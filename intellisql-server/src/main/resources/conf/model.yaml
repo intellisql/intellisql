@@ -1,0 +1,171 @@
+# IntelliSql Configuration Example
+# This file demonstrates the configuration for SQL federation and translation
+
+# Server configuration
+server:
+  host: 0.0.0.0
+  port: 8765
+  # Avatica JDBC server port
+  avaticaPort: 8766
+
+# Logging configuration
+logging:
+  level: INFO
+  # Enable SQL query logging
+  sqlLogging: true
+  # Log format: json or text
+  format: json
+
+# Connection pool settings
+pool:
+  # Maximum pool size per database
+  maxPoolSize: 10
+  # Minimum idle connections
+  minIdle: 2
+  # Connection timeout in milliseconds
+  connectionTimeout: 30000
+  # Idle timeout in milliseconds
+  idleTimeout: 600000
+  # Maximum lifetime in milliseconds
+  maxLifetime: 1800000
+
+# Data sources configuration
+dataSources:
+  # MySQL source database
+  - name: mysql_source
+    type: mysql
+    host: localhost
+    port: 3306
+    database: source_db
+    username: root
+    password: ${MYSQL_PASSWORD}
+    # Connection pool settings for this data source
+    pool:
+      maxPoolSize: 10
+      minIdle: 2
+    # MySQL specific settings
+    properties:
+      useSSL: false
+      serverTimezone: UTC
+      allowPublicKeyRetrieval: true
+
+  # PostgreSQL source database
+  - name: pg_source
+    type: postgresql
+    host: localhost
+    port: 5432
+    database: source_db
+    username: postgres
+    password: ${PG_PASSWORD}
+    pool:
+      maxPoolSize: 10
+      minIdle: 2
+    properties:
+      ssl: false
+
+  # Elasticsearch source
+  - name: es_source
+    type: elasticsearch
+    host: localhost
+    port: 9200
+    username: elastic
+    password: ${ES_PASSWORD}
+    # Index pattern for mapping
+    indexPattern: "*"
+    properties:
+      ssl: false
+      verifyCerts: false
+
+# SQL Federation configuration
+federation:
+  # Enable SQL federation
+  enabled: true
+  # Default query timeout in seconds
+  queryTimeout: 300
+  # Maximum result set size
+  maxResultSize: 100000
+  # Enable query caching
+  cacheEnabled: true
+  # Cache TTL in seconds
+  cacheTtl: 300
+
+# SQL Translation rules
+translation:
+  # Enable SQL translation
+  enabled: true
+  # Translation rules
+  rules:
+    # MySQL to standard SQL translation
+    - source: mysql
+      target: standard
+      # Function mappings
+      functions:
+        IFNULL: "COALESCE"
+        NOW: "CURRENT_TIMESTAMP"
+        DATE_FORMAT: "TO_CHAR"
+        LIMIT: "FETCH FIRST"
+
+    # PostgreSQL to standard SQL translation
+    - source: postgresql
+      target: standard
+      functions:
+        NOW: "CURRENT_TIMESTAMP"
+        ILIKE: "LIKE"
+
+# Schema mapping configuration
+schemaMapping:
+  # Enable automatic schema discovery
+  autoDiscovery: true
+  # Refresh interval in seconds
+  refreshInterval: 3600
+  # Schema caching
+  cache:
+    enabled: true
+    maxSize: 1000
+    ttl: 3600
+
+# Query optimization settings
+optimization:
+  # Enable query optimization
+  enabled: true
+  # Enable predicate pushdown
+  predicatePushdown: true
+  # Enable join optimization
+  joinOptimization: true
+  # Enable subquery optimization
+  subqueryOptimization: true
+  # Cost-based optimization
+  costBased:
+    enabled: true
+    # Maximum optimization time in milliseconds
+    maxTime: 5000
+
+# Monitoring and metrics
+monitoring:
+  # Enable metrics collection
+  enabled: true
+  # Metrics export endpoint
+  endpoint: /metrics
+  # Query statistics
+  queryStats:
+    enabled: true
+    # Slow query threshold in milliseconds
+    slowQueryThreshold: 1000
+  # Health check endpoint
+  healthCheck:
+    enabled: true
+    endpoint: /health
+
+# Security settings
+security:
+  # Enable authentication
+  authentication:
+    enabled: false
+    # Authentication type: none, basic, jwt
+    type: none
+  # Enable SSL/TLS
+  ssl:
+    enabled: false
+    # Certificate path
+    certPath: /path/to/cert.pem
+    keyPath: /path/to/key.pem
