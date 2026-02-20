@@ -18,7 +18,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.intellisql</groupId>
+        <groupId>com.intellisql</groupId>
         <artifactId>intellisql</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
@@ -29,12 +29,12 @@
     <dependencies>
         <!-- Internal module dependencies -->
         <dependency>
-            <groupId>org.intellisql</groupId>
+            <groupId>com.intellisql</groupId>
             <artifactId>intellisql-jdbc</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.intellisql</groupId>
+            <groupId>com.intellisql</groupId>
             <artifactId>intellisql-parser</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -78,7 +78,7 @@
                             </filters>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>org.intellisql.client.IntelliSqlClient</mainClass>
+                                    <mainClass>com.intellisql.client.IntelliSqlClient</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

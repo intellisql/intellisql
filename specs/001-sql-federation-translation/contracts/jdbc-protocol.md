@@ -78,7 +78,7 @@ public final class IntelliSqlDriver implements java.sql.Driver {
 ### META-INF/services/java.sql.Driver
 
 ```
-org.intellisql.jdbc.IntelliSqlDriver
+com.intellisql.jdbc.IntelliSqlDriver
 ```
 
 ### 连接流程

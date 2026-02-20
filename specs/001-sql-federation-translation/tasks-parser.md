@@ -49,7 +49,7 @@ intellisql-parser/
 ### 1.3 FMPP 配置文件
 
 - [X] T007 创建 FMPP 配置文件 intellisql-parser/src/main/codegen/config.fmpp，包含：
-  - parserClass: org.intellisql.parser.impl.IntelliSqlParserImpl
+  - parserClass: com.intellisql.parser.impl.IntelliSqlParserImpl
   - imported packages
   - reserved keywords
   - non-reserved keywords
@@ -358,9 +358,9 @@ intellisql-parser/
 
 ### 6.2 包信息文件
 
-- [X] T056 [P] 创建 org.intellisql.parser package-info.java (已存在)
-- [X] T057 [P] 创建 org.intellisql.parser.dialect package-info.java
-- [X] T058 [P] 创建 org.intellisql.parser.ast package-info.java
+- [X] T056 [P] 创建 com.intellisql.parser package-info.java (已存在)
+- [X] T057 [P] 创建 com.intellisql.parser.dialect package-info.java
+- [X] T058 [P] 创建 com.intellisql.parser.ast package-info.java
 
 ### 6.3 集成测试
 

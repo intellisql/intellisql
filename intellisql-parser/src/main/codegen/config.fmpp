@@ -63,11 +63,11 @@ data: {
   # Custom IntelliSql parser configuration (overrides defaults)
   parser: {
     # Generated parser implementation package and class name.
-    package: "org.intellisql.parser.impl",
+    package: "com.intellisql.parser.impl",
     class: "IntelliSqlParserImpl",
     # List of additional classes and packages to import.
     imports: [
-        "org.intellisql.parser.ast.*"
+        "com.intellisql.parser.ast.*"
     ],
     # List of new keywords for IntelliSql extensions.
     keywords: [

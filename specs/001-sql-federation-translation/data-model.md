@@ -15,7 +15,7 @@ IntelliSql 采用多层架构，实体主要在配置文件中定义，并在运
 
 **Purpose**: 表示到外部数据源（MySQL、PostgreSQL、Elasticsearch）的连接
 
-**Package**: `org.intellisql.kernel.metadata`
+**Package**: `com.intellisql.kernel.metadata`
 
 **字段**：
 
@@ -82,7 +82,7 @@ public final class DataSource {
 
 **Purpose**: 表示映射到 DataSource 或联邦视图的逻辑数据库模式
 
-**Package**: `org.intellisql.kernel.metadata`
+**Package**: `com.intellisql.kernel.metadata`
 
 **字段**：
 
@@ -123,7 +123,7 @@ public final class Schema {
 
 **Purpose**: 表示模式中的表（关系型）或索引（Elasticsearch）
 
-**Package**: `org.intellisql.kernel.metadata`
+**Package**: `com.intellisql.kernel.metadata`
 
 **字段**：
 
@@ -166,7 +166,7 @@ public final class Table {
 
 **Purpose**: 表示表中具有类型信息的列
 
-**Package**: `org.intellisql.kernel.metadata`
+**Package**: `com.intellisql.kernel.metadata`
 
 **字段**：
 
@@ -209,7 +209,7 @@ public final class Column {
 
 **Purpose**: 表示带有执行上下文的用户提交的 SQL 查询
 
-**Package**: `org.intellisql.kernel.executor`
+**Package**: `com.intellisql.kernel.executor`
 
 **字段**：
 
@@ -281,7 +281,7 @@ public class Query {
 
 **Purpose**: 表示从一种方言到另一种方言的 SQL 翻译任务
 
-**Package**: `org.intellisql.parser`
+**Package**: `com.intellisql.parser`
 
 **字段**：
 
@@ -327,7 +327,7 @@ public class Translation {
 
 **Purpose**: 表示 JDBC 客户端连接会话
 
-**Package**: `org.intellisql.server`
+**Package**: `com.intellisql.server`
 
 **字段**：
 
@@ -384,7 +384,7 @@ public class Connection {
 
 **Purpose**: 定义外部模式如何映射到 IntelliSql 模式
 
-**Package**: `org.intellisql.kernel.metadata`
+**Package**: `com.intellisql.kernel.metadata`
 
 **字段**：
 
@@ -414,7 +414,7 @@ public final class SchemaMapping {
 
 **Purpose**: 表示查询的优化执行计划
 
-**Package**: `org.intellisql.optimizer`
+**Package**: `com.intellisql.optimizer`
 
 **字段**：
 
@@ -450,7 +450,7 @@ public final class ExecutionPlan {
 
 **Purpose**: 表示查询执行的结果
 
-**Package**: `org.intellisql.kernel.executor`
+**Package**: `com.intellisql.kernel.executor`
 
 **字段**：
 

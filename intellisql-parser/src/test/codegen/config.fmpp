@@ -50,10 +50,10 @@ data: {
   },
   # Test parser configuration
   parser: {
-    package: "org.intellisql.parser.impl",
+    package: "com.intellisql.parser.impl",
     class: "IntelliSqlParserImpl",
     imports: [
-        "org.intellisql.parser.ast.*"
+        "com.intellisql.parser.ast.*"
     ],
     keywords: [
         "DATABASES",
