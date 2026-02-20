@@ -17,10 +17,13 @@
 
 package com.intellisql.test.it;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 import org.junit.jupiter.api.AfterEach;
@@ -44,6 +47,10 @@ public class ElasticsearchConnectorIT extends AbstractIntegrationTest {
 
     private static final int ELASTICSEARCH_PORT = 9200;
 
+    private static final int CONNECT_TIMEOUT = 10000;
+
+    private static final int READ_TIMEOUT = 10000;
+
     @Container
     private static final GenericContainer<?> ELASTICSEARCH_CONTAINER =
             new GenericContainer<>(DockerImageName.parse(ELASTICSEARCH_IMAGE))
@@ -60,8 +67,6 @@ public class ElasticsearchConnectorIT extends AbstractIntegrationTest {
                                     .withStartupTimeout(Duration.ofMinutes(3)))
                     .withReuse(true);
 
-    private HttpClient httpClient;
-
     private String elasticsearchUrl;
 
     @BeforeEach
@@ -71,7 +76,6 @@ public class ElasticsearchConnectorIT extends AbstractIntegrationTest {
                         "http://%s:%d",
                         ELASTICSEARCH_CONTAINER.getHost(),
                         ELASTICSEARCH_CONTAINER.getMappedPort(ELASTICSEARCH_PORT));
-        httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
     }
 
     @AfterEach
@@ -82,29 +86,17 @@ public class ElasticsearchConnectorIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("Should connect to Elasticsearch container successfully")
     void shouldConnectToElasticsearchContainer() throws Exception {
-        HttpRequest request =
-                HttpRequest.newBuilder()
-                        .uri(URI.create(elasticsearchUrl))
-                        .timeout(Duration.ofSeconds(10))
-                        .GET()
-                        .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        assertThat(response.statusCode()).isEqualTo(200);
-        assertThat(response.body()).contains("name", "cluster_name", "version");
+        HttpResponse response = sendRequest("GET", elasticsearchUrl, null);
+        assertThat(response.statusCode).isEqualTo(200);
+        assertThat(response.body).contains("name", "cluster_name", "version");
     }
 
     @Test
     @DisplayName("Should check cluster health")
     void shouldCheckClusterHealth() throws Exception {
-        HttpRequest request =
-                HttpRequest.newBuilder()
-                        .uri(URI.create(elasticsearchUrl + "/_cluster/health"))
-                        .timeout(Duration.ofSeconds(10))
-                        .GET()
-                        .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        assertThat(response.statusCode()).isEqualTo(200);
-        assertThat(response.body()).contains("status", "cluster_name");
+        HttpResponse response = sendRequest("GET", elasticsearchUrl + "/_cluster/health", null);
+        assertThat(response.statusCode).isEqualTo(200);
+        assertThat(response.body).contains("status", "cluster_name");
     }
 
     @Test
@@ -123,16 +115,9 @@ public class ElasticsearchConnectorIT extends AbstractIntegrationTest {
                         + "    }\n"
                         + "  }\n"
                         + "}";
-        HttpRequest request =
-                HttpRequest.newBuilder()
-                        .uri(URI.create(elasticsearchUrl + "/test_index"))
-                        .timeout(Duration.ofSeconds(10))
-                        .header("Content-Type", "application/json")
-                        .PUT(HttpRequest.BodyPublishers.ofString(indexMapping))
-                        .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        assertThat(response.statusCode()).isIn(200, 201);
-        assertThat(response.body()).contains("acknowledged\":true");
+        HttpResponse response = sendRequest("PUT", elasticsearchUrl + "/test_index", indexMapping);
+        assertThat(response.statusCode).isIn(200, 201);
+        assertThat(response.body).contains("acknowledged\":true");
     }
 
     @Test
@@ -144,16 +129,9 @@ public class ElasticsearchConnectorIT extends AbstractIntegrationTest {
                         + "  \"title\": \"Test Document\",\n"
                         + "  \"content\": \"This is a test document for Elasticsearch\"\n"
                         + "}";
-        HttpRequest request =
-                HttpRequest.newBuilder()
-                        .uri(URI.create(elasticsearchUrl + "/test_index/_doc/1"))
-                        .timeout(Duration.ofSeconds(10))
-                        .header("Content-Type", "application/json")
-                        .POST(HttpRequest.BodyPublishers.ofString(document))
-                        .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        assertThat(response.statusCode()).isIn(200, 201);
-        assertThat(response.body()).contains("\"result\":\"created\"");
+        HttpResponse response = sendRequest("POST", elasticsearchUrl + "/test_index/_doc/1", document);
+        assertThat(response.statusCode).isIn(200, 201);
+        assertThat(response.body).contains("\"result\":\"created\"");
     }
 
     @Test
@@ -177,16 +155,9 @@ public class ElasticsearchConnectorIT extends AbstractIntegrationTest {
                         + "    }\n"
                         + "  }\n"
                         + "}";
-        HttpRequest request =
-                HttpRequest.newBuilder()
-                        .uri(URI.create(elasticsearchUrl + "/test_index/_search"))
-                        .timeout(Duration.ofSeconds(10))
-                        .header("Content-Type", "application/json")
-                        .POST(HttpRequest.BodyPublishers.ofString(searchQuery))
-                        .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        assertThat(response.statusCode()).isEqualTo(200);
-        assertThat(response.body()).contains("\"hits\":");
+        HttpResponse response = sendRequest("POST", elasticsearchUrl + "/test_index/_search", searchQuery);
+        assertThat(response.statusCode).isEqualTo(200);
+        assertThat(response.body).contains("\"hits\":");
     }
 
     @Test
@@ -195,15 +166,9 @@ public class ElasticsearchConnectorIT extends AbstractIntegrationTest {
         createIndex("test_index");
         indexDocument("test_index", "1", "{\"title\": \"Test\", \"content\": \"Test content\"}");
         Thread.sleep(500);
-        HttpRequest request =
-                HttpRequest.newBuilder()
-                        .uri(URI.create(elasticsearchUrl + "/test_index/_doc/1"))
-                        .timeout(Duration.ofSeconds(10))
-                        .DELETE()
-                        .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        assertThat(response.statusCode()).isEqualTo(200);
-        assertThat(response.body()).contains("\"result\":\"deleted\"");
+        HttpResponse response = sendRequest("DELETE", elasticsearchUrl + "/test_index/_doc/1", null);
+        assertThat(response.statusCode).isEqualTo(200);
+        assertThat(response.body).contains("\"result\":\"deleted\"");
     }
 
     @Test
@@ -226,16 +191,9 @@ public class ElasticsearchConnectorIT extends AbstractIntegrationTest {
                         + "    }\n"
                         + "  }\n"
                         + "}";
-        HttpRequest request =
-                HttpRequest.newBuilder()
-                        .uri(URI.create(elasticsearchUrl + "/test_index/_search"))
-                        .timeout(Duration.ofSeconds(10))
-                        .header("Content-Type", "application/json")
-                        .POST(HttpRequest.BodyPublishers.ofString(aggQuery))
-                        .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        assertThat(response.statusCode()).isEqualTo(200);
-        assertThat(response.body()).contains("aggregations");
+        HttpResponse response = sendRequest("POST", elasticsearchUrl + "/test_index/_search", aggQuery);
+        assertThat(response.statusCode).isEqualTo(200);
+        assertThat(response.body).contains("aggregations");
     }
 
     private void createIndex(final String indexName) throws Exception {
@@ -254,40 +212,76 @@ public class ElasticsearchConnectorIT extends AbstractIntegrationTest {
                         + "    }\n"
                         + "  }\n"
                         + "}";
-        HttpRequest request =
-                HttpRequest.newBuilder()
-                        .uri(URI.create(elasticsearchUrl + "/" + indexName))
-                        .timeout(Duration.ofSeconds(10))
-                        .header("Content-Type", "application/json")
-                        .PUT(HttpRequest.BodyPublishers.ofString(indexMapping))
-                        .build();
-        httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        sendRequest("PUT", elasticsearchUrl + "/" + indexName, indexMapping);
     }
 
     private void indexDocument(final String indexName, final String docId, final String document) throws Exception {
-        HttpRequest request =
-                HttpRequest.newBuilder()
-                        .uri(URI.create(elasticsearchUrl + "/" + indexName + "/_doc/" + docId))
-                        .timeout(Duration.ofSeconds(10))
-                        .header("Content-Type", "application/json")
-                        .POST(HttpRequest.BodyPublishers.ofString(document))
-                        .build();
-        httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        sendRequest("POST", elasticsearchUrl + "/" + indexName + "/_doc/" + docId, document);
     }
 
     private void deleteIndex(final String indexName) throws Exception {
-        HttpRequest request =
-                HttpRequest.newBuilder()
-                        .uri(URI.create(elasticsearchUrl + "/" + indexName))
-                        .timeout(Duration.ofSeconds(10))
-                        .DELETE()
-                        .build();
         // CHECKSTYLE:OFF
         try {
-            httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            sendRequest("DELETE", elasticsearchUrl + "/" + indexName, null);
         } catch (final Exception ignored) {
             // Ignore exception when deleting index
         }
         // CHECKSTYLE:ON
+    }
+
+    private HttpResponse sendRequest(final String method, final String url, final String body) throws Exception {
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setRequestMethod(method);
+        connection.setConnectTimeout(CONNECT_TIMEOUT);
+        connection.setReadTimeout(READ_TIMEOUT);
+        connection.setRequestProperty("Content-Type", "application/json");
+
+        if (body != null && !body.isEmpty()) {
+            connection.setDoOutput(true);
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = body.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+        }
+
+        int statusCode = connection.getResponseCode();
+        String responseBody;
+
+        InputStream inputStream;
+        if (statusCode >= 200 && statusCode < 300) {
+            inputStream = connection.getInputStream();
+        } else {
+            inputStream = connection.getErrorStream();
+        }
+
+        if (inputStream != null) {
+            try (
+                    BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                responseBody = response.toString();
+            }
+        } else {
+            responseBody = "";
+        }
+
+        connection.disconnect();
+        return new HttpResponse(statusCode, responseBody);
+    }
+
+    private static final class HttpResponse {
+
+        private final int statusCode;
+
+        private final String body;
+
+        HttpResponse(final int statusCode, final String body) {
+            this.statusCode = statusCode;
+            this.body = body;
+        }
     }
 }
