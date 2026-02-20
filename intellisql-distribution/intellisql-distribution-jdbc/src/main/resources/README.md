@@ -20,7 +20,7 @@ Add the JAR file to your local Maven repository or include it directly:
 
 ```xml
 <dependency>
-    <groupId>org.intellisql</groupId>
+    <groupId>com.intellisql</groupId>
     <artifactId>intellisql-jdbc</artifactId>
     <version>{version}</version>
     <scope>system</scope>

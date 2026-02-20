@@ -241,9 +241,9 @@ intellisql/
 1. **创建连接器**：
 ```java
 // intellisql-connector/src/main/java/org/intellisql/connector/oracle/
-package org.intellisql.connector.oracle;
+package com.intellisql.connector.oracle;
 
-import org.intellisql.connector.api.DataSourceConnector;
+import com.intellisql.connector.api.DataSourceConnector;
 
 public class OracleConnector implements DataSourceConnector {
     @Override
@@ -416,7 +416,7 @@ class QueryPlannerTest {
 编辑 `conf/logback.xml`：
 
 ```xml
-<logger name="org.intellisql" level="DEBUG"/>
+<logger name="com.intellisql" level="DEBUG"/>
 <logger name="org.apache.calcite" level="DEBUG"/>
 ```
 

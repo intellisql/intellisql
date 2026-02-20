@@ -42,10 +42,10 @@
     </appender>
 
     <!-- Logger for IntelliSql -->
-    <logger name="org.intellisql" level="DEBUG"/>
+    <logger name="com.intellisql" level="DEBUG"/>
 
     <!-- Logger for SQL queries -->
-    <logger name="org.intellisql.SQL" level="DEBUG"/>
+    <logger name="com.intellisql.SQL" level="DEBUG"/>
 
     <!-- Logger for Avatica (JDBC server) -->
     <logger name="org.apache.calcite.avatica" level="INFO"/>

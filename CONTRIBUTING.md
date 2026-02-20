@@ -92,7 +92,7 @@ We use Checkstyle for code quality checks:
 #### Import Order
 
 Imports should be ordered as follows:
-1. `org.intellisql.*`
+1. `com.intellisql.*`
 2. `org.apache.*`
 3. Other imports (alphabetical)
 4. `javax.*`
@@ -100,8 +100,8 @@ Imports should be ordered as follows:
 6. Static imports
 
 ```java
-import org.intellisql.parser.SqlParser;
-import org.intellisql.optimizer.QueryOptimizer;
+import com.intellisql.parser.SqlParser;
+import com.intellisql.optimizer.QueryOptimizer;
 
 import org.apache.calcite.sql.SqlNode;
 
