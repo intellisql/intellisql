@@ -20,6 +20,7 @@ package com.intellisql.test.e2e;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -137,7 +138,7 @@ public class ConfigLoadingE2ETest {
             writer.write("      type: postgresql\n");
             writer.write("      priority: 1\n");
         }
-        String content = Files.readString(configFile.toPath());
+        String content = new String(Files.readAllBytes(configFile.toPath()), StandardCharsets.UTF_8);
         assertThat(content).contains("database:");
         assertThat(content).contains("url: " + POSTGRES_CONTAINER.getJdbcUrl());
         assertThat(content).contains("username: " + POSTGRES_CONTAINER.getUsername());
@@ -167,7 +168,7 @@ public class ConfigLoadingE2ETest {
         try (FileWriter writer = new FileWriter(configFile)) {
             writer.write(jsonContent);
         }
-        String content = Files.readString(configFile.toPath());
+        String content = new String(Files.readAllBytes(configFile.toPath()), StandardCharsets.UTF_8);
         assertThat(content).contains("\"url\":");
         assertThat(content).contains("\"username\":");
         assertThat(content).contains("\"poolSize\": 15");
