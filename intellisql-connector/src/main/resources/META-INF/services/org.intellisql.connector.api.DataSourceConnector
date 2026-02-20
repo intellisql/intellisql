@@ -1,0 +1,3 @@
+org.intellisql.connector.mysql.MySQLConnector
+org.intellisql.connector.postgresql.PostgreSQLConnector
+org.intellisql.connector.elasticsearch.ElasticsearchConnector

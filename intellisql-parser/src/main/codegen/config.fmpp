@@ -1,0 +1,108 @@
+# Licensed to the IntelliSql Project under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The IntelliSql Project licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# FMPP Configuration for IntelliSql Parser
+# This file allows extending Calcite's SQL parser to support IntelliSql specific
+# SQL statements such as SHOW TABLES, SHOW SCHEMAS, USE, etc.
+
+data: {
+  # Default parser configuration (fallback values for Parser.jj template)
+  default: {
+    parser: {
+      # Default class and package
+      package: "org.apache.calcite.sql.parser.impl",
+      class: "SqlParserImpl",
+      # Default imports
+      imports: [],
+      # Default keywords
+      keywords: [],
+      nonReservedKeywords: [],
+      nonReservedKeywordsToAdd: [],
+      # Default statement parser methods
+      statementParserMethods: [],
+      createStatementParserMethods: [],
+      dropStatementParserMethods: [],
+      alterStatementParserMethods: [],
+      truncateStatementParserMethods: [],
+      # Default literal and data type parsers
+      literalParserMethods: [],
+      dataTypeParserMethods: [],
+      # Default function call methods
+      builtinFunctionCallMethods: [],
+      # Default implementation files
+      implementationFiles: [],
+      # Default set option method
+      setOptionParserMethod: "SqlSetOption",
+      # Default feature flags
+      includeCompoundIdentifier: false,
+      includeBraces: false,
+      includeStarExclude: false,
+      includePosixOperators: false,
+      includeAdditionalDeclarations: false,
+      includeIntervalWithoutQualifier: false,
+      includeParsingStringLiteralAsArrayLiteral: false,
+      # Default join types
+      joinTypes: [],
+      # Default binary operators
+      binaryOperatorsTokens: [],
+      extraBinaryExpressions: []
+    }
+  },
+  # Custom IntelliSql parser configuration (overrides defaults)
+  parser: {
+    # Generated parser implementation package and class name.
+    package: "org.intellisql.parser.impl",
+    class: "IntelliSqlParserImpl",
+    # List of additional classes and packages to import.
+    imports: [
+        "org.intellisql.parser.ast.*"
+    ],
+    # List of new keywords for IntelliSql extensions.
+    keywords: [
+        "DATABASES",
+        "SCHEMAS",
+        "TABLES",
+        "USE"
+    ],
+    # List of keywords from "keywords" section that are not reserved.
+    nonReservedKeywords: [
+        "DATABASES",
+        "SCHEMAS",
+        "TABLES",
+        "USE"
+    ],
+    # Extended statement parser methods
+    statementParserMethods: [
+        "SqlShowTables()",
+        "SqlShowSchemas()",
+        "SqlUseSchema()"
+    ],
+    # Implementation files to include (parser extensions)
+    implementationFiles: [
+        "parserImpls.ftl"
+    ],
+    # Include compound identifier extensions
+    includeCompoundIdentifier: true,
+    # Feature flags
+    includeBraces: true,
+    includePosixOperators: false,
+    includeAdditionalDeclarations: false
+  }
+}
+
+# Configure the includes directory for @includes reference in Parser.jj
+freemarkerLinks: {
+  includes: includes/
+}
