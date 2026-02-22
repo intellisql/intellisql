@@ -21,20 +21,21 @@ import java.sql.Connection;
 
 import com.intellisql.connector.model.QueryResult;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch.cluster.HealthResponse;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.cluster.health.ClusterHealthStatus;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Elasticsearch implementation of Connection interface. Wraps an Elasticsearch Java client for
- * query execution.
+ * Elasticsearch implementation of Connection interface. Wraps an Elasticsearch RestHighLevelClient for
+ * query execution. Uses Elasticsearch 7.x API for JDK 8 compatibility.
  */
 @Slf4j
 public class ElasticsearchConnection implements com.intellisql.connector.api.Connection {
 
     @Getter
-    private final ElasticsearchClient client;
+    private final RestHighLevelClient client;
 
     private final ElasticsearchQueryExecutor queryExecutor;
 
@@ -43,9 +44,9 @@ public class ElasticsearchConnection implements com.intellisql.connector.api.Con
     /**
      * Creates a new Elasticsearch connection.
      *
-     * @param client the Elasticsearch client
+     * @param client the Elasticsearch RestHighLevelClient
      */
-    public ElasticsearchConnection(final ElasticsearchClient client) {
+    public ElasticsearchConnection(final RestHighLevelClient client) {
         this.client = client;
         this.queryExecutor = new ElasticsearchQueryExecutor();
     }
@@ -68,8 +69,11 @@ public class ElasticsearchConnection implements com.intellisql.connector.api.Con
             return false;
         }
         try {
-            HealthResponse health = client.cluster().health();
-            return health != null && !"red".equals(health.status().jsonValue());
+            org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse health =
+                    client.cluster().health(
+                            new org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest(),
+                            org.elasticsearch.client.RequestOptions.DEFAULT);
+            return health != null && health.getStatus() != ClusterHealthStatus.RED;
             // CHECKSTYLE:OFF: IllegalCatch
         } catch (final Exception ex) {
             // CHECKSTYLE:ON: IllegalCatch
@@ -84,7 +88,7 @@ public class ElasticsearchConnection implements com.intellisql.connector.api.Con
             return;
         }
         try {
-            client._transport().close();
+            client.close();
             closed = true;
             log.debug("Elasticsearch connection closed");
             // CHECKSTYLE:OFF: IllegalCatch

@@ -18,6 +18,7 @@
 package com.intellisql.kernel.metadata;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.schema.SchemaPlus;
 import com.intellisql.connector.api.DataSourceConnector;
@@ -32,6 +33,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /** Metadata manager for managing DataSource, Schema, and Table registration and queries. */
+@Slf4j
 @Getter
 public final class MetadataManager {
 
@@ -256,23 +258,43 @@ public final class MetadataManager {
 
     /**
      * Gets the root schema for Calcite.
+     * Uses FederatedSchema for proper table lookup without schema prefix.
      *
      * @return the root schema
      */
     public SchemaPlus getRootSchema() {
+        log.info("Creating root schema with {} tables and {} schemas", tables.size(), schemas.size());
+
+        // Create root schema with tables directly accessible (no schema prefix needed)
+        final com.intellisql.kernel.metadata.calcite.FederatedSchema rootFederatedSchema =
+                new com.intellisql.kernel.metadata.calcite.FederatedSchema("root");
+
+        // Add all tables to root schema for unqualified table access
+        for (final Table table : tables.values()) {
+            rootFederatedSchema.addTable(table.getName(), createCalciteTable(table));
+            log.debug("Added table to root schema: {}", table.getName());
+        }
+
         final SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, true).plus();
+        rootSchema.add("root", rootFederatedSchema);
+
+        // Also add tables directly to root for default schema path lookup
+        for (final Table table : tables.values()) {
+            rootSchema.add(table.getName(), createCalciteTable(table));
+        }
+
+        // Create sub-schemas for qualified access (schema.table)
         for (final Schema schema : schemas.values()) {
-            final SchemaPlus subSchema =
-                    rootSchema
-                            .add(schema.getName(), new org.apache.calcite.schema.impl.AbstractSchema())
-                            .unwrap(SchemaPlus.class);
-            if (schema.getTables() != null && subSchema != null) {
+            final com.intellisql.kernel.metadata.calcite.FederatedSchema federatedSchema =
+                    new com.intellisql.kernel.metadata.calcite.FederatedSchema(schema.getName());
+            if (schema.getTables() != null) {
                 for (final Entry<String, Table> entry : schema.getTables().entrySet()) {
-                    final Table table = entry.getValue();
-                    subSchema.add(entry.getKey(), createCalciteTable(table));
+                    federatedSchema.addTable(entry.getKey(), createCalciteTable(entry.getValue()));
                 }
             }
+            rootSchema.add(schema.getName(), federatedSchema);
         }
+
         return rootSchema;
     }
 
@@ -282,20 +304,30 @@ public final class MetadataManager {
      * @param connectors the data source connectors with their configurations
      */
     public void initialize(final Map<DataSourceConnector, DataSourceConfig> connectors) {
+        log.info("Initializing metadata from {} connector(s)", connectors.size());
         for (Entry<DataSourceConnector, DataSourceConfig> entry : connectors.entrySet()) {
             try {
+                final DataSourceConfig config = entry.getValue();
+                log.info("Discovering schema for data source: {} ({})",
+                        config.getName(), config.getJdbcUrl());
                 final com.intellisql.connector.model.Schema connectorSchema =
-                        entry.getKey().discoverSchema(entry.getValue());
+                        entry.getKey().discoverSchema(config);
                 if (connectorSchema != null) {
+                    log.info("Discovered schema '{}' with {} tables",
+                            connectorSchema.getName(),
+                            connectorSchema.getTables() != null ? connectorSchema.getTables().size() : 0);
                     registerFromConnectorSchema(connectorSchema);
+                } else {
+                    log.warn("Schema discovery returned null for data source: {}", config.getName());
                 }
                 // CHECKSTYLE:OFF
             } catch (final Exception ex) {
                 // CHECKSTYLE:ON
-                ex.printStackTrace();
-                // Log and continue with other connectors
+                log.error("Failed to discover schema for data source: {}", ex.getMessage(), ex);
             }
         }
+        log.info("Metadata initialization complete. Total tables: {}, Total schemas: {}",
+                tables.size(), schemas.size());
     }
 
     /**
@@ -305,6 +337,7 @@ public final class MetadataManager {
      */
     private void registerFromConnectorSchema(
                                              final com.intellisql.connector.model.Schema connectorSchema) {
+        final String dataSourceId = connectorSchema.getDataSourceName();
         final Map<String, Table> schemaTables = new ConcurrentHashMap<>();
         if (connectorSchema.getTables() != null) {
             for (final com.intellisql.connector.model.Table connectorTable : connectorSchema.getTables()) {
@@ -315,7 +348,12 @@ public final class MetadataManager {
                                 Column.builder().name(column.getName()).nullable(column.isNullable()).build());
                     }
                 }
-                final Table table = Table.builder().name(connectorTable.getName()).columns(columns).build();
+                final Table table = Table.builder()
+                        .name(connectorTable.getName())
+                        .dataSourceId(dataSourceId)
+                        .schemaName(connectorSchema.getName())
+                        .columns(columns)
+                        .build();
                 schemaTables.put(connectorTable.getName(), table);
                 tables.put(connectorTable.getName(), table);
             }
@@ -323,7 +361,7 @@ public final class MetadataManager {
         final Schema schema =
                 Schema.builder()
                         .name(connectorSchema.getName())
-                        .dataSourceId(connectorSchema.getDataSourceName())
+                        .dataSourceId(dataSourceId)
                         .tables(schemaTables)
                         .type(SchemaType.valueOf(connectorSchema.getType().name()))
                         .build();
@@ -337,23 +375,18 @@ public final class MetadataManager {
      * @return the Calcite table
      */
     private org.apache.calcite.schema.Table createCalciteTable(final Table table) {
-        return new org.apache.calcite.schema.impl.AbstractTable() {
+        final java.util.List<String> columnNames = new java.util.ArrayList<>();
+        final java.util.List<org.apache.calcite.sql.type.SqlTypeName> columnTypes = new java.util.ArrayList<>();
 
-            @Override
-            public org.apache.calcite.rel.type.RelDataType getRowType(
-                                                                      final org.apache.calcite.rel.type.RelDataTypeFactory typeFactory) {
-                final org.apache.calcite.rel.type.RelDataTypeFactory.Builder builder =
-                        typeFactory.builder();
-                if (table.getColumns() != null) {
-                    for (final Column column : table.getColumns()) {
-                        builder.add(
-                                column.getName(),
-                                typeFactory.createSqlType(org.apache.calcite.sql.type.SqlTypeName.VARCHAR));
-                    }
-                }
-                return builder.build();
+        if (table.getColumns() != null) {
+            for (final Column column : table.getColumns()) {
+                columnNames.add(column.getName());
+                columnTypes.add(org.apache.calcite.sql.type.SqlTypeName.VARCHAR);
             }
-        };
+        }
+
+        return new com.intellisql.kernel.metadata.calcite.FederatedTable(
+                table.getName(), table.getDataSourceId(), columnNames, columnTypes);
     }
 
     /** Closes the metadata manager and releases resources. */

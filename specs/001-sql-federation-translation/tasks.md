@@ -7,6 +7,8 @@
 
 **Organization**: 任务按用户故事组织，支持独立实现和测试
 
+**Reference**: `/Users/duanzhengqiang/IdeaProjects/shardingsphere/kernel/sql-federation` (参考实现)
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: 可并行执行（不同文件，无依赖）
@@ -19,7 +21,12 @@
 intellisql/                        # 仓库根目录
 ├── intellisql-parser/             # SQL 解析模块
 ├── intellisql-optimizer/          # SQL 优化模块
+│   ├── cost/                      # 代价模型
+│   ├── metadata/                  # 元数据提供者
+│   ├── plan/                      # 逻辑执行计划、物理计划转换
+│   └── rule/                      # 优化规则
 ├── intellisql-executor/           # SQL 执行模块
+│   └── iterator/                  # Volcano 迭代器模型 
 ├── intellisql-connector/          # 数据源连接器
 ├── intellisql-kernel/             # 核心编排层
 ├── intellisql-jdbc/               # JDBC 驱动
@@ -38,24 +45,13 @@ intellisql/                        # 仓库根目录
 
 **Purpose**: Maven 多模块项目结构搭建和基础配置
 
-- [ ] T001 创建父 POM 文件 pom.xml，定义依赖版本、插件配置（Spotless 2.43.0、Checkstyle 3.3.1、Lombok 1.18.30）
-- [ ] T002 [P] 创建 Maven Wrapper 配置 .mvn/wrapper/maven-wrapper.properties
-- [ ] T003 [P] 创建 mvnw 和 mvnw.cmd 脚本
-- [ ] T004 [P] 创建 Checkstyle 配置文件 src/resources/checkstyle/checkstyle.xml（参考 ShardingSphere 风格）
-- [ ] T005 [P] 创建 Spotless 配置在 pom.xml 中（Google Java Format，无空行规则）
-- [ ] T006 [P] 创建 logback.xml 配置 conf/logback.xml（JSON 格式日志，包含 Query ID、线程 ID）
-- [ ] T007 创建 intellisql-parser 模块 pom.xml 和目录结构
-- [ ] T008 [P] 创建 intellisql-optimizer 模块 pom.xml 和目录结构
-- [ ] T009 [P] 创建 intellisql-executor 模块 pom.xml 和目录结构
-- [ ] T010 [P] 创建 intellisql-connector 模块 pom.xml 和目录结构
-- [ ] T011 [P] 创建 intellisql-kernel 模块 pom.xml 和目录结构
-- [ ] T012 [P] 创建 intellisql-jdbc 模块 pom.xml 和目录结构
-- [ ] T013 [P] 创建 intellisql-server 模块 pom.xml 和目录结构
-- [ ] T014 [P] 创建 intellisql-client 模块 pom.xml 和目录结构
-- [ ] T015 [P] 创建 intellisql-distribution 父模块及子模块 pom.xml
-- [ ] T016 [P] 创建 intellisql-test 父模块及子模块 pom.xml
-- [ ] T017 创建示例配置文件 conf/model.yaml
-- [ ] T018 验证构建 ./mvnw clean install -DskipTests
+- [x] T001 验证父 POM 文件 pom.xml，确认依赖版本正确（Calcite 1.41.0, Avatica 1.27.0, Lombok 1.18.30）
+- [x] T002 [P] 验证 Maven Wrapper 配置 .mvn/wrapper/maven-wrapper.properties
+- [x] T003 [P] 验证 Checkstyle 配置文件 src/resources/checkstyle/checkstyle.xml（参考 ShardingSphere 风格）
+- [x] T004 [P] 验证 Spotless 配置在 pom.xml 中（Palantir Java Format，无空行规则）
+- [x] T005 [P] 验证 logback.xml 配置 intellisql-server/src/main/resources/logback.xml（JSON 格式日志）
+- [x] T006 验证所有模块 pom.xml 存在且依赖正确
+- [x] T007 验证构建 ./mvnw clean install -DskipTests
 
 **Checkpoint**: 项目结构完整，可成功构建
 
@@ -69,38 +65,36 @@ intellisql/                        # 仓库根目录
 
 ### 2.1 枚举定义（基础类型）
 
-- [ ] T019 [P] 创建 DataSourceType 枚举 in intellisql-kernel/src/main/java/org/intellisql/kernel/metadata/enums/DataSourceType.java
-- [ ] T020 [P] 创建 DataType 枚举 in intellisql-kernel/src/main/java/org/intellisql/kernel/metadata/enums/DataType.java
-- [ ] T021 [P] 创建 SchemaType 枚举 in intellisql-kernel/src/main/java/org/intellisql/kernel/metadata/enums/SchemaType.java
-- [ ] T022 [P] 创建 TableType 枚举 in intellisql-kernel/src/main/java/org/intellisql/kernel/metadata/enums/TableType.java
-- [ ] T023 [P] 创建 QueryStatus 枚举 in intellisql-kernel/src/main/java/org/intellisql/kernel/executor/enums/QueryStatus.java
-- [ ] T024 [P] 创建 SqlDialect 枚举 in intellisql-parser/src/main/java/org/intellisql/parser/dialect/SqlDialect.java
-- [ ] T025 [P] 创建 TranslationMode 枚举 in intellisql-parser/src/main/java/org/intellisql/parser/TranslationMode.java
-- [ ] T026 [P] 创建 ConnectionStatus 枚举 in intellisql-server/src/main/java/org/intellisql/server/ConnectionStatus.java
+- [x] T008 [P] 验证 DataSourceType 枚举 in intellisql-kernel/src/main/java/com/intellisql/kernel/metadata/enums/DataSourceType.java
+- [x] T009 [P] 验证 DataType 枚举 in intellisql-kernel/src/main/java/com/intellisql/kernel/metadata/enums/DataType.java
+- [x] T010 [P] 验证 SchemaType 枚举 in intellisql-kernel/src/main/java/com/intellisql/kernel/metadata/enums/SchemaType.java
+- [x] T011 [P] 验证 TableType 枚举 in intellisql-kernel/src/main/java/com/intellisql/kernel/metadata/enums/TableType.java
+- [x] T012 [P] 验证 QueryStatus 枚举 in intellisql-kernel/src/main/java/com/intellisql/kernel/executor/enums/QueryStatus.java
+- [x] T013 [P] 验证 SqlDialect 枚举 in intellisql-parser/src/main/java/com/intellisql/parser/dialect/SqlDialect.java
+- [x] T014 [P] 验证 TranslationMode 枚举 in intellisql-parser/src/main/java/com/intellisql/parser/TranslationMode.java
+- [x] T015 [P] 验证 ConnectionStatus 枚举 in intellisql-server/src/main/java/com/intellisql/server/ConnectionStatus.java
 
 ### 2.2 配置加载（YAML 解析）
 
-- [ ] T027 [P] 创建 Props 配置类 in intellisql-kernel/src/main/java/org/intellisql/kernel/config/Props.java
-- [ ] T028 [P] 创建 HealthCheckConfig 值对象 in intellisql-kernel/src/main/java/org/intellisql/kernel/config/HealthCheckConfig.java
-- [ ] T029 [P] 创建 ConnectionPoolConfig 值对象 in intellisql-kernel/src/main/java/org/intellisql/kernel/config/ConnectionPoolConfig.java
-- [ ] T030 创建 DataSourceConfig 配置类 in intellisql-kernel/src/main/java/org/intellisql/kernel/config/DataSourceConfig.java
-- [ ] T031 创建 ModelConfig 根配置类 in intellisql-kernel/src/main/java/org/intellisql/kernel/config/ModelConfig.java
-- [ ] T032 实现 ConfigLoader YAML 解析 in intellisql-kernel/src/main/java/org/intellisql/kernel/config/ConfigLoader.java（使用 SnakeYAML 2.2）
-- [ ] T033 实现环境变量替换逻辑 in intellisql-kernel/src/main/java/org/intellisql/kernel/config/EnvironmentVariableSubstitutor.java
-- [ ] T034 创建 ConfigLoader 单元测试 in intellisql-kernel/src/test/java/org/intellisql/kernel/config/ConfigLoaderTest.java
+- [x] T016 [P] 验证 Props 配置类 in intellisql-kernel/src/main/java/com/intellisql/kernel/config/Props.java
+- [x] T017 [P] 验证 HealthCheckConfig 值对象 in intellisql-kernel/src/main/java/com/intellisql/kernel/config/HealthCheckConfig.java
+- [x] T018 [P] 验证 ConnectionPoolConfig 值对象 in intellisql-kernel/src/main/java/com/intellisql/kernel/config/ConnectionPoolConfig.java
+- [x] T019 验证 DataSourceConfig 配置类 in intellisql-kernel/src/main/java/com/intellisql/kernel/config/DataSourceConfig.java
+- [x] T020 验证 ModelConfig 根配置类 in intellisql-kernel/src/main/java/com/intellisql/kernel/config/ModelConfig.java
+- [x] T021 验证 ConfigLoader YAML 解析 in intellisql-kernel/src/main/java/com/intellisql/kernel/config/ConfigLoader.java
+- [x] T022 验证环境变量替换逻辑 in intellisql-kernel/src/main/java/com/intellisql/kernel/config/EnvironmentVariableSubstitutor.java
 
 ### 2.3 日志基础设施（NFR-001 ~ NFR-005）
 
-- [ ] T035 [P] 创建 QueryContext 查询上下文 in intellisql-kernel/src/main/java/org/intellisql/kernel/logging/QueryContext.java（包含 Query ID）
-- [ ] T036 [P] 创建 StructuredLogger 结构化日志 in intellisql-kernel/src/main/java/org/intellisql/kernel/logging/StructuredLogger.java
-- [ ] T037 实现 QueryContext MDC 管理器 in intellisql-kernel/src/main/java/org/intellisql/kernel/logging/QueryContextManager.java
+- [x] T023 [P] 验证 QueryContext 查询上下文 in intellisql-kernel/src/main/java/com/intellisql/kernel/logger/QueryContext.java
+- [x] T024 [P] 验证 StructuredLogger 结构化日志 in intellisql-kernel/src/main/java/com/intellisql/kernel/logger/StructuredLogger.java
+- [x] T025 验证 QueryContext MDC 管理器 in intellisql-kernel/src/main/java/com/intellisql/kernel/logger/QueryContextManager.java
 
 ### 2.4 重试机制（NFR-006 ~ NFR-009）
 
-- [ ] T038 创建 RetryPolicy 重试策略 in intellisql-kernel/src/main/java/org/intellisql/kernel/retry/RetryPolicy.java
-- [ ] T039 实现 ExponentialBackoffRetry 指数退避重试 in intellisql-kernel/src/main/java/org/intellisql/kernel/retry/ExponentialBackoffRetry.java
-- [ ] T040 创建 TransientErrorDetector 瞬时错误检测 in intellisql-kernel/src/main/java/org/intellisql/kernel/retry/TransientErrorDetector.java
-- [ ] T041 创建 RetryPolicy 单元测试 in intellisql-kernel/src/test/java/org/intellisql/kernel/retry/ExponentialBackoffRetryTest.java
+- [x] T026 验证 RetryPolicy 重试策略 in intellisql-kernel/src/main/java/com/intellisql/kernel/retry/RetryPolicy.java
+- [x] T027 验证 ExponentialBackoffRetry 指数退避重试 in intellisql-kernel/src/main/java/com/intellisql/kernel/retry/ExponentialBackoffRetry.java
+- [x] T028 验证 TransientErrorDetector 瞬时错误检测 in intellisql-kernel/src/main/java/com/intellisql/kernel/retry/TransientErrorDetector.java
 
 **Checkpoint**: 基础设施就绪 - 用户故事实现可以并行开始
 
@@ -108,109 +102,151 @@ intellisql/                        # 仓库根目录
 
 ## Phase 3: User Story 1 - 跨数据源联邦查询 (Priority: P1) 🎯 MVP
 
-**Goal**: 支持通过标准 SQL 执行跨异构数据源的 JOIN 查询
+**Goal**: 支持通过标准 SQL 执行跨异构数据源的 JOIN 查询，采用混合优化器策略和 Volcano 迭代器执行模型
 
 **Independent Test**:
 - 配置 MySQL 和 Elasticsearch 两个数据源
 - 执行跨源 JOIN 查询
 - 验证结果正确合并两个数据源的数据
 
+**Reference**: ShardingSphere sql-federation (HybridOptimizer, Volcano Iterator Model)
+
 ### 3.1 Tests for User Story 1
 
-- [ ] T042 [P] [US1] 创建 Column 实体测试 in intellisql-kernel/src/test/java/org/intellisql/kernel/metadata/ColumnTest.java
-- [ ] T043 [P] [US1] 创建 Table 实体测试 in intellisql-kernel/src/test/java/org/intellisql/kernel/metadata/TableTest.java
-- [ ] T044 [P] [US1] 创建 Schema 实体测试 in intellisql-kernel/src/test/java/org/intellisql/kernel/metadata/SchemaTest.java
-- [ ] T045 [P] [US1] 创建 DataSource 实体测试 in intellisql-kernel/src/test/java/org/intellisql/kernel/metadata/DataSourceTest.java
-- [ ] T046 [P] [US1] 创建 QueryResult 集成测试 in intellisql-test/intellisql-test-it/src/test/java/org/intellisql/it/executor/QueryResultIT.java
+- [x] T029 [P] [US1] 创建 FederatedQueryExecutorTest in intellisql-executor/src/test/java/com/intellisql/executor/FederatedQueryExecutorTest.java
+- [x] T030 [P] [US1] 创建 MySQLConnectorIT in intellisql-connector/src/test/java/com/intellisql/connector/mysql/MySQLConnectorIT.java
+- [x] T031 [P] [US1] 创建 PostgreSQLConnectorIT in intellisql-connector/src/test/java/com/intellisql/connector/postgresql/PostgreSQLConnectorIT.java
+- [x] T032 [P] [US1] 创建 ElasticsearchConnectorIT in intellisql-connector/src/test/java/com/intellisql/connector/elasticsearch/ElasticsearchConnectorIT.java
+- [x] T033 [US1] 创建 CrossSourceJoinIT in intellisql-test/intellisql-test-it/src/test/java/com/intellisql/it/federation/CrossSourceJoinIT.java
+- [x] T034 [P] [US1] 创建 HybridOptimizerTest in intellisql-optimizer/src/test/java/com/intellisql/optimizer/HybridOptimizerTest.java
+- [x] T035 [P] [US1] 创建 FederatedCostTest in intellisql-optimizer/src/test/java/com/intellisql/optimizer/cost/FederatedCostTest.java
+- [x] T036 [P] [US1] 创建 QueryIteratorTest in intellisql-executor/src/test/java/com/intellisql/executor/iterator/QueryIteratorTest.java
+- [x] T037 [P] [US1] 创建 PhysicalPlanConverterTest in intellisql-optimizer/src/test/java/com/intellisql/optimizer/plan/PhysicalPlanConverterTest.java
 
-### 3.2 Implementation for User Story 1
+### 3.2 元数据模型
 
-#### 元数据模型
+- [x] T038 [P] [US1] 验证 Column 实体 in intellisql-kernel/src/main/java/com/intellisql/kernel/metadata/Column.java
+- [x] T039 [P] [US1] 验证 Index 实体 in intellisql-kernel/src/main/java/com/intellisql/kernel/metadata/Index.java
+- [x] T040 [P] [US1] 验证 Table 实体 in intellisql-kernel/src/main/java/com/intellisql/kernel/metadata/Table.java
+- [x] T041 [US1] 验证 Schema 实体 in intellisql-kernel/src/main/java/com/intellisql/kernel/metadata/Schema.java
+- [x] T042 [US1] 验证 DataSource 实体 in intellisql-kernel/src/main/java/com/intellisql/kernel/metadata/DataSource.java
+- [x] T043 [US1] 验证 MetadataManager 元数据管理器 in intellisql-kernel/src/main/java/com/intellisql/kernel/metadata/MetadataManager.java
 
-- [ ] T047 [P] [US1] 创建 Column 实体 in intellisql-kernel/src/main/java/org/intellisql/kernel/metadata/Column.java
-- [ ] T048 [P] [US1] 创建 Index 实体 in intellisql-kernel/src/main/java/org/intellisql/kernel/metadata/Index.java
-- [ ] T049 [P] [US1] 创建 Table 实体 in intellisql-kernel/src/main/java/org/intellisql/kernel/metadata/Table.java
-- [ ] T050 [US1] 创建 Schema 实体 in intellisql-kernel/src/main/java/org/intellisql/kernel/metadata/Schema.java
-- [ ] T051 [US1] 创建 DataSource 实体 in intellisql-kernel/src/main/java/org/intellisql/kernel/metadata/DataSource.java
-- [ ] T052 [US1] 创建 MetadataManager 元数据管理器 in intellisql-kernel/src/main/java/org/intellisql/kernel/metadata/MetadataManager.java
+### 3.3 连接器 SPI（已有实现）
 
-#### 连接器 SPI
+- [x] T044 [US1] 验证 DataSourceConnector 接口 in intellisql-connector/src/main/java/com/intellisql/connector/api/DataSourceConnector.java
+- [x] T045 [US1] 验证 Connection 接口 in intellisql-connector/src/main/java/com/intellisql/connector/api/Connection.java
+- [x] T046 [US1] 验证 SchemaDiscoverer 接口 in intellisql-connector/src/main/java/com/intellisql/connector/api/SchemaDiscoverer.java
+- [x] T047 [US1] 验证 QueryExecutor 接口 in intellisql-connector/src/main/java/com/intellisql/connector/api/QueryExecutor.java
+- [x] T048 [US1] 验证 ConnectorRegistry 注册中心 in intellisql-connector/src/main/java/com/intellisql/connector/ConnectorRegistry.java
 
-- [ ] T053 [US1] 创建 DataSourceConnector 接口 in intellisql-connector/src/main/java/org/intellisql/connector/api/DataSourceConnector.java
-- [ ] T054 [US1] 创建 Connection 接口 in intellisql-connector/src/main/java/org/intellisql/connector/api/Connection.java
-- [ ] T055 [US1] 创建 SchemaDiscoverer 接口 in intellisql-connector/src/main/java/org/intellisql/connector/api/SchemaDiscoverer.java
-- [ ] T056 [US1] 创建 QueryExecutor 接口 in intellisql-connector/src/main/java/org/intellisql/connector/api/QueryExecutor.java
-- [ ] T057 [US1] 创建 ConnectorRegistry 注册中心 in intellisql-connector/src/main/java/org/intellisql/connector/ConnectorRegistry.java
+### 3.4 MySQL 连接器（已有实现）
 
-#### MySQL 连接器
+- [x] T049 [US1] 验证 MySQLConnector in intellisql-connector/src/main/java/com/intellisql/connector/mysql/MySQLConnector.java
+- [x] T050 [US1] 验证 MySQLSchemaDiscoverer in intellisql-connector/src/main/java/com/intellisql/connector/mysql/MySQLSchemaDiscoverer.java
+- [x] T051 [US1] 验证 MySQLQueryExecutor in intellisql-connector/src/main/java/com/intellisql/connector/mysql/MySQLQueryExecutor.java
+- [x] T052 [US1] 验证 MySQLConnectionPool in intellisql-connector/src/main/java/com/intellisql/connector/mysql/MySQLConnectionPool.java
 
-- [ ] T058 [US1] 创建 MySQLConnector 实现类 in intellisql-connector/src/main/java/org/intellisql/connector/mysql/MySQLConnector.java
-- [ ] T059 [US1] 创建 MySQLSchemaDiscoverer in intellisql-connector/src/main/java/org/intellisql/connector/mysql/MySQLSchemaDiscoverer.java
-- [ ] T060 [US1] 创建 MySQLQueryExecutor in intellisql-connector/src/main/java/org/intellisql/connector/mysql/MySQLQueryExecutor.java
-- [ ] T061 [US1] 创建 MySQLConnectionPool in intellisql-connector/src/main/java/org/intellisql/connector/mysql/MySQLConnectionPool.java（使用 HikariCP 5.1.0）
-- [ ] T062 [US1] 创建 MySQLConnector 单元测试 in intellisql-connector/src/test/java/org/intellisql/connector/mysql/MySQLConnectorTest.java
+### 3.5 PostgreSQL 连接器（已有实现）
 
-#### PostgreSQL 连接器
+- [x] T053 [P] [US1] 验证 PostgreSQLConnector in intellisql-connector/src/main/java/com/intellisql/connector/postgresql/PostgreSQLConnector.java
+- [x] T054 [P] [US1] 验证 PostgreSQLSchemaDiscoverer in intellisql-connector/src/main/java/com/intellisql/connector/postgresql/PostgreSQLSchemaDiscoverer.java
+- [x] T055 [P] [US1] 验证 PostgreSQLQueryExecutor in intellisql-connector/src/main/java/com/intellisql/connector/postgresql/PostgreSQLQueryExecutor.java
+- [x] T056 [P] [US1] 验证 PostgreSQLConnectionPool in intellisql-connector/src/main/java/com/intellisql/connector/postgresql/PostgreSQLConnectionPool.java
 
-- [ ] T063 [P] [US1] 创建 PostgreSQLConnector in intellisql-connector/src/main/java/org/intellisql/connector/postgresql/PostgreSQLConnector.java
-- [ ] T064 [P] [US1] 创建 PostgreSQLSchemaDiscoverer in intellisql-connector/src/main/java/org/intellisql/connector/postgresql/PostgreSQLSchemaDiscoverer.java
-- [ ] T065 [P] [US1] 创建 PostgreSQLQueryExecutor in intellisql-connector/src/main/java/org/intellisql/connector/postgresql/PostgreSQLQueryExecutor.java
-- [ ] T066 [P] [US1] 创建 PostgreSQLConnectionPool in intellisql-connector/src/main/java/org/intellisql/connector/postgresql/PostgreSQLConnectionPool.java
-- [ ] T067 [P] [US1] 创建 PostgreSQLConnector 单元测试 in intellisql-connector/src/test/java/org/intellisql/connector/postgresql/PostgreSQLConnectorTest.java
+### 3.6 Elasticsearch 连接器（已有实现）
 
-#### Elasticsearch 连接器
+- [x] T057 [P] [US1] 验证 ElasticsearchConnector in intellisql-connector/src/main/java/com/intellisql/connector/elasticsearch/ElasticsearchConnector.java
+- [x] T058 [P] [US1] 验证 ElasticsearchSchemaDiscoverer in intellisql-connector/src/main/java/com/intellisql/connector/elasticsearch/ElasticsearchSchemaDiscoverer.java
+- [x] T059 [P] [US1] 验证 ElasticsearchQueryExecutor in intellisql-connector/src/main/java/com/intellisql/connector/elasticsearch/ElasticsearchQueryExecutor.java
+- [x] T060 [P] [US1] 验证 ElasticsearchTypeMapping in intellisql-connector/src/main/java/com/intellisql/connector/elasticsearch/ElasticsearchTypeMapping.java
 
-- [ ] T068 [P] [US1] 创建 ElasticsearchConnector in intellisql-connector/src/main/java/org/intellisql/connector/elasticsearch/ElasticsearchConnector.java
-- [ ] T069 [P] [US1] 创建 ElasticsearchSchemaDiscoverer in intellisql-connector/src/main/java/org/intellisql/connector/elasticsearch/ElasticsearchSchemaDiscoverer.java
-- [ ] T070 [P] [US1] 创建 ElasticsearchQueryExecutor in intellisql-connector/src/main/java/org/intellisql/connector/elasticsearch/ElasticsearchQueryExecutor.java
-- [ ] T071 [P] [US1] 创建 ElasticsearchTypeMapping in intellisql-connector/src/main/java/org/intellisql/connector/elasticsearch/ElasticsearchTypeMapping.java
-- [ ] T072 [P] [US1] 创建 ElasticsearchConnector 单元测试 in intellisql-connector/src/test/java/org/intellisql/connector/elasticsearch/ElasticsearchConnectorTest.java
+### 3.7 健康检查（已有实现）
 
-#### 健康检查
+- [x] T061 [US1] 验证 HealthChecker 接口 in intellisql-connector/src/main/java/com/intellisql/connector/health/HealthChecker.java
+- [x] T062 [US1] 验证 DataSourceHealthChecker in intellisql-connector/src/main/java/com/intellisql/connector/health/DataSourceHealthChecker.java
+- [x] T063 [US1] 验证 HealthCheckScheduler in intellisql-connector/src/main/java/com/intellisql/connector/health/HealthCheckScheduler.java
 
-- [ ] T073 [US1] 创建 HealthChecker 接口 in intellisql-connector/src/main/java/org/intellisql/connector/health/HealthChecker.java
-- [ ] T074 [US1] 创建 DataSourceHealthChecker 实现 in intellisql-connector/src/main/java/org/intellisql/connector/health/DataSourceHealthChecker.java
-- [ ] T075 [US1] 创建 HealthCheckScheduler 调度器 in intellisql-connector/src/main/java/org/intellisql/connector/health/HealthCheckScheduler.java
+### 3.8 Parser 模块（已有实现）
 
-#### SQL 解析（Calcite 集成）
+- [x] T064 [US1] 验证 SqlParserFactory in intellisql-parser/src/main/java/com/intellisql/parser/SqlParserFactory.java
+- [x] T065 [US1] 验证 BabelParserConfiguration in intellisql-parser/src/main/java/com/intellisql/parser/BabelParserConfiguration.java
 
-- [ ] T076 [US1] 创建 SqlParserFactory in intellisql-parser/src/main/java/org/intellisql/parser/SqlParserFactory.java
-- [ ] T077 [US1] 创建 IntelliSqlConventions 约定 in intellisql-parser/src/main/java/org/intellisql/parser/IntelliSqlConventions.java
-- [ ] T078 [US1] 创建 SqlNodeToStringConverter in intellisql-parser/src/main/java/org/intellisql/parser/SqlNodeToStringConverter.java
+### 3.9 混合优化器策略（新增 - 参考 ShardingSphere）
 
-#### SQL 优化器
+#### 优化器核心
 
-- [ ] T079 [US1] 创建 ExecutionStage 实体 in intellisql-optimizer/src/main/java/org/intellisql/optimizer/plan/ExecutionStage.java
-- [ ] T080 [US1] 创建 ExecutionPlan 实体 in intellisql-optimizer/src/main/java/org/intellisql/optimizer/plan/ExecutionPlan.java
-- [ ] T081 [US1] 创建 Optimizer 核心类 in intellisql-optimizer/src/main/java/org/intellisql/optimizer/Optimizer.java
-- [ ] T082 [US1] 创建 PredicatePushDownRule 谓词下推规则 in intellisql-optimizer/src/main/java/org/intellisql/optimizer/rule/PredicatePushDownRule.java
-- [ ] T083 [US1] 创建 ProjectionPushDownRule 投影下推规则 in intellisql-optimizer/src/main/java/org/intellisql/optimizer/rule/ProjectionPushDownRule.java
-- [ ] T084 [US1] 创建 Optimizer 单元测试 in intellisql-optimizer/src/test/java/org/intellisql/optimizer/OptimizerTest.java
+- [x] T066 [US1] 重构 Optimizer.java 为 RboOptimizer.java in intellisql-optimizer/src/main/java/com/intellisql/optimizer/RboOptimizer.java
+- [x] T067 [US1] 实现 CboOptimizer (VolcanoPlanner) in intellisql-optimizer/src/main/java/com/intellisql/optimizer/CboOptimizer.java
+- [x] T068 [US1] 实现 HybridOptimizer (RBO → CBO) in intellisql-optimizer/src/main/java/com/intellisql/optimizer/HybridOptimizer.java
+- [x] T069 [US1] 更新 QueryProcessor 使用 HybridOptimizer in intellisql-kernel/src/main/java/com/intellisql/kernel/QueryProcessor.java
 
-#### SQL 执行器
+### 3.10 完整代价模型（新增 - 参考 ShardingSphere）
 
-- [ ] T085 [US1] 创建 Row 行数据 in intellisql-executor/src/main/java/org/intellisql/executor/Row.java
-- [ ] T086 [US1] 创建 ColumnMetadata 列元数据 in intellisql-executor/src/main/java/org/intellisql/executor/ColumnMetadata.java
-- [ ] T087 [US1] 创建 QueryError 错误信息 in intellisql-executor/src/main/java/org/intellisql/executor/QueryError.java
-- [ ] T088 [US1] 创建 QueryResult 结果集 in intellisql-executor/src/main/java/org/intellisql/executor/QueryResult.java
-- [ ] T089 [US1] 创建 Query 实体 in intellisql-executor/src/main/java/org/intellisql/executor/Query.java
-- [ ] T090 [US1] 创建 QueryExecutor 核心执行器 in intellisql-executor/src/main/java/org/intellisql/executor/QueryExecutor.java
-- [ ] T091 [US1] 创建 FederatedQueryExecutor 联邦查询执行器 in intellisql-executor/src/main/java/org/intellisql/executor/FederatedQueryExecutor.java
-- [ ] T092 [US1] 创建 IntermediateResultLimiter 中间结果限制器 in intellisql-executor/src/main/java/org/intellisql/executor/IntermediateResultLimiter.java（NFR-010）
-- [ ] T093 [US1] 创建 QueryExecutor 单元测试 in intellisql-executor/src/test/java/org/intellisql/executor/QueryExecutorTest.java
+- [x] T070 [US1] 实现 CostFactor 枚举 (CPU/IO/NETWORK/MEMORY) in intellisql-optimizer/src/main/java/com/intellisql/optimizer/cost/CostFactor.java
+- [x] T071 [US1] 实现 FederatedCost (RelOptCost 接口) in intellisql-optimizer/src/main/java/com/intellisql/optimizer/cost/FederatedCost.java
+- [x] T072 [US1] 实现 FederatedCostFactory in intellisql-optimizer/src/main/java/com/intellisql/optimizer/cost/FederatedCostFactory.java
+- [x] T073 [US1] 注册 FederatedCostFactory 到 VolcanoPlanner in intellisql-optimizer/src/main/java/com/intellisql/optimizer/CboOptimizer.java
 
-#### 核心编排层
+### 3.11 扩展 RBO 规则集（新增 - 参考 ShardingSphere PushFilterIntoScanRule 等）
 
-- [ ] T094 [US1] 创建 IntelliSqlKernel 内核入口 in intellisql-kernel/src/main/java/org/intellisql/kernel/IntelliSqlKernel.java
-- [ ] T095 [US1] 创建 QueryProcessor 查询处理器 in intellisql-kernel/src/main/java/org/intellisql/kernel/QueryProcessor.java
-- [ ] T096 [US1] 创建 DataSourceManager 数据源管理器 in intellisql-kernel/src/main/java/org/intellisql/kernel/DataSourceManager.java
+- [x] T074 [P] [US1] 实现 PredicatePushDownRule in intellisql-optimizer/src/main/java/com/intellisql/optimizer/rule/PredicatePushDownRule.java
+- [x] T075 [P] [US1] 实现 ProjectionPushDownRule in intellisql-optimizer/src/main/java/com/intellisql/optimizer/rule/ProjectionPushDownRule.java
+- [x] T076 [P] [US1] 实现 JoinReorderRule in intellisql-optimizer/src/main/java/com/intellisql/optimizer/rule/JoinReorderRule.java
+- [x] T077 [P] [US1] 实现 SubqueryRewriteRule in intellisql-optimizer/src/main/java/com/intellisql/optimizer/rule/SubqueryRewriteRule.java
+- [x] T078 [P] [US1] 实现 AggregateSplitRule in intellisql-optimizer/src/main/java/com/intellisql/optimizer/rule/AggregateSplitRule.java
+- [x] T079 [P] [US1] 实现 LimitPushDownRule in intellisql-optimizer/src/main/java/com/intellisql/optimizer/rule/LimitPushDownRule.java
+- [x] T080 [US1] 注册所有规则到 RboOptimizer in intellisql-optimizer/src/main/java/com/intellisql/optimizer/RboOptimizer.java
 
-#### 集成测试
+### 3.12 Volcano 迭代器执行模型（新增 - 参考 ShardingSphere Enumerator 模式）
 
-- [ ] T097 [US1] 创建 MySQL 容器测试 in intellisql-test/intellisql-test-it/src/test/java/org/intellisql/it/connector/MySQLConnectorIT.java（使用 TestContainers）
-- [ ] T098 [US1] 创建 PostgreSQL 容器测试 in intellisql-test/intellisql-test-it/src/test/java/org/intellisql/it/connector/PostgreSQLConnectorIT.java
-- [ ] T099 [US1] 创建 Elasticsearch 容器测试 in intellisql-test/intellisql-test-it/src/test/java/org/intellisql/it/connector/ElasticsearchConnectorIT.java
-- [ ] T100 [US1] 创建跨源 JOIN 集成测试 in intellisql-test/intellisql-test-it/src/test/java/org/intellisql/it/federation/CrossSourceJoinIT.java
+#### 迭代器接口和基类
+
+- [x] T081 [US1] 定义 QueryIterator 接口 (open/hasNext/next/close) in intellisql-executor/src/main/java/com/intellisql/executor/iterator/QueryIterator.java
+- [x] T082 [US1] 实现 AbstractOperator 基类 in intellisql-executor/src/main/java/com/intellisql/executor/iterator/AbstractOperator.java
+
+#### 算子实现（参考 ShardingSphere JDBCDataRowEnumerator 模式）
+
+- [x] T083 [P] [US1] 实现 TableScanOperator in intellisql-executor/src/main/java/com/intellisql/executor/iterator/TableScanOperator.java
+- [x] T084 [P] [US1] 实现 FilterOperator in intellisql-executor/src/main/java/com/intellisql/executor/iterator/FilterOperator.java
+- [x] T085 [P] [US1] 实现 ProjectOperator in intellisql-executor/src/main/java/com/intellisql/executor/iterator/ProjectOperator.java
+- [x] T086 [P] [US1] 实现 JoinOperator (Hash Join) in intellisql-executor/src/main/java/com/intellisql/executor/iterator/JoinOperator.java
+- [x] T087 [P] [US1] 实现 AggregateOperator in intellisql-executor/src/main/java/com/intellisql/executor/iterator/AggregateOperator.java
+- [x] T088 [P] [US1] 实现 SortOperator in intellisql-executor/src/main/java/com/intellisql/executor/iterator/SortOperator.java
+
+#### 物理计划转换
+
+- [x] T089 [US1] 实现 PhysicalPlanConverter (RelNode → Operator Tree) in intellisql-executor/src/main/java/com/intellisql/executor/plan/PhysicalPlanConverter.java
+
+### 3.13 RelMetadataQuery 元数据支持（新增）
+
+- [x] T090 [US1] 实现 TableStatistics 实体 in intellisql-optimizer/src/main/java/com/intellisql/optimizer/metadata/TableStatistics.java
+- [x] T091 [US1] 实现 StatisticsHandler in intellisql-optimizer/src/main/java/com/intellisql/optimizer/metadata/StatisticsHandler.java
+- [x] T092 [US1] 实现 FederatedMetadataProvider in intellisql-optimizer/src/main/java/com/intellisql/optimizer/metadata/FederatedMetadataProvider.java
+
+### 3.14 执行计划和查询处理
+
+- [x] T093 [P] [US1] 验证 ExecutionPlan 实体 in intellisql-optimizer/src/main/java/com/intellisql/optimizer/plan/ExecutionPlan.java
+- [x] T094 [P] [US1] 验证 ExecutionStage 实体 in intellisql-optimizer/src/main/java/com/intellisql/optimizer/plan/ExecutionStage.java
+
+### 3.15 查询结果模型
+
+- [x] T095 [P] [US1] 验证 Query 实体 in intellisql-executor/src/main/java/com/intellisql/executor/Query.java
+- [x] T096 [P] [US1] 验证 QueryResult 实体 in intellisql-executor/src/main/java/com/intellisql/executor/QueryResult.java
+- [x] T097 [P] [US1] 验证 QueryError 实体 in intellisql-executor/src/main/java/com/intellisql/executor/QueryError.java
+- [x] T098 [P] [US1] 验证 Row 实体 in intellisql-executor/src/main/java/com/intellisql/executor/Row.java
+- [x] T099 [P] [US1] 验证 ColumnMetadata 实体 in intellisql-executor/src/main/java/com/intellisql/executor/ColumnMetadata.java
+
+### 3.16 联邦查询执行器集成
+
+- [x] T100 [US1] 更新 FederatedQueryExecutor 集成 Volcano 迭代器 in intellisql-executor/src/main/java/com/intellisql/executor/FederatedQueryExecutor.java
+- [x] T101 [US1] 验证 IntermediateResultLimiter (100k rows) in intellisql-executor/src/main/java/com/intellisql/executor/IntermediateResultLimiter.java
+
+### 3.17 核心编排层
+
+- [x] T102 [US1] 验证 IntelliSqlKernel 内核入口 in intellisql-kernel/src/main/java/com/intellisql/kernel/IntelliSqlKernel.java
+- [x] T103 [US1] 验证 QueryProcessor 查询处理器 in intellisql-kernel/src/main/java/com/intellisql/kernel/QueryProcessor.java
+- [x] T104 [US1] 验证 DataSourceManager 数据源管理器 in intellisql-kernel/src/main/java/com/intellisql/kernel/DataSourceManager.java
 
 **Checkpoint**: US1 完成 - 跨数据源联邦查询功能可独立测试
 
@@ -227,23 +263,43 @@ intellisql/                        # 仓库根目录
 
 ### 4.1 Tests for User Story 2
 
-- [ ] T101 [P] [US2] 创建 Translation 实体测试 in intellisql-parser/src/test/java/org/intellisql/parser/TranslationTest.java
-- [ ] T102 [P] [US2] 创建 SqlTranslator 单元测试 in intellisql-parser/src/test/java/org/intellisql/parser/SqlTranslatorTest.java
+- [x] T105 [P] [US2] 验证 SqlTranslatorTest in intellisql-parser/src/test/java/com/intellisql/parser/SqlTranslatorTest.java
+- [x] T106 [P] [US2] 验证 MySQLDialectConverterTest in intellisql-parser/src/test/java/com/intellisql/parser/dialect/MySQLDialectConverterTest.java
+- [x] T107 [P] [US2] 验证 PostgreSQLDialectConverterTest in intellisql-parser/src/test/java/com/intellisql/parser/dialect/PostgreSQLDialectConverterTest.java
 
 ### 4.2 Implementation for User Story 2
 
-- [ ] T103 [US2] 创建 Translation 实体 in intellisql-parser/src/main/java/org/intellisql/parser/Translation.java
-- [ ] T104 [US2] 创建 TranslationError 错误信息 in intellisql-parser/src/main/java/org/intellisql/parser/TranslationError.java
-- [ ] T105 [US2] 创建 SqlTranslator 核心翻译器 in intellisql-parser/src/main/java/org/intellisql/parser/SqlTranslator.java
-- [ ] T106 [US2] 创建 DialectConverter 方言转换器 in intellisql-parser/src/main/java/org/intellisql/parser/DialectConverter.java
-- [ ] T107 [US2] 创建 BabelParserConfiguration Calcite Babel 配置 in intellisql-parser/src/main/java/org/intellisql/parser/BabelParserConfiguration.java
-- [ ] T108 [US2] 创建 MySQL dialect 适配 in intellisql-parser/src/main/java/org/intellisql/parser/dialect/MySQLDialectConverter.java
-- [ ] T109 [P] [US2] 创建 PostgreSQL dialect 适配 in intellisql-parser/src/main/java/org/intellisql/parser/dialect/PostgreSQLDialectConverter.java
-- [ ] T110 [P] [US2] 创建 Oracle dialect 适配 in intellisql-parser/src/main/java/org/intellisql/parser/dialect/OracleDialectConverter.java
-- [ ] T111 [P] [US2] 创建 SQLServer dialect 适配 in intellisql-parser/src/main/java/org/intellisql/parser/dialect/SQLServerDialectConverter.java
-- [ ] T112 [P] [US2] 创建 Hive dialect 适配 in intellisql-parser/src/main/java/org/intellisql/parser/dialect/HiveDialectConverter.java
-- [ ] T113 [US2] 创建 OnlineTranslationService 在线翻译服务 in intellisql-parser/src/main/java/org/intellisql/parser/OnlineTranslationService.java
-- [ ] T114 [US2] 创建 OfflineTranslationService 离线翻译服务 in intellisql-parser/src/main/java/org/intellisql/parser/OfflineTranslationService.java
+- [x] T108 [US2] 验证 Translation 实体 in intellisql-parser/src/main/java/com/intellisql/parser/Translation.java
+- [x] T109 [US2] 验证 TranslationException in intellisql-parser/src/main/java/com/intellisql/parser/TranslationException.java
+- [x] T110 [US2] 验证 SqlTranslator 核心翻译器 in intellisql-parser/src/main/java/com/intellisql/parser/SqlTranslator.java
+- [x] T111 [US2] 验证 SqlNodeToStringConverter in intellisql-parser/src/main/java/com/intellisql/parser/SqlNodeToStringConverter.java
+
+### 4.3 方言转换器
+
+- [x] T112 [US2] 验证 SqlDialect 枚举 in intellisql-parser/src/main/java/com/intellisql/parser/dialect/SqlDialect.java
+- [x] T113 [US2] 实现 DialectConverter 接口 in intellisql-parser/src/main/java/com/intellisql/parser/dialect/DialectConverter.java
+- [x] T114 [US2] 实现 DialectConverterFactory in intellisql-parser/src/main/java/com/intellisql/parser/dialect/DialectConverterFactory.java
+- [x] T115 [US2] 验证 MySQLDialectConverter in intellisql-parser/src/main/java/com/intellisql/parser/dialect/MySQLDialectConverter.java
+- [x] T116 [P] [US2] 验证 PostgreSQLDialectConverter in intellisql-parser/src/main/java/com/intellisql/parser/dialect/PostgreSQLDialectConverter.java
+- [x] T117 [P] [US2] 实现 OracleDialectConverter in intellisql-parser/src/main/java/com/intellisql/parser/dialect/OracleDialectConverter.java
+- [x] T118 [P] [US2] 实现 SQLServerDialectConverter in intellisql-parser/src/main/java/com/intellisql/parser/dialect/SQLServerDialectConverter.java
+- [x] T119 [P] [US2] 实现 HiveDialectConverter in intellisql-parser/src/main/java/com/intellisql/parser/dialect/HiveDialectConverter.java
+
+### 4.4 Parser 扩展（参考 Quicksql 实现）
+
+- [x] T120 [US2] 创建 config.fmpp 配置 in intellisql-parser/src/main/codegen/config.fmpp
+- [x] T121 [US2] 创建 Parser.jj 模板 in intellisql-parser/src/main/codegen/templates/Parser.jj
+- [x] T122 [US2] 创建 parserImpls.ftl 自定义语法 in intellisql-parser/src/main/codegen/includes/parserImpls.ftl
+
+### 4.5 AST 扩展节点
+
+- [x] T123 [US2] 实现 SqlShowTables AST 节点 in intellisql-parser/src/main/java/com/intellisql/parser/ast/SqlShowTables.java
+- [x] T124 [P] [US2] 实现 SqlShowSchemas AST 节点 in intellisql-parser/src/main/java/com/intellisql/parser/ast/SqlShowSchemas.java
+- [x] T125 [P] [US2] 实现 SqlUseSchema AST 节点 in intellisql-parser/src/main/java/com/intellisql/parser/ast/SqlUseSchema.java
+
+### 4.6 错误处理
+
+- [x] T126 [US2] 实现 TranslationError in intellisql-parser/src/main/java/com/intellisql/parser/TranslationError.java
 
 **Checkpoint**: US2 完成 - SQL 方言翻译功能可独立测试
 
@@ -260,40 +316,36 @@ intellisql/                        # 仓库根目录
 
 ### 5.1 Tests for User Story 3
 
-- [ ] T115 [P] [US3] 创建 IntelliSqlDriver 单元测试 in intellisql-jdbc/src/test/java/org/intellisql/jdbc/IntelliSqlDriverTest.java
-- [ ] T116 [P] [US3] 创建 IntelliSqlConnection 单元测试 in intellisql-jdbc/src/test/java/org/intellisql/jdbc/IntelliSqlConnectionTest.java
-- [ ] T117 [P] [US3] 创建 JDBC 集成测试 in intellisql-test/intellisql-test-it/src/test/java/org/intellisql/it/jdbc/JdbcConnectionIT.java
+- [x] T127 [P] [US3] 验证 IntelliSqlDriverTest in intellisql-jdbc/src/test/java/com/intellisql/jdbc/IntelliSqlDriverTest.java
+- [x] T128 [P] [US3] 验证 IntelliSqlConnectionTest in intellisql-jdbc/src/test/java/com/intellisql/jdbc/IntelliSqlConnectionTest.java
+- [x] T129 [US3] 创建 JdbcProtocolIT in intellisql-test/intellisql-test-it/src/test/java/com/intellisql/it/jdbc/JdbcProtocolIT.java
 
-### 5.2 Implementation for User Story 3
+### 5.2 JDBC 驱动实现（已有基础）
 
-#### JDBC 驱动
+- [x] T130 [US3] 验证 IntelliSqlDriver in intellisql-jdbc/src/main/java/com/intellisql/jdbc/IntelliSqlDriver.java
+- [x] T131 [US3] 验证 DriverRegistration in intellisql-jdbc/src/main/java/com/intellisql/jdbc/DriverRegistration.java
+- [x] T132 [US3] 验证 JdbcUrlParser in intellisql-jdbc/src/main/java/com/intellisql/jdbc/JdbcUrlParser.java
+- [x] T133 [US3] 验证 META-INF/services/java.sql.Driver in intellisql-jdbc/src/main/resources/META-INF/services/java.sql.Driver
+- [x] T134 [US3] 验证 IntelliSqlConnection in intellisql-jdbc/src/main/java/com/intellisql/jdbc/IntelliSqlConnection.java
+- [x] T135 [US3] 验证 IntelliSqlStatement in intellisql-jdbc/src/main/java/com/intellisql/jdbc/IntelliSqlStatement.java
+- [x] T136 [US3] 验证 IntelliSqlPreparedStatement in intellisql-jdbc/src/main/java/com/intellisql/jdbc/IntelliSqlPreparedStatement.java
+- [x] T137 [US3] 验证 IntelliSqlResultSet in intellisql-jdbc/src/main/java/com/intellisql/jdbc/IntelliSqlResultSet.java
+- [x] T138 [US3] 验证 IntelliSqlResultSetMetaData in intellisql-jdbc/src/main/java/com/intellisql/jdbc/IntelliSqlResultSetMetaData.java
+- [x] T139 [US3] 验证 IntelliSqlDatabaseMetaData in intellisql-jdbc/src/main/java/com/intellisql/jdbc/IntelliSqlDatabaseMetaData.java
+- [x] T140 [US3] 验证 AvaticaClient in intellisql-jdbc/src/main/java/com/intellisql/jdbc/AvaticaClient.java
 
-- [ ] T118 [US3] 创建 IntelliSqlDriver 驱动类 in intellisql-jdbc/src/main/java/org/intellisql/jdbc/IntelliSqlDriver.java
-- [ ] T119 [US3] 创建 DriverRegistration 驱动注册 in intellisql-jdbc/src/main/java/org/intellisql/jdbc/DriverRegistration.java
-- [ ] T120 [US3] 创建 JdbcUrlParser URL 解析器 in intellisql-jdbc/src/main/java/org/intellisql/jdbc/JdbcUrlParser.java
-- [ ] T121 [US3] 创建 META-INF/services/java.sql.Driver in intellisql-jdbc/src/main/resources/META-INF/services/java.sql.Driver
-- [ ] T122 [US3] 创建 IntelliSqlConnection 连接类 in intellisql-jdbc/src/main/java/org/intellisql/jdbc/IntelliSqlConnection.java
-- [ ] T123 [US3] 创建 IntelliSqlStatement 语句类 in intellisql-jdbc/src/main/java/org/intellisql/jdbc/IntelliSqlStatement.java
-- [ ] T124 [US3] 创建 IntelliSqlPreparedStatement 预编译语句 in intellisql-jdbc/src/main/java/org/intellisql/jdbc/IntelliSqlPreparedStatement.java
-- [ ] T125 [US3] 创建 IntelliSqlResultSet 结果集 in intellisql-jdbc/src/main/java/org/intellisql/jdbc/IntelliSqlResultSet.java
-- [ ] T126 [US3] 创建 IntelliSqlDatabaseMetaData 元数据 in intellisql-jdbc/src/main/java/org/intellisql/jdbc/IntelliSqlDatabaseMetaData.java
-- [ ] T127 [US3] 创建 AvaticaClient Avatica 客户端 in intellisql-jdbc/src/main/java/org/intellisql/jdbc/AvaticaClient.java
+### 5.3 Server 端（Avatica 协议）
 
-#### Server 端（Avatica 协议）
+- [x] T141 [US3] 实现 ConnectionManager in intellisql-server/src/main/java/com/intellisql/server/ConnectionManager.java
+- [x] T142 [US3] 实现 StatementManager in intellisql-server/src/main/java/com/intellisql/server/StatementManager.java
+- [x] T143 [US3] 实现 IntelliSqlHandler (AvaticaHandler) in intellisql-server/src/main/java/com/intellisql/server/IntelliSqlHandler.java
+- [x] T144 [US3] 实现 IntelliSqlServer in intellisql-server/src/main/java/com/intellisql/server/IntelliSqlServer.java
+- [x] T145 [US3] 实现 ServerMain 入口 in intellisql-server/src/main/java/com/intellisql/server/ServerMain.java
 
-- [ ] T128 [US3] 创建 Connection 实体 in intellisql-server/src/main/java/org/intellisql/server/Connection.java
-- [ ] T129 [US3] 创建 ConnectionManager 连接管理器 in intellisql-server/src/main/java/org/intellisql/server/ConnectionManager.java
-- [ ] T130 [US3] 创建 IntelliSqlServer 服务入口 in intellisql-server/src/main/java/org/intellisql/server/IntelliSqlServer.java
-- [ ] T131 [US3] 创建 AvaticaHandler Avatica 处理器 in intellisql-server/src/main/java/org/intellisql/server/AvaticaHandler.java
-- [ ] T132 [US3] 创建 IntelliSqlMeta 元数据服务 in intellisql-server/src/main/java/org/intellisql/server/IntelliSqlMeta.java
-- [ ] T133 [US3] 创建 ServerConfig 服务器配置 in intellisql-server/src/main/java/org/intellisql/server/ServerConfig.java
-- [ ] T134 [US3] 创建 Main 启动类 in intellisql-server/src/main/java/org/intellisql/server/Main.java
-- [ ] T135 [US3] 创建启动脚本 bin/start.sh in bin/start.sh
+### 5.4 E2E 测试
 
-#### E2E 测试
-
-- [ ] T136 [US3] 创建 JDBC E2E 测试 in intellisql-test/intellisql-test-e2e/src/test/java/org/intellisql/e2e/jdbc/JdbcE2ETest.java
-- [ ] T137 [US3] 创建大结果集 E2E 测试 in intellisql-test/intellisql-test-e2e/src/test/java/org/intellisql/e2e/jdbc/LargeResultSetE2ETest.java（100 万行）
+- [x] T146 [US3] 创建 JdbcE2ETest in intellisql-test/intellisql-test-e2e/src/test/java/com/intellisql/e2e/jdbc/JdbcE2ETest.java
+- [x] T147 [US3] 创建 LargeResultSetE2ETest (100万行) in intellisql-test/intellisql-test-e2e/src/test/java/com/intellisql/e2e/jdbc/LargeResultSetE2ETest.java
 
 **Checkpoint**: US3 完成 - JDBC 标准接口访问可独立测试
 
@@ -310,21 +362,32 @@ intellisql/                        # 仓库根目录
 
 ### 6.1 Tests for User Story 4
 
-- [ ] T138 [P] [US4] 创建 ISqlClient 单元测试 in intellisql-client/src/test/java/org/intellisql/client/ISqlClientTest.java
-- [ ] T139 [P] [US4] 创建 CommandParser 单元测试 in intellisql-client/src/test/java/org/intellisql/client/CommandParserTest.java
+- [x] T148 [P] [US4] 验证 IntelliSqlClientTest in intellisql-client/src/test/java/com/intellisql/client/IntelliSqlClientTest.java
+- [x] T149 [P] [US4] 验证 ReplHandlerTest in intellisql-client/src/test/java/com/intellisql/client/ReplHandlerTest.java
 
-### 6.2 Implementation for User Story 4
+### 6.2 Implementation for User Story 4（已有基础）
 
-- [ ] T140 [US4] 创建 ISqlClient 主入口 in intellisql-client/src/main/java/org/intellisql/client/ISqlClient.java
-- [ ] T141 [US4] 创建 CommandParser 命令解析器 in intellisql-client/src/main/java/org/intellisql/client/CommandParser.java
-- [ ] T142 [US4] 创建 ReplHandler 交互处理器 in intellisql-client/src/main/java/org/intellisql/client/ReplHandler.java
-- [ ] T143 [US4] 创建 QueryCommand 查询命令 in intellisql-client/src/main/java/org/intellisql/client/command/QueryCommand.java
-- [ ] T144 [US4] 创建 TranslateCommand 翻译命令 in intellisql-client/src/main/java/org/intellisql/client/command/TranslateCommand.java
-- [ ] T145 [US4] 创建 ScriptCommand 脚本命令 in intellisql-client/src/main/java/org/intellisql/client/command/ScriptCommand.java
-- [ ] T146 [US4] 创建 ResultFormatter 结果格式化 in intellisql-client/src/main/java/org/intellisql/client/ResultFormatter.java
-- [ ] T147 [US4] 创建 SyntaxHighlighter 语法高亮 in intellisql-client/src/main/java/org/intellisql/client/SyntaxHighlighter.java
-- [ ] T148 [US4] 创建 PromptProvider 提示符 in intellisql-client/src/main/java/org/intellisql/client/PromptProvider.java
-- [ ] T149 [US4] 创建 ISqlClient 启动脚本 in bin/isql
+- [x] T150 [US4] 验证 IntelliSqlClient 主入口 in intellisql-client/src/main/java/com/intellisql/client/IntelliSqlClient.java
+- [x] T151 [US4] 验证 CommandParser in intellisql-client/src/main/java/com/intellisql/client/CommandParser.java
+- [x] T152 [US4] 验证 ReplHandler in intellisql-client/src/main/java/com/intellisql/client/ReplHandler.java
+- [x] T153 [US4] 验证 ClientException in intellisql-client/src/main/java/com/intellisql/client/ClientException.java
+
+### 6.3 输出格式化
+
+- [x] T154 [US4] 验证 ResultFormatter in intellisql-client/src/main/java/com/intellisql/client/ResultFormatter.java
+- [x] T155 [US4] 验证 SyntaxHighlighter in intellisql-client/src/main/java/com/intellisql/client/SyntaxHighlighter.java
+- [x] T156 [US4] 验证 PromptProvider in intellisql-client/src/main/java/com/intellisql/client/PromptProvider.java
+
+### 6.4 命令实现
+
+- [x] T157 [US4] 验证 Command 接口 in intellisql-client/src/main/java/com/intellisql/client/command/Command.java
+- [x] T158 [P] [US4] 验证 QueryCommand in intellisql-client/src/main/java/com/intellisql/client/command/QueryCommand.java
+- [x] T159 [P] [US4] 验证 TranslateCommand (--translate) in intellisql-client/src/main/java/com/intellisql/client/command/TranslateCommand.java
+- [x] T160 [P] [US4] 验证 ScriptCommand (-f) in intellisql-client/src/main/java/com/intellisql/client/command/ScriptCommand.java
+
+### 6.5 E2E 测试
+
+- [x] T161 [US4] 创建 CommandLineIT in intellisql-test/intellisql-test-e2e/src/test/java/com/intellisql/e2e/CommandLineIT.java
 
 **Checkpoint**: US4 完成 - 命令行工具 isql 可独立测试
 
@@ -341,18 +404,15 @@ intellisql/                        # 仓库根目录
 
 ### 7.1 Tests for User Story 5
 
-- [ ] T150 [P] [US5] 创建 SchemaMapping 测试 in intellisql-kernel/src/test/java/org/intellisql/kernel/metadata/SchemaMappingTest.java
-- [ ] T151 [P] [US5] 创建配置加载 E2E 测试 in intellisql-test/intellisql-test-e2e/src/test/java/org/intellisql/e2e/config/ConfigLoadingE2ETest.java
+- [x] T162 [P] [US5] 验证 SchemaMappingTest in intellisql-kernel/src/test/java/com/intellisql/kernel/metadata/SchemaMappingTest.java
+- [x] T163 [US5] 创建 MetadataManagementIT in intellisql-test/intellisql-test-it/src/test/java/com/intellisql/it/metadata/MetadataManagementIT.java
 
 ### 7.2 Implementation for User Story 5
 
-- [ ] T152 [US5] 创建 SchemaMapping 模式映射 in intellisql-kernel/src/main/java/org/intellisql/kernel/metadata/SchemaMapping.java
-- [ ] T153 [US5] 创建 ColumnMapping 列映射 in intellisql-kernel/src/main/java/org/intellisql/kernel/metadata/ColumnMapping.java
-- [ ] T154 [US5] 创建 SchemaDiscovererService 自动发现服务 in intellisql-kernel/src/main/java/org/intellisql/kernel/metadata/SchemaDiscovererService.java
-- [ ] T155 [US5] 创建 ConfigValidator 配置验证器 in intellisql-kernel/src/main/java/org/intellisql/kernel/config/ConfigValidator.java
-- [ ] T156 [US5] 创建 ConfigHotReloader 热加载器 in intellisql-kernel/src/main/java/org/intellisql/kernel/config/ConfigHotReloader.java
-- [ ] T157 [US5] 实现 SHOW SCHEMAS 支持 in intellisql-kernel/src/main/java/org/intellisql/kernel/metadata/ShowSchemasHandler.java
-- [ ] T158 [US5] 实现 SHOW TABLES 支持 in intellisql-kernel/src/main/java/org/intellisql/kernel/metadata/ShowTablesHandler.java
+- [x] T164 [US5] 验证 SchemaMapping in intellisql-kernel/src/main/java/com/intellisql/kernel/metadata/SchemaMapping.java
+- [x] T165 [US5] 验证 ColumnMapping in intellisql-kernel/src/main/java/com/intellisql/kernel/metadata/ColumnMapping.java
+- [x] T166 [US5] 实现 SHOW SCHEMAS 支持 in QueryProcessor
+- [x] T167 [US5] 实现 SHOW TABLES 支持 via SqlShowTables
 
 **Checkpoint**: US5 完成 - 数据源元数据管理可独立测试
 
@@ -362,29 +422,29 @@ intellisql/                        # 仓库根目录
 
 **Purpose**: 跨用户故事的改进
 
-### 文档
-
-- [ ] T159 [P] 更新 README.md 项目说明
-- [ ] T160 [P] 创建 CONTRIBUTING.md 贡献指南
-- [ ] T161 [P] 验证 quickstart.md 场景
-
 ### 分发包
 
-- [ ] T162 [P] 创建 JDBC Driver 分发包 in intellisql-distribution/intellisql-distribution-jdbc/pom.xml
-- [ ] T163 [P] 创建 Server 分发包 in intellisql-distribution/intellisql-distribution-server/pom.xml
-- [ ] T164 创建 Server 打包脚本 in intellisql-distribution/intellisql-distribution-server/src/main/assembly/server.xml
+- [x] T168 [P] 配置 intellisql-distribution-jdbc assembly in intellisql-distribution/intellisql-distribution-jdbc/pom.xml
+- [x] T169 [P] 配置 intellisql-distribution-server assembly in intellisql-distribution/intellisql-distribution-server/pom.xml
+- [x] T170 创建 bin/start.sh 启动脚本 in intellisql-distribution/intellisql-distribution-server/src/main/assembly/bin/start.sh
+- [x] T171 [P] 创建 bin/stop.sh 停止脚本 in intellisql-distribution/intellisql-distribution-server/src/main/assembly/bin/stop.sh
+- [x] T172 [P] 创建 bin/isql 客户端脚本 in intellisql-distribution/intellisql-distribution-jdbc/src/main/assembly/bin/isql
+
+### 文档
+
+- [x] T173 [P] 更新 README.md in README.md
+- [x] T174 [P] 创建示例配置 conf/examples/dev-model.yaml
+
+### E2E 测试
+
+- [x] T175 创建 E2E 完整流程测试 in intellisql-test/intellisql-test-e2e/src/test/java/com/intellisql/e2e/EndToEndTest.java
+- [x] T176 [P] 创建性能基准测试 in intellisql-test/intellisql-test-e2e/src/test/java/com/intellisql/e2e/PerformanceBenchmarkTest.java
 
 ### 质量检查
 
-- [ ] T165 运行 Spotless 检查 ./mvnw spotless:check
-- [ ] T166 运行 Checkstyle 检查 ./mvnw checkstyle:check
-- [ ] T167 运行完整测试 ./mvnw clean install -Pcheck
-
-### 性能验证
-
-- [ ] T168 验证单表查询开销 < 50ms in intellisql-test/intellisql-test-e2e/src/test/java/org/intellisql/e2e/performance/QueryPerformanceTest.java
-- [ ] T169 验证跨源 JOIN（10万行）< 5s in intellisql-test/intellisql-test-e2e/src/test/java/org/intellisql/e2e/performance/FederatedQueryPerformanceTest.java
-- [ ] T170 验证 100 并发连接 in intellisql-test/intellisql-test-e2e/src/test/java/org/intellisql/e2e/performance/ConcurrentConnectionTest.java
+- [x] T177 运行 Spotless:apply on all modules
+- [x] T178 运行 Checkstyle:check and fix violations
+- [x] T179 验证所有测试通过 ./mvnw clean install
 
 ---
 
@@ -396,52 +456,53 @@ intellisql/                        # 仓库根目录
 - **Foundational (Phase 2)**: 依赖 Setup 完成 - **阻塞所有用户故事**
 - **User Stories (Phase 3-7)**: 全部依赖 Foundational 完成
   - US1 和 US2 可以并行（P1 优先级）
-  - US3 和 US4 可以并行（P2 优先级）
-  - US5 最后实现（P3 优先级）
+  - US3 依赖 US1 的查询能力
+  - US4 依赖 US2 的翻译能力和 US3 的 JDBC 连接
+  - US5 可以在 Foundational 后开始
 - **Polish (Phase 8)**: 依赖所有期望的用户故事完成
 
 ### User Story Dependencies
 
-- **US1 (P1)**: Foundational 完成后可开始 - 无其他故事依赖
-- **US2 (P1)**: Foundational 完成后可开始 - 无其他故事依赖
-- **US3 (P2)**: 依赖 US1 的元数据和查询能力
-- **US4 (P2)**: 依赖 US2 的翻译能力、US3 的 JDBC 连接
-- **US5 (P3)**: 依赖 US1 的元数据管理能力
-
-### Within Each User Story
-
-- 测试先行（TDD）
-- 枚举 → 实体 → 服务 → 接口
-- 核心实现 → 集成
-- 故事完成后才能进入下一优先级
+- **US1 (P1)**: Foundational 完成后可开始 - 核心联邦查询
+- **US2 (P1)**: Foundational 完成后可开始 - SQL 翻译（独立）
+- **US3 (P2)**: 依赖 US1 查询执行能力
+- **US4 (P2)**: 依赖 US2 翻译能力和 US3 JDBC 连接
+- **US5 (P3)**: Foundational 完成后可开始 - 配置管理
 
 ### Parallel Opportunities
 
 - Setup 阶段所有标记 [P] 的任务可并行
-- Foundational 阶段标记 [P] 的任务可并行（Phase 2 内）
-- Foundational 完成后，US1 和 US2 可并行
-- 同一用户故事内标记 [P] 的任务可并行
+- Foundational 阶段标记 [P] 的任务可并行
+- US1 和 US2 可并行开始
+- 连接器实现（MySQL/PostgreSQL/ES）可并行
+- RBO 规则实现可并行
+- 迭代器算子实现可并行
 
 ---
 
-## Parallel Example: User Story 1 (联邦查询)
+## Parallel Example: User Story 1 (联邦查询增强)
 
 ```bash
-# 并行启动 US1 所有测试任务:
-Task T042: ColumnTest.java
-Task T043: TableTest.java
-Task T044: SchemaTest.java
-Task T045: DataSourceTest.java
-Task T046: QueryResultIT.java
+# 并行启动 RBO 规则实现:
+Task T074: PredicatePushDownRule.java
+Task T075: ProjectionPushDownRule.java
+Task T076: JoinReorderRule.java
+Task T077: SubqueryRewriteRule.java
+Task T078: AggregateSplitRule.java
+Task T079: LimitPushDownRule.java
 
-# 并行启动元数据模型:
-Task T047: Column.java
-Task T048: Index.java
+# 并行启动迭代器算子:
+Task T083: TableScanOperator.java
+Task T084: FilterOperator.java
+Task T085: ProjectOperator.java
+Task T086: JoinOperator.java
+Task T087: AggregateOperator.java
+Task T088: SortOperator.java
 
-# 并行启动各连接器:
-Task T058-T062: MySQL 连接器
-Task T063-T067: PostgreSQL 连接器
-Task T068-T072: Elasticsearch 连接器
+# 并行启动连接器测试:
+Task T030: MySQLConnectorIT.java
+Task T031: PostgreSQLConnectorIT.java
+Task T032: ElasticsearchConnectorIT.java
 ```
 
 ---
@@ -452,8 +513,8 @@ Task T068-T072: Elasticsearch 连接器
 
 1. 完成 Phase 1: Setup
 2. 完成 Phase 2: Foundational（阻塞关键路径）
-3. 完成 Phase 3: User Story 1
-4. **停止并验证**: 独立测试 US1
+3. 完成 Phase 3: User Story 1（含混合优化器和 Volcano 迭代器）
+4. **停止并验证**: 独立测试 US1 跨源 JOIN
 5. 如果就绪可部署/演示
 
 ### Incremental Delivery
@@ -461,10 +522,9 @@ Task T068-T072: Elasticsearch 连接器
 1. 完成 Setup + Foundational → 基础就绪
 2. 添加 US1 → 独立测试 → 部署/演示（**MVP!**）
 3. 添加 US2 → 独立测试 → 部署/演示
-4. 添加 US3 → 独立测试 → 部署/演示
-5. 添加 US4 → 独立测试 → 部署/演示
-6. 添加 US5 → 独立测试 → 部署/演示
-7. 每个故事独立增加价值，不破坏之前的故事
+4. 添加 US3 + US4 → 独立测试 → 部署/演示
+5. 添加 US5 → 独立测试 → 部署/演示
+6. 每个故事独立增加价值，不破坏之前的故事
 
 ### Parallel Team Strategy
 
@@ -472,14 +532,12 @@ Task T068-T072: Elasticsearch 连接器
 
 1. 团队共同完成 Setup + Foundational
 2. Foundational 完成后:
-   - 开发者 A: User Story 1（联邦查询）
+   - 开发者 A: User Story 1（联邦查询 + 优化器 + 迭代器）
    - 开发者 B: User Story 2（SQL 翻译）
-3. US1 和 US2 完成后:
-   - 开发者 A: User Story 3（JDBC 接口）
-   - 开发者 B: User Story 4（isql CLI）
-4. US3 和 US4 完成后:
-   - 开发者 A: User Story 5（元数据管理）
-   - 开发者 B: Polish & 性能测试
+3. US1 基础完成后:
+   - 开发者 C: User Story 3（JDBC 接口）
+4. US3 完成后:
+   - 开发者 D: User Story 4（isql CLI）
 
 ---
 
@@ -487,18 +545,25 @@ Task T068-T072: Elasticsearch 连接器
 
 | 指标 | 数值 |
 |------|------|
-| 总任务数 | 170 |
-| Phase 1 (Setup) | 18 |
-| Phase 2 (Foundational) | 23 |
-| US1 (联邦查询) | 59 |
-| US2 (SQL翻译) | 14 |
-| US3 (JDBC接口) | 23 |
-| US4 (isql CLI) | 12 |
-| US5 (元数据管理) | 9 |
+| 总任务数 | 179 |
+| Phase 1 (Setup) | 7 |
+| Phase 2 (Foundational) | 21 |
+| US1 (联邦查询) | 76 |
+| US2 (SQL翻译) | 22 |
+| US3 (JDBC接口) | 21 |
+| US4 (isql CLI) | 14 |
+| US5 (元数据管理) | 6 |
 | Phase 8 (Polish) | 12 |
-| 可并行任务数 | 65 |
+| 可并行任务数 | 68 |
 
-**MVP 范围**: Phase 1 + Phase 2 + Phase 3 (US1) = 100 任务
+**MVP 范围**: Phase 1 + Phase 2 + Phase 3 (US1) = 104 任务
+
+**新增增强功能（参考 ShardingSphere）**:
+- 混合优化器策略 (RBO → CBO)
+- 完整代价模型 (CPU + I/O + 网络 + 内存)
+- 扩展 RBO 规则集 (6 条规则)
+- Volcano 迭代器执行模型 (6 个算子)
+- RelMetadataQuery 元数据支持
 
 ---
 
@@ -507,7 +572,7 @@ Task T068-T072: Elasticsearch 连接器
 - [P] 任务 = 不同文件，无依赖
 - [Story] 标签映射任务到具体用户故事，便于追踪
 - 每个用户故事应独立可完成和测试
+- 参考 ShardingSphere sql-federation 实现优化器和迭代器模式
 - 验证测试失败后再实现
 - 每个任务或逻辑组完成后提交
 - 在任何检查点停止以独立验证故事
-- 避免：模糊任务、相同文件冲突、破坏独立性的跨故事依赖

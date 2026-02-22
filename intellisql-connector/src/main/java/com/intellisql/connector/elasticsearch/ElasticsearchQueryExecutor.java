@@ -24,24 +24,27 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.RangeQueryBuilder;
+import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.query.WildcardQueryBuilder;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortOrder;
+
 import com.intellisql.connector.enums.DataType;
 import com.intellisql.connector.model.QueryResult;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.FieldValue;
-import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.core.search.Hit;
-import co.elastic.clients.json.JsonData;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Elasticsearch implementation of QueryExecutor. Converts SQL-like queries to Elasticsearch Query
- * DSL and executes them.
+ * DSL and executes them. Uses Elasticsearch 7.x API for JDK 8 compatibility.
  */
 @Slf4j
 public class ElasticsearchQueryExecutor {
@@ -61,44 +64,51 @@ public class ElasticsearchQueryExecutor {
     /**
      * Executes a SQL-like query against Elasticsearch.
      *
-     * @param client the Elasticsearch client
+     * @param client the Elasticsearch RestHighLevelClient
      * @param sql the SQL string
      * @return the query result
      * @throws Exception if execution fails
      */
-    public QueryResult executeQuery(final ElasticsearchClient client, final String sql) throws Exception {
+    public QueryResult executeQuery(final RestHighLevelClient client, final String sql) throws Exception {
         long startTime = System.currentTimeMillis();
         try {
             SqlQuery parsedQuery = parseSql(sql);
-            SearchRequest.Builder searchBuilder = new SearchRequest.Builder().index(parsedQuery.getIndex());
+            SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+
             if (parsedQuery.getWhereClause() != null && !parsedQuery.getWhereClause().isEmpty()) {
-                Query query = buildQuery(parsedQuery.getWhereClause());
-                searchBuilder.query(query);
+                BoolQueryBuilder query = buildQuery(parsedQuery.getWhereClause());
+                sourceBuilder.query(query);
             }
+
             if (parsedQuery.getOrderBy() != null && !parsedQuery.getOrderBy().isEmpty()) {
                 String[] orderParts = parsedQuery.getOrderBy().trim().split("\\s+");
                 String sortField = orderParts[0];
                 SortOrder sortOrder =
                         orderParts.length > 1 && "DESC".equalsIgnoreCase(orderParts[1])
-                                ? SortOrder.Desc
-                                : SortOrder.Asc;
-                searchBuilder.sort(s -> s.field(f -> f.field(sortField).order(sortOrder)));
+                                ? SortOrder.DESC
+                                : SortOrder.ASC;
+                sourceBuilder.sort(sortField, sortOrder);
             }
-            if (parsedQuery.getLimit() > 0) {
-                searchBuilder.size(parsedQuery.getLimit());
-            } else {
-                searchBuilder.size(1000);
-            }
+
+            int size = parsedQuery.getLimit() > 0 ? parsedQuery.getLimit() : 1000;
+            sourceBuilder.size(size);
+
             if (!parsedQuery.getFields().isEmpty() && !parsedQuery.getFields().contains("*")) {
-                searchBuilder.source(s -> s.filter(f -> f.includes(parsedQuery.getFields())));
+                sourceBuilder.fetchSource(parsedQuery.getFields().toArray(new String[0]), null);
             }
-            SearchResponse<Map> response = client.search(searchBuilder.build(), Map.class);
+
+            final SearchRequest searchRequest = new SearchRequest(parsedQuery.getIndex());
+            searchRequest.source(sourceBuilder);
+
+            SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+
             List<String> columnNames = new ArrayList<>();
             List<DataType> columnTypes = new ArrayList<>();
             List<List<Object>> rows = new ArrayList<>();
             boolean columnsInitialized = false;
-            for (Hit<Map> hit : response.hits().hits()) {
-                Map<String, Object> source = hit.source();
+
+            for (SearchHit hit : response.getHits().getHits()) {
+                Map<String, Object> source = hit.getSourceAsMap();
                 if (source == null) {
                     source = new HashMap<>();
                 }
@@ -115,6 +125,7 @@ public class ElasticsearchQueryExecutor {
                 }
                 rows.add(row);
             }
+
             long executionTime = System.currentTimeMillis() - startTime;
             log.debug(
                     "Elasticsearch query executed in {}ms, returned {} rows", executionTime, rows.size());
@@ -154,23 +165,20 @@ public class ElasticsearchQueryExecutor {
         return query;
     }
 
-    private Query buildQuery(final String whereClause) {
-        BoolQuery.Builder boolBuilder = new BoolQuery.Builder();
+    private BoolQueryBuilder buildQuery(final String whereClause) {
+        BoolQueryBuilder boolBuilder = QueryBuilders.boolQuery();
         String[] conditions = whereClause.split("(?i)\\s+AND\\s+");
         for (String condition : conditions) {
             String trimmedCondition = condition.trim();
-            Query termQuery = parseCondition(trimmedCondition);
-            if (termQuery != null) {
-                boolBuilder.must(termQuery);
-            }
+            addCondition(boolBuilder, trimmedCondition);
         }
-        return boolBuilder.build()._toQuery();
+        return boolBuilder;
     }
 
-    private Query parseCondition(final String condition) {
+    private void addCondition(final BoolQueryBuilder boolBuilder, final String condition) {
         String[] parts = condition.split("(?i)\\s+(=|!=|<>|>|<|>=|<=|LIKE|IN)\\s+", 2);
         if (parts.length < 2) {
-            return null;
+            return;
         }
         String field = parts[0].trim();
         String operator =
@@ -179,55 +187,42 @@ public class ElasticsearchQueryExecutor {
                         .replaceAll("(?i)\\s+" + parts[1] + "$", "")
                         .trim();
         String value = parts[1].trim().replaceAll("^['\"]|['\"]$", "");
-        if (isNestedField(field)) {
-            return buildNestedQuery(field, operator, value);
-        }
+
         switch (operator.toUpperCase()) {
             case "=":
-                return Query.of(q -> q.term(t -> t.field(field).value(value)));
+                boolBuilder.must(new TermQueryBuilder(field, value));
+                break;
             case "!=":
             case "<>":
-                return Query.of(q -> q.bool(b -> b.mustNot(m -> m.term(t -> t.field(field).value(value)))));
+                boolBuilder.mustNot(new TermQueryBuilder(field, value));
+                break;
             case ">":
-                return Query.of(q -> q.range(r -> r.field(field).gt(JsonData.of(value))));
+                boolBuilder.must(new RangeQueryBuilder(field).gt(value));
+                break;
             case "<":
-                return Query.of(q -> q.range(r -> r.field(field).lt(JsonData.of(value))));
+                boolBuilder.must(new RangeQueryBuilder(field).lt(value));
+                break;
             case ">=":
-                return Query.of(q -> q.range(r -> r.field(field).gte(JsonData.of(value))));
+                boolBuilder.must(new RangeQueryBuilder(field).gte(value));
+                break;
             case "<=":
-                return Query.of(q -> q.range(r -> r.field(field).lte(JsonData.of(value))));
+                boolBuilder.must(new RangeQueryBuilder(field).lte(value));
+                break;
             case "LIKE":
                 String wildcard = value.replace("%", "*").replace("_", "?");
-                return Query.of(q -> q.wildcard(w -> w.field(field).value(wildcard)));
+                boolBuilder.must(new WildcardQueryBuilder(field, wildcard));
+                break;
             case "IN":
                 String[] values = value.split(",");
-                List<FieldValue> fieldValues = new ArrayList<>();
+                BoolQueryBuilder inQuery = QueryBuilders.boolQuery();
                 for (String v : values) {
-                    fieldValues.add(FieldValue.of(v.trim().replaceAll("^['\"]|['\"]$", "")));
+                    inQuery.should(new TermQueryBuilder(field, v.trim().replaceAll("^['\"]|['\"]$", "")));
                 }
-                return Query.of(
-                        q -> q.terms(
-                                t -> t.field(field)
-                                        .terms(TermsQueryField.of(f -> f.value(fieldValues)))));
+                boolBuilder.must(inQuery);
+                break;
             default:
-                return Query.of(q -> q.term(t -> t.field(field).value(value)));
+                boolBuilder.must(new TermQueryBuilder(field, value));
         }
-    }
-
-    private boolean isNestedField(final String field) {
-        return NESTED_FIELD_PATTERN.matcher(field).matches();
-    }
-
-    private Query buildNestedQuery(final String field, final String operator, final String value) {
-        Matcher matcher = NESTED_FIELD_PATTERN.matcher(field);
-        if (matcher.find()) {
-            String path = matcher.group(1);
-            return Query.of(
-                    q -> q.nested(
-                            n -> n.path(path)
-                                    .query(parseCondition(matcher.group(2) + " " + operator + " " + value))));
-        }
-        return null;
     }
 
     private DataType inferDataType(final Object value) {

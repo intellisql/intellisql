@@ -26,16 +26,21 @@ import java.sql.Statement;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.cluster.health.ClusterHealthStatus;
+
 import com.intellisql.connector.config.DataSourceConfig;
 import com.intellisql.connector.enums.DataSourceType;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch.cluster.HealthResponse;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Implementation of HealthChecker for various data sources. MySQL/PostgreSQL use SELECT 1 for
  * health checks. Elasticsearch uses GET /_cluster/health for health checks.
+ * Uses Elasticsearch 7.x API for JDK 8 compatibility.
  */
 @Slf4j
 public class DataSourceHealthChecker implements HealthChecker {
@@ -109,10 +114,10 @@ public class DataSourceHealthChecker implements HealthChecker {
     }
 
     private boolean checkElasticsearch(final DataSourceConfig config) {
-        ElasticsearchClient client = getOrCreateElasticsearchClient(config);
-        HealthResponse health;
+        RestHighLevelClient client = getOrCreateElasticsearchClient(config);
+        ClusterHealthResponse health;
         try {
-            health = client.cluster().health();
+            health = client.cluster().health(new ClusterHealthRequest(), RequestOptions.DEFAULT);
         } catch (final IOException ex) {
             log.error("Elasticsearch health check failed for '{}': {}", config.getName(), ex.getMessage());
             return false;
@@ -120,19 +125,19 @@ public class DataSourceHealthChecker implements HealthChecker {
         if (health == null) {
             return false;
         }
-        String status = health.status().jsonValue();
-        if ("red".equals(status)) {
+        ClusterHealthStatus status = health.getStatus();
+        if (status == ClusterHealthStatus.RED) {
             log.warn("Elasticsearch cluster '{}' is in RED state", config.getName());
             return false;
         }
-        if ("yellow".equals(status)) {
+        if (status == ClusterHealthStatus.YELLOW) {
             log.info("Elasticsearch cluster '{}' is in YELLOW state", config.getName());
         }
         return true;
     }
 
-    private ElasticsearchClient getOrCreateElasticsearchClient(final DataSourceConfig config) {
-        return (ElasticsearchClient) connectionCache.computeIfAbsent(
+    private RestHighLevelClient getOrCreateElasticsearchClient(final DataSourceConfig config) {
+        return (RestHighLevelClient) connectionCache.computeIfAbsent(
                 config.getName(),
                 name -> createElasticsearchClient(config));
     }
@@ -141,9 +146,9 @@ public class DataSourceHealthChecker implements HealthChecker {
      * Creates an Elasticsearch client from the configuration.
      *
      * @param config the data source configuration
-     * @return the created Elasticsearch client
+     * @return the created Elasticsearch RestHighLevelClient
      */
-    private ElasticsearchClient createElasticsearchClient(final DataSourceConfig config) {
+    private RestHighLevelClient createElasticsearchClient(final DataSourceConfig config) {
         String scheme = "http";
         if (config.getProperties() != null
                 && "true".equalsIgnoreCase(config.getProperties().get("ssl"))) {
@@ -164,11 +169,7 @@ public class DataSourceHealthChecker implements HealthChecker {
             builder.setHttpClientConfigCallback(
                     httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
         }
-        org.elasticsearch.client.RestClient restClient = builder.build();
-        co.elastic.clients.transport.ElasticsearchTransport transport =
-                new co.elastic.clients.transport.rest_client.RestClientTransport(
-                        restClient, new co.elastic.clients.json.jackson.JacksonJsonpMapper());
-        return new ElasticsearchClient(transport);
+        return new RestHighLevelClient(builder);
     }
 
     private String buildJdbcUrl(final DataSourceConfig config, final String dbType) {
@@ -198,14 +199,14 @@ public class DataSourceHealthChecker implements HealthChecker {
      */
     public void removeFromCache(final String dataSourceName) {
         Object client = connectionCache.remove(dataSourceName);
-        if (client instanceof ElasticsearchClient) {
-            closeElasticsearchClient((ElasticsearchClient) client, dataSourceName);
+        if (client instanceof RestHighLevelClient) {
+            closeElasticsearchClient((RestHighLevelClient) client, dataSourceName);
         }
     }
 
-    private void closeElasticsearchClient(final ElasticsearchClient client, final String dataSourceName) {
+    private void closeElasticsearchClient(final RestHighLevelClient client, final String dataSourceName) {
         try {
-            client._transport().close();
+            client.close();
         } catch (final IOException ex) {
             log.error("Error closing Elasticsearch client for: {}", dataSourceName, ex);
         }
