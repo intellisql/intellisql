@@ -13,10 +13,10 @@ IntelliSql 是一个聚焦于 SQL 能力的平台，本次迭代实现 SQL 联�
 **主要依赖**: Apache Calcite 1.41.0, Apache Avatica 1.27.0, Lombok 1.18.30
 **存储**: 无持久化存储（内存中执行跨源 JOIN）
 **测试**: JUnit 5.10.2（单元测试）, TestContainers 1.19.4（E2E 集成测试）
-**目标平台**: Linux 服务器（JVM）
+**目标平台**: Linux 服务器（JVM）；isql 支持 Linux/macOS/Windows（Native Image）
 **项目类型**: 多模块 Maven 项目
-**性能目标**: 单表查询额外开销 <50ms；跨源 JOIN（10万行）<5s
-**约束**: JDK 8 兼容；100 并发连接；100万行结果集不 OOM
+**性能目标**: 单表查询额外开销 <50ms；跨源 JOIN（10万行）<5s；isql 启动 <0.5s
+**约束**: JDK 8 兼容（Server）；GraalVM 兼容（Client）；100 并发连接；100万行结果集不 OOM
 **规模**: 支持 5 种数据库方言；100+ 并发用户
 
 ## 宪法检查
@@ -34,7 +34,8 @@ IntelliSql 是一个聚焦于 SQL 能力的平台，本次迭代实现 SQL 联�
 | 极致 | ✅ 通过 | 无无用空行，无占位符代码 |
 
 **技术约束检查**:
-- ✅ JDK 8 兼容性
+- ✅ JDK 8 兼容性（服务端）
+- ✅ GraalVM Native Image 兼容性（客户端）
 - ✅ ShardingSphere 代码风格（Spotless + Checkstyle）
 - ✅ 无 CVE 漏洞依赖
 - ✅ 多模块架构（参考 360 QuickSql）
@@ -51,7 +52,8 @@ specs/001-sql-federation-translation/
 ├── quickstart.md        # 阶段 1 输出（快速入门）
 ├── contracts/           # 阶段 1 输出（契约定义）
 │   ├── jdbc-protocol.md
-│   └── config-schema.md
+│   ├── config-schema.md
+│   └── isql-cli.md      # isql 命令行接口定义
 └── tasks.md             # 阶段 2 输出（/speckit.tasks 命令）
 ```
 
@@ -59,52 +61,75 @@ specs/001-sql-federation-translation/
 
 ```text
 intellisql/
-├── intellisql-parser/          # SQL 解析与翻译
+├── intellisql-common/              # 公共基础设施
+│   └── src/main/java/com/intellisql/common/
+│       ├── config/                 # 配置加载（ConfigLoader, ModelConfig, DataSourceConfig）
+│       ├── logger/                 # 日志（StructuredLogger, QueryContext）
+│       ├── retry/                  # 重试机制（RetryPolicy, ExponentialBackoffRetry）
+│       ├── metadata/               # 元数据实体（Column, Table, Schema, DataSource）
+│       │   └── enums/              # 枚举（DataSourceType, DataType, TableType）
+│       └── dialect/                # 方言枚举（SqlDialect）
+├── intellisql-parser/              # SQL 解析与翻译
 │   └── src/
 │       ├── main/java/
 │       └── test/java/
-├── intellisql-optimizer/       # SQL 优化器
+├── intellisql-features/            # 功能特性父模块
+│   ├── intellisql-optimizer/       # SQL 优化器
+│   │   └── src/main/java/com/intellisql/optimizer/
+│   │       ├── cost/               # 代价模型（FederatedCost, CostFactor）
+│   │       ├── metadata/           # 元数据提供者
+│   │       ├── plan/               # 逻辑执行计划
+│   │       └── rule/               # 优化规则
+│   ├── intellisql-translator/      # SQL 翻译器
+│   │   └── src/main/java/com/intellisql/translator/
+│   │       ├── dialect/            # 方言转换器
+│   │       ├── SqlTranslator.java
+│   │       └── Translation.java
+│   └── intellisql-federation/      # 联邦查询核心
+│       └── src/main/java/com/intellisql/federation/
+│           ├── IntelliSqlKernel.java       # 内核入口
+│           ├── QueryProcessor.java         # 查询处理器
+│           ├── DataSourceManager.java      # 数据源管理
+│           ├── executor/                   # 执行引擎
+│           │   ├── FederatedQueryExecutor.java
+│           │   ├── QueryExecutor.java
+│           │   ├── iterator/               # Volcano 迭代器
+│           │   └── plan/                   # 物理计划转换
+│           └── metadata/                   # 元数据管理
+├── intellisql-connector/           # 数据源连接器
+│   └── src/
+│       ├── main/java/
+│       │   ├── api/                # Connector SPI
+│       │   ├── mysql/              # MySQL 适配器
+│       │   ├── postgresql/         # PostgreSQL 适配器
+│       │   └── elasticsearch/      # Elasticsearch 适配器
+│       └── test/java/
+├── intellisql-jdbc/                # JDBC 驱动
 │   └── src/
 │       ├── main/java/
 │       └── test/java/
-├── intellisql-executor/        # SQL 执行引擎
-│   └── src/
-│       ├── main/java/
-│       └── test/java/
-├── intellisql-connector/       # 数据源连接器
-│   └── src/
-│       ├── main/java/
-│       │   ├── api/            # Connector SPI
-│       │   ├── mysql/          # MySQL 适配器
-│       │   ├── postgresql/     # PostgreSQL 适配器
-│       │   └── elasticsearch/  # Elasticsearch 适配器
-│       └── test/java/
-├── intellisql-kernel/          # 核心编排层
-│   └── src/
-│       ├── main/java/
-│       └── test/java/
-├── intellisql-jdbc/            # JDBC 驱动
-│   └── src/
-│       ├── main/java/
-│       └── test/java/
-├── intellisql-server/          # 服务端实现
+├── intellisql-server/              # 服务端实现
 │   └── src/
 │       ├── main/java/
 │       ├── main/resources/
 │       └── test/java/
-├── intellisql-client/          # isql CLI 工具
-│   └── src/
-│       ├── main/java/
-│       └── test/java/
-├── intellisql-distribution/    # 打包分发父模块
+├── intellisql-client/              # isql CLI 工具
+│   ├── src/
+│   │   ├── main/java/
+│   │   ├── main/resources/
+│   │   │   ├── META-INF/native-image/ # GraalVM 配置
+│   │   │   └── sql.nanorc             # 语法高亮配置
+│   │   └── test/java/
+│   └── pom.xml                     # 含 native-maven-plugin
+├── intellisql-distribution/        # 打包分发父模块
 │   ├── intellisql-distribution-jdbc/
 │   └── intellisql-distribution-server/
-├── intellisql-test/            # 测试模块父模块
-│   ├── intellisql-test-it/     # 集成测试
-│   └── intellisql-test-e2e/    # 端到端测试
-├── conf/                       # 配置文件
+├── intellisql-test/                # 测试模块父模块
+│   ├── intellisql-test-it/         # 集成测试
+│   └── intellisql-test-e2e/        # 端到端测试
+├── conf/                           # 配置文件
 │   └── model.yaml
-├── mvnw                        # Maven Wrapper
+├── mvnw                            # Maven Wrapper
 ├── mvnw.cmd
 ├── pom.xml
 └── .mvn/
@@ -112,8 +137,8 @@ intellisql/
 ```
 
 **结构决策**: 采用多模块 Maven 架构，分为四层：
-1. **基础功能层**: parser、optimizer、executor、connector
-2. **核心处理层**: kernel（编排各功能模块）
+1. **公共基础层**: common（配置、日志、重试、元数据实体）
+2. **功能特性层**: parser、features（optimizer、translator、federation）、connector
 3. **协议适配层**: jdbc、server
 4. **工具与支撑层**: client、distribution、test
 
@@ -123,6 +148,8 @@ intellisql/
 |------|------|------|
 | Apache Calcite | 1.41.0 | SQL 解析与优化 |
 | Apache Avatica | 1.27.0 | JDBC 协议 |
+| JLine | 3.25.1 | 终端交互与高亮 |
+| Picocli | 4.7.5 | 命令行参数解析 |
 | Lombok | 1.18.30 | 精简代码 |
 | Spotless | 2.43.0 | 代码格式化 |
 | Checkstyle | 3.3.1 | 代码检查 |
@@ -506,7 +533,7 @@ public class ExtensionSqlParserTest extends SqlParserTest {
 
 ---
 
-# 模块实现计划：联邦查询增强 (intellisql-optimizer & intellisql-executor)
+# 模块实现计划：联邦查询增强 (intellisql-optimizer & intellisql-federation)
 
 **参考实现**: ShardingSphere sql-federation
 **日期**: 2026-02-20
@@ -529,7 +556,7 @@ public class ExtensionSqlParserTest extends SqlParserTest {
 ### 关键文件
 
 ```
-intellisql-optimizer/
+intellisql-features/intellisql-optimizer/
 ├── src/main/java/com/intellisql/optimizer/
 │   ├── Optimizer.java                    # 当前仅 HepPlanner (RBO)
 │   ├── plan/
@@ -539,17 +566,17 @@ intellisql-optimizer/
 │       ├── PredicatePushDownRule.java    # 已实现
 │       └── ProjectionPushDownRule.java   # 已实现
 
-intellisql-executor/
-├── src/main/java/com/intellisql/executor/
-│   ├── FederatedQueryExecutor.java       # 跨源 JOIN 执行
-│   ├── QueryExecutor.java
-│   └── IntermediateResultLimiter.java
-
-intellisql-kernel/
-├── src/main/java/com/intellisql/kernel/
+intellisql-features/intellisql-federation/
+├── src/main/java/com/intellisql/federation/
 │   ├── IntelliSqlKernel.java             # 核心入口
 │   ├── QueryProcessor.java               # 查询处理管道
-│   └── metadata/MetadataManager.java
+│   ├── DataSourceManager.java            # 数据源管理
+│   ├── executor/
+│   │   ├── FederatedQueryExecutor.java   # 跨源 JOIN 执行
+│   │   ├── QueryExecutor.java
+│   │   └── IntermediateResultLimiter.java
+│   └── metadata/
+│       └── MetadataManager.java
 ```
 
 ### 当前优化流程
@@ -571,7 +598,7 @@ SQL → SqlParserFactory.parseWithBabel() → SqlNode
 **新增文件**:
 
 ```
-intellisql-optimizer/src/main/java/com/intellisql/optimizer/
+intellisql-features/intellisql-optimizer/src/main/java/com/intellisql/optimizer/
 ├── HybridOptimizer.java              # 混合优化器入口
 ├── RboOptimizer.java                 # RBO 优化器（重构自 Optimizer）
 ├── CboOptimizer.java                 # CBO 优化器（新增）
@@ -684,7 +711,7 @@ public class FederatedJoinCostEstimator {
 
 **目标**: 参考 ShardingSphere 完善规则
 
-**新增规则** (位于 `intellisql-optimizer/src/main/java/com/intellisql/optimizer/rule/`):
+**新增规则** (位于 `intellisql-features/intellisql-optimizer/src/main/java/com/intellisql/optimizer/rule/`):
 
 | 规则 | 类名 | 功能 | 优先级 |
 |------|------|------|--------|
@@ -735,7 +762,7 @@ shardingsphere-sql-parser/
 **新增文件**:
 
 ```
-intellisql-executor/src/main/java/com/intellisql/executor/
+intellisql-features/intellisql-federation/src/main/java/com/intellisql/federation/executor/
 ├── iterator/
 │   ├── QueryIterator.java            # 迭代器接口
 │   ├── AbstractOperator.java         # 算子基类
@@ -857,7 +884,7 @@ public class PhysicalPlanConverter {
 **新增文件**:
 
 ```
-intellisql-optimizer/src/main/java/com/intellisql/optimizer/metadata/
+intellisql-features/intellisql-optimizer/src/main/java/com/intellisql/optimizer/metadata/
 ├── FederatedMetadataProvider.java    # 元数据提供者
 ├── FederatedRelMetadataQuery.java    # 元数据查询
 ├── StatisticsHandler.java            # 统计信息处理
@@ -1052,3 +1079,117 @@ void assertFederatedJoinWithCostBasedOptimization() {
 
 1. ⏭️ 运行 `/speckit.tasks` 生成联邦查询增强详细任务列表
 2. 开始 Phase 1 优化器重构实现
+
+---
+
+# 模块实现计划：intellisql-client (isql)
+
+**参考实现**: SQLLine, JLine3 Demo
+**日期**: 2026-02-22
+**目标**: 实现高性能、原生编译的交互式 SQL 命令行工具
+
+## 模块概述
+
+intellisql-client 是 IntelliSql 的官方命令行工具，提供交互式查询（REPL）和脚本执行能力。基于 GraalVM Native Image 技术，实现毫秒级启动和零 JVM 依赖分发。
+
+### 核心能力
+
+- **原生启动**: 启动时间 < 0.5s，单文件分发
+- **交互体验**: 语法高亮（nanorc）、自动补全（Context-aware）、历史记录（持久化）
+- **结果展示**: 自定义分页渲染（less-like）、CJK 字符对齐、流式处理
+- **多模式**: 支持交互模式（REPL）和批处理模式（-f script.sql）
+
+## 技术架构
+
+### 核心组件
+
+```
+intellisql-client/
+├── src/main/java/com/intellisql/client/
+│   ├── IsqlClient.java               # main 入口 (Picocli)
+│   ├── command/                      # 客户端命令
+│   │   ├── ConnectCommand.java
+│   │   ├── TranslateCommand.java
+│   │   └── HelpCommand.java
+│   ├── console/                      # 终端交互
+│   │   ├── ConsoleReader.java        # JLine Reader 封装
+│   │   ├── SyntaxHighlighter.java    # nanorc 高亮适配
+│   │   ├── CompleterFactory.java     # 补全器工厂
+│   │   └── TerminalPrinter.java      # 输出打印
+│   ├── renderer/                     # 结果渲染
+│   │   ├── PagingRenderer.java       # 分页渲染器
+│   │   └── ResultSetFormatter.java   # 格式化逻辑
+│   └── util/
+│       └── NativeUtils.java          # 原生环境适配
+└── src/main/resources/
+    ├── META-INF/native-image/        # GraalVM 配置
+    └── sql.nanorc                    # 高亮规则
+```
+
+### 交互流程
+
+```
+Start → Picocli Parse Args 
+      → If batch mode: Execute Script & Exit
+      → If interactive mode:
+           Initialize JLine Terminal
+           Load History & Config
+           Connect to Server (Optional at start)
+           Loop:
+              Read Line (with highlight & complete)
+              Handle Client Command (e.g., \c, \quit)
+              OR Execute SQL via JDBC
+              Render Result (Paging)
+```
+
+## 实现计划
+
+### Phase 1: 基础骨架 & 原生构建 (预估: 2天)
+
+**任务列表**:
+
+1. [ ] 搭建 `intellisql-client` 模块 Maven 配置 (引入 Picocli, JLine)
+2. [ ] 配置 `native-maven-plugin` 和 GraalVM 环境
+3. [ ] 实现 `IsqlClient` 入口和基础参数解析
+4. [ ] 验证 Hello World 级原生编译
+
+### Phase 2: 终端交互增强 (预估: 3天)
+
+**任务列表**:
+
+1. [ ] 集成 JLine3 `LineReader`
+2. [ ] 配置 `sql.nanorc` 实现语法高亮
+3. [ ] 实现 `SignalHandler` 捕获 Ctrl+C
+4. [ ] 实现历史记录持久化
+
+### Phase 3: JDBC 集成与补全 (预估: 3天)
+
+**任务列表**:
+
+1. [ ] 集成 `intellisql-jdbc` 驱动
+2. [ ] 实现连接管理命令 (`\connect`)
+3. [ ] 实现 `MetaDataCompleter` (基于 DatabaseMetaData)
+4. [ ] 异步加载元数据以优化补全性能
+
+### Phase 4: 结果渲染 (预估: 3天)
+
+**任务列表**:
+
+1. [ ] 实现 `PagingRenderer` (流式读取 ResultSet)
+2. [ ] 实现 CJK 字符宽度计算逻辑
+3. [ ] 实现交互式分页控制 (n: next page, q: quit)
+4. [ ] 验证大结果集 (100万行) 渲染内存占用
+
+## 宪法检查（Client 模块）
+
+| 原则 | 状态 | 合规说明 |
+|------|------|----------|
+| 用心 | ✅ | 追求极致的启动速度和交互体验 |
+| 可读 | ✅ | 清晰的 Command/Console 分层 |
+| 极致 | ✅ | 原生编译，无额外 JVM 开销 |
+
+## 测试策略
+
+- **原生测试**: 使用 `native-image-agent` 辅助生成配置，并在 CI 中运行 native-image 测试
+- **交互测试**: 模拟 PTY 进行自动化交互测试 (使用 Expect 脚本或 Java PTY 库)
+
