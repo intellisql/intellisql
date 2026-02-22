@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.intellisql.kernel.config.ModelConfig;
 import com.intellisql.kernel.logger.QueryContext;
 import com.intellisql.kernel.metadata.MetadataManager;
-import com.intellisql.optimizer.Optimizer;
+import com.intellisql.optimizer.HybridOptimizer;
 import com.intellisql.parser.SqlParserFactory;
 import com.intellisql.parser.dialect.SqlDialect;
 
@@ -47,7 +47,7 @@ public final class IntelliSqlKernel implements AutoCloseable {
 
     private final MetadataManager metadataManager;
 
-    private final Optimizer optimizer;
+    private final HybridOptimizer optimizer;
 
     private final AtomicBoolean initialized = new AtomicBoolean(false);
 
@@ -61,7 +61,9 @@ public final class IntelliSqlKernel implements AutoCloseable {
     public IntelliSqlKernel(final ModelConfig config) {
         this.config = config;
         this.dataSourceManager = new DataSourceManager(config);
-        this.optimizer = new Optimizer(config.getProps().getMaxIntermediateRows());
+        // Disable CBO for federated queries - we use RBO for logical optimization
+        // and push down queries to data sources rather than executing in Calcite
+        this.optimizer = new HybridOptimizer(false, config.getProps().getMaxIntermediateRows());
         this.metadataManager = new MetadataManager();
         this.queryProcessor =
                 new QueryProcessor(dataSourceManager, metadataManager, optimizer, config.getProps());

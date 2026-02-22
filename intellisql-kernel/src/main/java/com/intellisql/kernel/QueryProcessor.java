@@ -17,11 +17,13 @@
 
 package com.intellisql.kernel;
 
+import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.sql.SqlNode;
 import com.intellisql.connector.ConnectorRegistry;
 import com.intellisql.connector.api.DataSourceConnector;
 import com.intellisql.connector.model.QueryResult;
 import com.intellisql.kernel.config.Props;
+import com.intellisql.kernel.converter.RelConverter;
 import com.intellisql.kernel.logger.QueryContext;
 import com.intellisql.kernel.logger.QueryContextManager;
 import com.intellisql.kernel.logger.StructuredLogger;
@@ -29,12 +31,11 @@ import com.intellisql.kernel.metadata.MetadataManager;
 import com.intellisql.kernel.metadata.enums.DataSourceType;
 import com.intellisql.kernel.retry.ExponentialBackoffRetry;
 import com.intellisql.kernel.retry.RetryableOperation;
-import com.intellisql.optimizer.Optimizer;
+import com.intellisql.optimizer.HybridOptimizer;
 import com.intellisql.optimizer.plan.ExecutionPlan;
 import com.intellisql.parser.SqlParserFactory;
 import com.intellisql.parser.dialect.SqlDialect;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -42,20 +43,64 @@ import lombok.extern.slf4j.Slf4j;
  * entire query processing pipeline.
  */
 @Slf4j
-@RequiredArgsConstructor
 public class QueryProcessor {
 
     private final DataSourceManager dataSourceManager;
 
     private final MetadataManager metadataManager;
 
-    private final Optimizer optimizer;
+    private final HybridOptimizer optimizer;
 
     private final Props props;
 
     private final StructuredLogger structuredLogger = StructuredLogger.getLogger(QueryProcessor.class);
 
     private final ExponentialBackoffRetry retryPolicy = new ExponentialBackoffRetry();
+
+    /** Lazily initialized RelConverter - created on first use after metadata is initialized. */
+    private volatile RelConverter relConverter;
+
+    /**
+     * Creates a new QueryProcessor.
+     *
+     * @param dataSourceManager the data source manager
+     * @param metadataManager the metadata manager
+     * @param optimizer the hybrid optimizer
+     * @param props the configuration properties
+     */
+    public QueryProcessor(
+                          final DataSourceManager dataSourceManager,
+                          final MetadataManager metadataManager,
+                          final HybridOptimizer optimizer,
+                          final Props props) {
+        this.dataSourceManager = dataSourceManager;
+        this.metadataManager = metadataManager;
+        this.optimizer = optimizer;
+        this.props = props;
+        // RelConverter is lazily created on first use to ensure metadata is initialized
+    }
+
+    /**
+     * Gets the RelConverter, creating it lazily if needed.
+     * The RelConverter creates its own VolcanoPlanner, ensuring RelNodes
+     * are associated with the correct planner for optimization.
+     *
+     * @return the RelConverter instance
+     */
+    private RelConverter getRelConverter() {
+        if (relConverter == null) {
+            synchronized (this) {
+                if (relConverter == null) {
+                    log.info("Creating RelConverter with {} tables in schema",
+                            metadataManager.getAllTables().size());
+                    // RelConverter creates its own planner/cluster
+                    // The optimizer will get the planner from the RelNode's cluster
+                    relConverter = new RelConverter(metadataManager.getRootSchema());
+                }
+            }
+        }
+        return relConverter;
+    }
 
     /**
      * Processes a SQL query and returns the result.
@@ -83,6 +128,7 @@ public class QueryProcessor {
         } catch (final Exception ex) {
             // CHECKSTYLE:ON
             final long duration = System.currentTimeMillis() - startTime;
+            ex.printStackTrace();
             structuredLogger.error(context, "Query failed after {}ms: {}", duration, ex.getMessage());
             return QueryResult.failure("Query execution failed: " + ex.getMessage());
         } finally {
@@ -112,6 +158,8 @@ public class QueryProcessor {
 
     /**
      * Converts a SqlNode to a relational plan.
+     * Uses direct SqlValidator and SqlToRelConverter instead of Frameworks.
+     * Reference: ShardingSphere SQLFederationRelConverter.
      *
      * @param sqlNode the parsed SQL node
      * @param context the query context
@@ -120,39 +168,19 @@ public class QueryProcessor {
      */
     private org.apache.calcite.rel.RelNode convertToRelational(
                                                                final SqlNode sqlNode, final QueryContext context) {
-        structuredLogger.debug(context, "Converting SQL to relational plan");
-        org.apache.calcite.tools.Planner planner = null;
+        structuredLogger.debug(context, "Converting SQL to relational plan using RelConverter");
         try {
-            final org.apache.calcite.tools.FrameworkConfig frameworkConfig = buildFrameworkConfig();
-            planner = org.apache.calcite.tools.Frameworks.getPlanner(frameworkConfig);
-            return planner.rel(sqlNode).project();
+            // Convert SQL to RelNode using the direct approach (no Frameworks)
+            // This follows ShardingSphere's SQLFederationRelConverter pattern
+            // Use getRelConverter() to ensure lazy initialization after metadata is loaded
+            final RelRoot relRoot = getRelConverter().convertQuery(sqlNode, true, true);
+            return relRoot.rel;
             // CHECKSTYLE:OFF
         } catch (final Exception ex) {
             // CHECKSTYLE:ON
             structuredLogger.error(context, "Failed to convert to relational plan: {}", ex.getMessage());
             throw new RuntimeException("Failed to convert SQL to relational plan: " + ex.getMessage(), ex);
-        } finally {
-            if (planner != null) {
-                try {
-                    planner.close();
-                    // CHECKSTYLE:OFF IllegalCatch
-                } catch (final Exception ex) {
-                    // CHECKSTYLE:ON
-                    // Ignore close errors
-                }
-            }
         }
-    }
-
-    /**
-     * Builds the Calcite framework configuration.
-     *
-     * @return the framework configuration
-     */
-    private org.apache.calcite.tools.FrameworkConfig buildFrameworkConfig() {
-        return org.apache.calcite.tools.Frameworks.newConfigBuilder()
-                .defaultSchema(metadataManager.getRootSchema())
-                .build();
     }
 
     /**
@@ -226,6 +254,7 @@ public class QueryProcessor {
             return connection.executeQuery(targetSql);
             // CHECKSTYLE:OFF
         } catch (final Exception ex) {
+            ex.printStackTrace();
             // CHECKSTYLE:ON
             structuredLogger.error(context, "Stage execution failed: {}", ex.getMessage());
             return QueryResult.failure("Stage execution failed: " + ex.getMessage());
@@ -259,19 +288,22 @@ public class QueryProcessor {
         final String normalizedName = dataSourceId.replaceAll("[\\[\\]]", "").split(",")[0];
         final com.intellisql.kernel.config.DataSourceConfig config =
                 dataSourceManager.getDataSourceConfig(normalizedName);
-        final com.intellisql.connector.config.DataSourceConfig connectorConfig = convertConfig(config);
+        final com.intellisql.connector.config.DataSourceConfig connectorConfig = convertConfig(normalizedName, config);
         return connector.connect(connectorConfig);
     }
 
     /**
      * Converts kernel DataSourceConfig to connector DataSourceConfig.
      *
+     * @param dataSourceName the data source name
      * @param kernelConfig the kernel configuration
      * @return the connector configuration
      */
     private com.intellisql.connector.config.DataSourceConfig convertConfig(
+                                                                           final String dataSourceName,
                                                                            final com.intellisql.kernel.config.DataSourceConfig kernelConfig) {
         return com.intellisql.connector.config.DataSourceConfig.builder()
+                .name(dataSourceName)
                 .type(com.intellisql.connector.enums.DataSourceType.valueOf(kernelConfig.getType().name()))
                 .jdbcUrl(kernelConfig.getUrl())
                 .username(kernelConfig.getUsername())

@@ -63,11 +63,12 @@
         <jackson.version>2.16.1</jackson.version>
         <mysql.connector.version>8.3.0</mysql.connector.version>
         <postgresql.version>42.7.1</postgresql.version>
-        <elasticsearch.version>8.12.0</elasticsearch.version>
-        <!-- Test versions -->
-        <junit.version>5.10.2</junit.version>
-        <mockito.version>5.9.0</mockito.version>
-        <assertj.version>3.25.2</assertj.version>
+        <!-- Elasticsearch 7.x for JDK 8 compatibility -->
+        <elasticsearch.version>7.17.18</elasticsearch.version>
+        <!-- Test versions - JDK 8 compatible -->
+        <junit.version>5.8.2</junit.version>
+        <mockito.version>4.11.0</mockito.version>
+        <assertj.version>3.24.2</assertj.version>
         <testcontainers.version>1.19.4</testcontainers.version>
         <!-- Plugin versions -->
         <spotless.version>2.43.0</spotless.version>
@@ -164,9 +165,10 @@
                 <artifactId>postgresql</artifactId>
                 <version>${postgresql.version}</version>
             </dependency>
+            <!-- Elasticsearch 7.x for JDK 8 compatibility -->
             <dependency>
-                <groupId>co.elastic.clients</groupId>
-                <artifactId>elasticsearch-java</artifactId>
+                <groupId>org.elasticsearch.client</groupId>
+                <artifactId>elasticsearch-rest-high-level-client</artifactId>
                 <version>${elasticsearch.version}</version>
             </dependency>
             <!-- Test Dependencies -->

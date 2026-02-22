@@ -30,7 +30,7 @@ import lombok.Singular;
 
 /** Represents a database schema containing tables and views. */
 @Data
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class Schema {

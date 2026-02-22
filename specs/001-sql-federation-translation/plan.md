@@ -503,3 +503,552 @@ public class ExtensionSqlParserTest extends SqlParserTest {
 
 1. ⏭️ 运行 `/speckit.tasks` 生成 intellisql-parser 详细任务列表
 2. 开始 Phase 1 基础框架实现
+
+---
+
+# 模块实现计划：联邦查询增强 (intellisql-optimizer & intellisql-executor)
+
+**参考实现**: ShardingSphere sql-federation
+**日期**: 2026-02-20
+**目标**: 实现混合优化器策略、完整代价模型、Volcano 迭代器执行模型
+
+## 模块概述
+
+基于 spec.md Session 2026-02-20 的澄清，在现有联邦查询实现基础上增强以下能力：
+
+| 功能 | 说明 | 参考实现 |
+|------|------|----------|
+| 混合优化器策略 | HepPlanner (RBO) + VolcanoPlanner (CBO) | ShardingSphere sql-federation |
+| 完整代价模型 | CPU + I/O + 网络 + 内存 | Calcite RelOptCost |
+| 扩展 RBO 规则集 | filter/projection pushdown, join reorder, subquery rewrite, aggregate split | ShardingSphere |
+| Volcano 迭代器模型 | open-next-close 协议 | Volcano Executor |
+| RelMetadataQuery | 标准 Calcite 统计信息集成 | Calcite Metadata |
+
+## 现有实现分析
+
+### 关键文件
+
+```
+intellisql-optimizer/
+├── src/main/java/com/intellisql/optimizer/
+│   ├── Optimizer.java                    # 当前仅 HepPlanner (RBO)
+│   ├── plan/
+│   │   ├── ExecutionPlan.java
+│   │   └── ExecutionStage.java
+│   └── rule/
+│       ├── PredicatePushDownRule.java    # 已实现
+│       └── ProjectionPushDownRule.java   # 已实现
+
+intellisql-executor/
+├── src/main/java/com/intellisql/executor/
+│   ├── FederatedQueryExecutor.java       # 跨源 JOIN 执行
+│   ├── QueryExecutor.java
+│   └── IntermediateResultLimiter.java
+
+intellisql-kernel/
+├── src/main/java/com/intellisql/kernel/
+│   ├── IntelliSqlKernel.java             # 核心入口
+│   ├── QueryProcessor.java               # 查询处理管道
+│   └── metadata/MetadataManager.java
+```
+
+### 当前优化流程
+
+```
+SQL → SqlParserFactory.parseWithBabel() → SqlNode
+    → planner.rel() → RelNode (Logical Plan)
+    → Optimizer.optimize() [HepPlanner only] → RelNode (Optimized)
+    → Optimizer.generateExecutionPlan() → ExecutionPlan
+    → QueryProcessor.executePlan() → QueryResult
+```
+
+## 技术架构设计
+
+### 1. 混合优化器策略
+
+**目标**: 实现两阶段优化 RBO → CBO
+
+**新增文件**:
+
+```
+intellisql-optimizer/src/main/java/com/intellisql/optimizer/
+├── HybridOptimizer.java              # 混合优化器入口
+├── RboOptimizer.java                 # RBO 优化器（重构自 Optimizer）
+├── CboOptimizer.java                 # CBO 优化器（新增）
+├── cost/
+│   ├── FederatedCost.java            # 代价实现
+│   ├── FederatedCostFactory.java     # 代价工厂
+│   └── CostFactor.java               # 代价因子枚举
+└── metadata/
+    ├── FederatedMetadataProvider.java # 元数据提供者
+    └── StatisticsHandler.java         # 统计信息处理器
+```
+
+**优化流程**:
+
+```
+                    ┌─────────────────────────────────────────┐
+                    │              HybridOptimizer             │
+                    └─────────────────────────────────────────┘
+                                       │
+                    ┌──────────────────┴──────────────────┐
+                    ▼                                      ▼
+        ┌───────────────────┐                  ┌───────────────────┐
+        │   RboOptimizer    │                  │   CboOptimizer    │
+        │   (HepPlanner)    │                  │ (VolcanoPlanner)  │
+        └───────────────────┘                  └───────────────────┘
+                    │                                      │
+                    │  • PredicatePushDown                │  • JoinReorder
+                    │  • ProjectionPushDown               │  • CostBasedJoinOrder
+                    │  • SubqueryRewrite                  │  • AccessPathSelection
+                    │  • AggregateSplit                   │
+                    ▼                                      ▼
+        ┌─────────────────────────────────────────────────────┐
+        │                   Optimized Plan                     │
+        └─────────────────────────────────────────────────────┘
+```
+
+**关键实现**:
+
+```java
+public class HybridOptimizer {
+    private final RboOptimizer rboOptimizer;
+    private final CboOptimizer cboOptimizer;
+    public RelNode optimize(RelNode logicalPlan) {
+        // Phase 1: RBO - 规则优化（确定性转换）
+        RelNode afterRbo = rboOptimizer.optimize(logicalPlan);
+        // Phase 2: CBO - 代价优化（基于统计信息）
+        return cboOptimizer.optimize(afterRbo);
+    }
+}
+```
+
+### 2. 完整代价模型
+
+**目标**: CPU + I/O + 网络 + 内存四维代价
+
+**代价因子**:
+
+| 因子 | 权重 | 说明 |
+|------|------|------|
+| CPU | 1.0 | 计算代价（表达式求值、函数调用） |
+| IO | 10.0 | 磁盘 I/O 代价（表扫描） |
+| NETWORK | 100.0 | 网络传输代价（跨源 JOIN 关键） |
+| MEMORY | 5.0 | 内存使用代价（中间结果缓存） |
+
+**代价计算**:
+
+```java
+public class FederatedCost implements RelOptCost {
+    private final double cpu;
+    private final double io;
+    private final double network;
+    private final double memory;
+    private static final double CPU_WEIGHT = 1.0;
+    private static final double IO_WEIGHT = 10.0;
+    private static final double NETWORK_WEIGHT = 100.0;
+    private static final double MEMORY_WEIGHT = 5.0;
+    @Override
+    public double getValue() {
+        return cpu * CPU_WEIGHT
+             + io * IO_WEIGHT
+             + network * NETWORK_WEIGHT
+             + memory * MEMORY_WEIGHT;
+    }
+    public boolean isLt(RelOptCost other) {
+        return this.getValue() < other.getValue();
+    }
+}
+```
+
+**跨源 JOIN 代价估算**:
+
+```java
+public class FederatedJoinCostEstimator {
+    public FederatedCost estimateJoinCost(RelNode left, RelNode right, JoinInfo joinInfo) {
+        double leftRows = estimateRowCount(left);
+        double rightRows = estimateRowCount(right);
+        double resultRows = estimateJoinResultRows(leftRows, rightRows, joinInfo);
+        // 网络代价：需要传输的数据量
+        double networkCost = (leftRows + rightRows) * getAvgRowSize(left, right);
+        // CPU 代价：JOIN 计算
+        double cpuCost = leftRows * rightRows * JOIN_CPU_FACTOR;
+        // 内存代价：中间结果
+        double memoryCost = resultRows * getAvgRowSize(left, right);
+        return new FederatedCost(cpuCost, 0, networkCost, memoryCost);
+    }
+}
+```
+
+### 3. 扩展 RBO 规则集
+
+**目标**: 参考 ShardingSphere 完善规则
+
+**新增规则** (位于 `intellisql-optimizer/src/main/java/com/intellisql/optimizer/rule/`):
+
+| 规则 | 类名 | 功能 | 优先级 |
+|------|------|------|--------|
+| JOIN 重排序 | `JoinReorderRule.java` | 小表驱动大表，减少中间结果 | P0 |
+| 子查询重写 | `SubqueryRewriteRule.java` | 子查询转 JOIN | P0 |
+| 聚合拆分 | `AggregateSplitRule.java` | 聚合下推到数据源 | P1 |
+| UNION 合并 | `UnionMergeRule.java` | UNION 优化合并 | P2 |
+| LIMIT 下推 | `LimitPushDownRule.java` | LIMIT 下推到数据源 | P0 |
+
+**规则注册**:
+
+```java
+public class RboOptimizer {
+    private List<RelOptRule> buildDefaultRules() {
+        List<RelOptRule> rules = new LinkedList<>();
+        // 已有规则
+        rules.add(PredicatePushDownRule.INSTANCE);
+        rules.add(ProjectionPushDownRule.INSTANCE);
+        // 新增规则
+        rules.add(JoinReorderRule.INSTANCE);
+        rules.add(SubqueryRewriteRule.INSTANCE);
+        rules.add(AggregateSplitRule.INSTANCE);
+        rules.add(LimitPushDownRule.INSTANCE);
+        return rules;
+    }
+}
+```
+
+**ShardingSphere 规则参考**:
+
+```
+shardingsphere-sql-parser/
+└── sql-federation-features/
+    └── optimizer/
+        ├── src/main/java/org/apache/shardingsphere/sqlfederation/optimizer/
+        │   ├── rule/
+        │   │   ├── FilterPushDownRule.java
+        │   │   ├── ProjectPushDownRule.java
+        │   │   ├── JoinReorderRule.java
+        │   │   └── SubqueryRewriteRule.java
+        │   └── ...
+```
+
+### 4. Volcano 迭代器执行模型
+
+**目标**: open-next-close 协议的流式执行
+
+**新增文件**:
+
+```
+intellisql-executor/src/main/java/com/intellisql/executor/
+├── iterator/
+│   ├── QueryIterator.java            # 迭代器接口
+│   ├── AbstractOperator.java         # 算子基类
+│   ├── TableScanOperator.java        # 表扫描算子
+│   ├── JoinOperator.java             # JOIN 算子
+│   ├── FilterOperator.java           # 过滤算子
+│   ├── ProjectOperator.java          # 投影算子
+│   ├── AggregateOperator.java        # 聚合算子
+│   └── SortOperator.java             # 排序算子
+└── plan/
+    └── PhysicalPlanConverter.java    # RelNode → Operator Tree
+```
+
+**接口设计**:
+
+```java
+public interface QueryIterator extends AutoCloseable {
+    /**
+     * 初始化资源（打开游标、建立连接等）
+     */
+    void open() throws SQLException;
+    /**
+     * 是否有更多数据
+     */
+    boolean hasNext() throws SQLException;
+    /**
+     * 获取下一行数据
+     */
+    Row next() throws SQLException;
+    /**
+     * 释放资源（关闭游标、释放连接等）
+     */
+    void close() throws SQLException;
+}
+```
+
+**算子基类**:
+
+```java
+public abstract class AbstractOperator implements QueryIterator {
+    protected final List<QueryIterator> children;
+    protected boolean isOpened = false;
+    protected AbstractOperator(List<QueryIterator> children) {
+        this.children = children;
+    }
+    @Override
+    public void open() throws SQLException {
+        for (QueryIterator each : children) {
+            each.open();
+        }
+        isOpened = true;
+    }
+    @Override
+    public void close() throws SQLException {
+        for (QueryIterator each : children) {
+            each.close();
+        }
+        isOpened = false;
+    }
+}
+```
+
+**JOIN 算子示例**:
+
+```java
+public class JoinOperator extends AbstractOperator {
+    private final JoinType joinType;
+    private final JoinCondition condition;
+    private final KeyExtractor leftKeyExtractor;
+    private final KeyExtractor rightKeyExtractor;
+    private Iterator<Row> resultIterator;
+    @Override
+    public void open() throws SQLException {
+        super.open();
+        // 构建哈希索引
+        Map<Object, List<Row>> rightIndex = buildHashIndex(children.get(1));
+        // 执行 JOIN
+        List<Row> joined = performJoin(rightIndex);
+        resultIterator = joined.iterator();
+    }
+    @Override
+    public boolean hasNext() throws SQLException {
+        return resultIterator != null && resultIterator.hasNext();
+    }
+    @Override
+    public Row next() throws SQLException {
+        return resultIterator.next();
+    }
+}
+```
+
+**执行计划转换**:
+
+```java
+public class PhysicalPlanConverter {
+    public QueryIterator convert(RelNode relNode) {
+        if (relNode instanceof TableScan) {
+            return new TableScanOperator((TableScan) relNode);
+        } else if (relNode instanceof Join) {
+            Join join = (Join) relNode;
+            QueryIterator left = convert(join.getLeft());
+            QueryIterator right = convert(join.getRight());
+            return new JoinOperator(left, right, join.getCondition());
+        } else if (relNode instanceof Filter) {
+            Filter filter = (Filter) relNode;
+            QueryIterator child = convert(filter.getInput());
+            return new FilterOperator(child, filter.getCondition());
+        }
+        // ... 其他算子
+        throw new UnsupportedOperationException("Unsupported RelNode: " + relNode.getClass());
+    }
+}
+```
+
+### 5. RelMetadataQuery 元数据支持
+
+**目标**: 标准 Calcite 统计信息集成
+
+**新增文件**:
+
+```
+intellisql-optimizer/src/main/java/com/intellisql/optimizer/metadata/
+├── FederatedMetadataProvider.java    # 元数据提供者
+├── FederatedRelMetadataQuery.java    # 元数据查询
+├── StatisticsHandler.java            # 统计信息处理
+└── TableStatistics.java              # 表统计信息
+```
+
+**统计信息类型**:
+
+| 统计信息 | 方法 | 说明 |
+|----------|------|------|
+| 行数估计 | `getRowCount(RelNode)` | 表或表达式行数 |
+| 唯一值数量 | `getDistinctCount(RelNode, int)` | 列的唯一值数量 |
+| 选择性 | `getSelectivity(RelNode, RexNode)` | 谓词选择性 |
+| 数据分布 | `getDistribution(RelNode)` | 数据分布信息 |
+
+**元数据提供者**:
+
+```java
+public class FederatedMetadataProvider extends RelMetadataProvider {
+    @Override
+    public <M extends Metadata> UnboundMetadata<M> apply(Class<? extends RelNode> relClass, Class<M> metadataClass) {
+        if (metadataClass == RelMdRowCount.class) {
+            return (rel, mq) -> (M) new RelMdRowCount() {
+                @Override
+                public Double getRowCount(TableScan rel, RelMetadataQuery mq) {
+                    return getTableStatistics(rel).getRowCount();
+                }
+            };
+        }
+        // ... 其他元数据类型
+        return null;
+    }
+    private TableStatistics getTableStatistics(TableScan tableScan) {
+        String tableName = tableScan.getTable().getQualifiedName().toString();
+        return statisticsCache.get(tableName);
+    }
+}
+```
+
+**统计信息收集**:
+
+```java
+public class StatisticsHandler {
+    private final MetadataManager metadataManager;
+    public TableStatistics collectStatistics(String dataSourceId, String tableName) {
+        DataSourceConnector connector = getConnector(dataSourceId);
+        // 执行统计查询
+        long rowCount = executeCountQuery(connector, tableName);
+        Map<String, Long> distinctCounts = executeDistinctCountQuery(connector, tableName);
+        return new TableStatistics(tableName, rowCount, distinctCounts);
+    }
+}
+```
+
+## 实现计划
+
+### Phase 1: 优化器重构 (预估: 3天)
+
+**任务列表**:
+
+1. [ ] 重构 `Optimizer.java` → `RboOptimizer.java`
+2. [ ] 实现 `CboOptimizer.java` (VolcanoPlanner)
+3. [ ] 实现 `HybridOptimizer.java` (组合 RBO + CBO)
+4. [ ] 更新 `QueryProcessor.java` 使用 `HybridOptimizer`
+5. [ ] 单元测试
+
+**依赖**: 无
+
+### Phase 2: 代价模型 (预估: 2天)
+
+**任务列表**:
+
+1. [ ] 实现 `FederatedCost.java` (RelOptCost 接口)
+2. [ ] 实现 `FederatedCostFactory.java` (代价工厂)
+3. [ ] 实现 `CostFactor.java` (代价因子枚举)
+4. [ ] 注册到 VolcanoPlanner
+5. [ ] 单元测试
+
+**依赖**: Phase 1
+
+### Phase 3: 扩展规则 (预估: 3天)
+
+**任务列表**:
+
+1. [ ] 实现 `JoinReorderRule.java` (JOIN 重排序)
+2. [ ] 实现 `SubqueryRewriteRule.java` (子查询重写)
+3. [ ] 实现 `AggregateSplitRule.java` (聚合拆分)
+4. [ ] 实现 `LimitPushDownRule.java` (LIMIT 下推)
+5. [ ] 注册规则到 RboOptimizer
+6. [ ] 单元测试
+
+**依赖**: Phase 1
+
+### Phase 4: 迭代器模型 (预估: 4天)
+
+**任务列表**:
+
+1. [ ] 定义 `QueryIterator` 接口
+2. [ ] 实现 `AbstractOperator` 基类
+3. [ ] 实现 `TableScanOperator`
+4. [ ] 实现 `JoinOperator`
+5. [ ] 实现 `FilterOperator`
+6. [ ] 实现 `ProjectOperator`
+7. [ ] 实现 `PhysicalPlanConverter`
+8. [ ] 集成到 `FederatedQueryExecutor`
+9. [ ] 集成测试
+
+**依赖**: Phase 1, Phase 2, Phase 3
+
+### Phase 5: 元数据集成 (预估: 2天)
+
+**任务列表**:
+
+1. [ ] 实现 `FederatedMetadataProvider.java`
+2. [ ] 实现 `FederatedRelMetadataQuery.java`
+3. [ ] 实现 `StatisticsHandler.java`
+4. [ ] 实现 `TableStatistics.java`
+5. [ ] 集成到优化器
+6. [ ] 单元测试
+
+**依赖**: Phase 2
+
+## 宪法检查（联邦查询增强）
+
+| 原则 | 状态 | 合规说明 |
+|------|------|----------|
+| 用心 | ✅ | 参考 ShardingSphere 成熟实现，工匠精神 |
+| 可读 | ✅ | 清晰的分层架构，接口设计明确 |
+| 整洁 | ✅ | 无无用空行，遵循编码规范 |
+| 一致 | ✅ | 与 ShardingSphere 风格保持一致 |
+| 精简 | ✅ | DRY 原则，复用 Calcite 基础设施 |
+| 抽象 | ✅ | Optimizer、Cost、Iterator 层次清晰 |
+| 极致 | ✅ | 无占位符代码，每行有意义 |
+
+## 测试策略
+
+### 单元测试
+
+| 测试类 | 覆盖范围 |
+|--------|----------|
+| HybridOptimizerTest | 混合优化流程测试 |
+| CboOptimizerTest | CBO 优化测试 |
+| FederatedCostTest | 代价计算测试 |
+| JoinReorderRuleTest | JOIN 重排序测试 |
+| QueryIteratorTest | 迭代器协议测试 |
+| PhysicalPlanConverterTest | 计划转换测试 |
+
+### 集成测试
+
+```java
+@Test
+void assertFederatedJoinWithCostBasedOptimization() {
+    // 配置两个数据源
+    configureDataSource("mysql_db", DataSourceType.MYSQL);
+    configureDataSource("es_logs", DataSourceType.ELASTICSEARCH);
+    // 执行跨源 JOIN
+    String sql = "SELECT o.id, o.customer_name, l.access_time " +
+                 "FROM mysql_db.orders o " +
+                 "JOIN es_logs.access_logs l ON o.id = l.order_id " +
+                 "WHERE o.status = 'completed'";
+    QueryResult result = kernel.query(sql);
+    // 验证结果
+    assertThat(result.isSuccess(), is(true));
+    assertThat(result.getRowCount(), greaterThan(0));
+}
+```
+
+### 性能测试
+
+| 场景 | 目标 | 验证方式 |
+|------|------|----------|
+| 单表查询 | 额外开销 <50ms | 基准测试 |
+| 跨源 JOIN (10万行) | <5s | 集成测试 |
+| 大结果集 (100万行) | 无 OOM | 内存监控 |
+
+## 风险与缓解
+
+| 风险 | 影响 | 缓解措施 |
+|------|------|----------|
+| VolcanoPlanner 学习曲线 | 中 | 参考 ShardingSphere 实现 |
+| 统计信息缺失导致 CBO 不准确 | 中 | 提供默认统计信息 + 可配置 |
+| 迭代器模型内存管理 | 高 | 严格遵循 open-close 协议 |
+| 跨源 JOIN 网络延迟 | 高 | 网络代价权重设置较高 |
+
+## 参考资料
+
+- Apache Calcite 官方文档: https://calcite.apache.org/docs/
+- ShardingSphere SQL Federation: https://shardingsphere.apache.org/document/current/en/features/sharding/overview/
+- Volcano Executor Model: https://paperhub.s3.amazonaws.com/18e91eb4db2114a07ea42010c985778f.pdf
+
+## 下一步行动
+
+1. ⏭️ 运行 `/speckit.tasks` 生成联邦查询增强详细任务列表
+2. 开始 Phase 1 优化器重构实现
