@@ -143,11 +143,13 @@ isql> \q
 
 ```
 intellisql/
+├── intellisql-common/      # 通用工具与共享模型
 ├── intellisql-parser/      # SQL 解析模块
-├── intellisql-optimizer/   # 查询优化模块
-├── intellisql-executor/    # 查询执行模块
+├── intellisql-features/    # 核心特性聚合模块
+│   ├── intellisql-federation/  # SQL 联邦引擎（元数据、执行）
+│   ├── intellisql-translator/  # SQL 翻译模块
+│   └── intellisql-optimizer/   # 查询优化模块
 ├── intellisql-connector/   # 数据库连接器
-├── intellisql-kernel/      # 核心内核模块
 ├── intellisql-jdbc/        # JDBC 驱动实现
 ├── intellisql-server/      # 服务器实现
 │   └── src/main/resources/
@@ -166,25 +168,25 @@ intellisql/
 
 ## 模块说明
 
+### intellisql-common
+
+通用模块，包含平台共享的工具类、配置管理、元数据定义和公共接口。
+
 ### intellisql-parser
 
 基于 Apache Calcite 的 SQL 解析模块。将 SQL 语句解析为抽象语法树（AST）。
 
-### intellisql-optimizer
+### intellisql-features
 
-查询优化模块。实现基于代价的优化、谓词下推和连接优化。
+核心特性聚合模块：
 
-### intellisql-executor
-
-查询执行引擎。跨多个数据源执行优化后的查询计划。
+- **intellisql-federation**：核心联邦引擎，处理元数据管理、模式发现和分布式查询执行。
+- **intellisql-translator**：SQL 翻译模块，用于在不同 SQL 方言之间进行转换。
+- **intellisql-optimizer**：基于代价的查询优化模块，支持谓词下推能力。
 
 ### intellisql-connector
 
 数据库连接器实现。为 MySQL、PostgreSQL 和 Elasticsearch 提供统一接口。
-
-### intellisql-kernel
-
-核心内核模块，包含共享工具、配置管理和公共接口。
 
 ### intellisql-jdbc
 
