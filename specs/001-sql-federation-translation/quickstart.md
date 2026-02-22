@@ -43,6 +43,9 @@ cd intellisql
 # Build project (first build downloads dependencies)
 ./mvnw clean install -DskipTests
 
+# [Optional] Build isql native image (Requires GraalVM, ~5 mins)
+# ./mvnw -Pnative -pl intellisql-client package
+
 # Expected output:
 # [INFO] BUILD SUCCESS
 # [INFO] Total time:  02:15 min
@@ -104,8 +107,11 @@ public class QuickStart {
 #### 使用 isql CLI
 
 ```bash
-# Start isql client
+# Start isql client (JVM mode)
 ./bin/isql
+
+# OR Start native executable (if built)
+# ./intellisql-client/target/isql
 
 # Execute queries
 isql> SHOW SCHEMAS;
@@ -130,24 +136,29 @@ isql> exit
 
 ```
 intellisql/
-├── intellisql-parser/          # SQL parsing & translation
-├── intellisql-optimizer/       # Query optimization
-├── intellisql-executor/        # Query execution
-├── intellisql-connector/       # Data source adapters
+├── intellisql-common/              # Common infrastructure (config, logging, retry, metadata entities)
+├── intellisql-parser/              # SQL parsing
+├── intellisql-features/            # Feature modules parent
+│   ├── intellisql-optimizer/       # Query optimization (RBO + CBO)
+│   ├── intellisql-translator/      # SQL translation
+│   └── intellisql-federation/      # Federation query core (kernel + executor)
+├── intellisql-connector/           # Data source adapters
 │   ├── src/main/java/
-│   │   ├── api/                # Connector SPI
-│   │   ├── mysql/              # MySQL adapter
-│   │   ├── postgresql/         # PostgreSQL adapter
-│   │   └── elasticsearch/      # Elasticsearch adapter
-├── intellisql-kernel/          # Core orchestration
-├── intellisql-jdbc/            # JDBC driver
-├── intellisql-server/          # Server implementation
-├── intellisql-client/          # isql CLI
-├── intellisql-test/            # Testing
-│   ├── intellisql-test-it/     # Integration tests
-│   └── intellisql-test-e2e/    # End-to-end tests
+│   │   ├── api/                    # Connector SPI
+│   │   ├── mysql/                  # MySQL adapter
+│   │   ├── postgresql/             # PostgreSQL adapter
+│   │   └── elasticsearch/          # Elasticsearch adapter
+├── intellisql-jdbc/                # JDBC driver
+├── intellisql-server/              # Server implementation (Avatica protocol)
+├── intellisql-client/              # isql CLI
+├── intellisql-distribution/        # Packaging and distribution
+│   ├── intellisql-distribution-jdbc/
+│   └── intellisql-distribution-server/
+├── intellisql-test/                # Testing
+│   ├── intellisql-test-it/         # Integration tests
+│   └── intellisql-test-e2e/        # End-to-end tests
 └── conf/
-    └── model.yaml              # Configuration (YAML format)
+    └── model.yaml                  # Configuration (YAML format)
 ```
 
 ## 开发工作流
