@@ -21,11 +21,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import com.intellisql.federation.IntelliSqlKernel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.intellisql.kernel.IntelliSqlKernel;
-import com.intellisql.kernel.config.ModelConfig;
+import com.intellisql.common.config.ModelConfig;
 
 /**
  * Integration tests for cross-source JOIN functionality.
@@ -40,7 +40,7 @@ class CrossSourceJoinIT {
         final String configPath = System.getenv("INTELLISQL_TEST_CONFIG");
         assumeTrue(configPath != null, "Test config not set, skipping IT");
 
-        final ModelConfig config = com.intellisql.kernel.config.ConfigLoader.load(
+        final ModelConfig config = com.intellisql.common.config.ConfigLoader.load(
                 java.nio.file.Paths.get(configPath));
         kernel = new IntelliSqlKernel(config);
         kernel.initialize();

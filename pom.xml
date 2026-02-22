@@ -32,11 +32,10 @@
         </license>
     </licenses>
     <modules>
+        <module>intellisql-common</module>
         <module>intellisql-parser</module>
-        <module>intellisql-optimizer</module>
-        <module>intellisql-executor</module>
+        <module>intellisql-features</module>
         <module>intellisql-connector</module>
-        <module>intellisql-kernel</module>
         <module>intellisql-jdbc</module>
         <module>intellisql-server</module>
         <module>intellisql-client</module>
@@ -81,6 +80,63 @@
     </properties>
     <dependencyManagement>
         <dependencies>
+            <!-- Internal Modules -->
+            <dependency>
+                <groupId>com.intellisql</groupId>
+                <artifactId>intellisql-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.intellisql</groupId>
+                <artifactId>intellisql-parser</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.intellisql</groupId>
+                <artifactId>intellisql-features</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.intellisql</groupId>
+                <artifactId>intellisql-federation</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.intellisql</groupId>
+                <artifactId>intellisql-translator</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.intellisql</groupId>
+                <artifactId>intellisql-optimizer</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.intellisql</groupId>
+                <artifactId>intellisql-connector</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.intellisql</groupId>
+                <artifactId>intellisql-jdbc</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.intellisql</groupId>
+                <artifactId>intellisql-server</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.intellisql</groupId>
+                <artifactId>intellisql-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.intellisql</groupId>
+                <artifactId>intellisql-distribution</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            
             <!-- Apache Calcite -->
             <dependency>
                 <groupId>org.apache.calcite</groupId>

@@ -17,6 +17,9 @@
 
 package com.intellisql.server;
 
+import com.intellisql.connector.model.QueryResult;
+import com.intellisql.federation.IntelliSqlKernel;
+import com.intellisql.federation.metadata.MetadataManager;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -28,9 +31,6 @@ import org.apache.calcite.avatica.NoSuchConnectionException;
 import org.apache.calcite.avatica.NoSuchStatementException;
 import org.apache.calcite.avatica.QueryState;
 import org.apache.calcite.avatica.remote.TypedValue;
-import com.intellisql.connector.model.QueryResult;
-import com.intellisql.kernel.IntelliSqlKernel;
-import com.intellisql.kernel.metadata.MetadataManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -312,7 +312,7 @@ public class IntelliSqlMeta implements Meta {
         List<Object> rows = new ArrayList<>();
         if (metadataManager != null) {
             log.info("Getting tables from metadataManager, current count: {}", metadataManager.getAllTables().size());
-            for (com.intellisql.kernel.metadata.Table table : metadataManager.getAllTables()) {
+            for (com.intellisql.common.metadata.Table table : metadataManager.getAllTables()) {
                 log.info("Found table: {}", table.getName());
                 rows.add(Collections.singletonList(table.getName()));
             }

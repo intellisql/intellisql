@@ -26,8 +26,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.calcite.avatica.remote.LocalService;
 import org.apache.calcite.avatica.server.AvaticaProtobufHandler;
 import org.apache.calcite.avatica.server.HttpServer;
-import com.intellisql.kernel.IntelliSqlKernel;
-import com.intellisql.kernel.metadata.MetadataManager;
+import com.intellisql.federation.IntelliSqlKernel;
+import com.intellisql.federation.metadata.MetadataManager;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
