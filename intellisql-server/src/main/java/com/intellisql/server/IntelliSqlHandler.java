@@ -19,7 +19,7 @@ package com.intellisql.server;
 
 import java.sql.SQLException;
 
-import com.intellisql.kernel.IntelliSqlKernel;
+import com.intellisql.federation.IntelliSqlKernel;
 
 import lombok.extern.slf4j.Slf4j;
 

@@ -29,7 +29,7 @@
         <!-- IntelliSql modules -->
         <dependency>
             <groupId>com.intellisql</groupId>
-            <artifactId>intellisql-kernel</artifactId>
+            <artifactId>intellisql-federation</artifactId>
             <version>${project.version}</version>
         </dependency>
         

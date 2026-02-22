@@ -20,11 +20,11 @@ package com.intellisql.client.command;
 import com.intellisql.client.ClientException;
 import com.intellisql.client.IntelliSqlClient;
 import com.intellisql.client.ResultFormatter;
-import com.intellisql.parser.SqlTranslator;
-import com.intellisql.parser.Translation;
-import com.intellisql.parser.TranslationMode;
-import com.intellisql.parser.dialect.SqlDialect;
+import com.intellisql.common.dialect.SqlDialect;
 
+import com.intellisql.translator.SqlTranslator;
+import com.intellisql.translator.Translation;
+import com.intellisql.translator.TranslationMode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

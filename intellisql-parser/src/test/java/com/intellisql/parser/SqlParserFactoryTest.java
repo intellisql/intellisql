@@ -19,7 +19,7 @@ package com.intellisql.parser;
 
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParseException;
-import com.intellisql.parser.dialect.SqlDialect;
+import com.intellisql.common.dialect.SqlDialect;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
