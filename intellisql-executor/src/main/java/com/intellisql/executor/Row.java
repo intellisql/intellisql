@@ -20,19 +20,45 @@ package com.intellisql.executor;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 /**
  * Represents a single row of data in a result set. Provides type-safe accessors for column values.
  */
 @Getter
-@RequiredArgsConstructor
 public class Row {
 
     /** The column values in this row. */
-    private final Object[] values;
+    private final List<Object> values;
+
+    /** The column names (optional). */
+    private final List<String> columnNames;
+
+    /**
+     * Creates a new Row with the given values array.
+     *
+     * @param values the column values
+     */
+    public Row(final Object[] values) {
+        this.values = values != null ? Arrays.asList(values) : Collections.emptyList();
+        this.columnNames = Collections.emptyList();
+    }
+
+    /**
+     * Creates a new Row with the given values and column names.
+     *
+     * @param values      the column values
+     * @param columnNames the column names
+     */
+    public Row(final List<Object> values, final List<String> columnNames) {
+        this.values = values != null ? new ArrayList<>(values) : Collections.emptyList();
+        this.columnNames = columnNames != null ? new ArrayList<>(columnNames) : Collections.emptyList();
+    }
 
     /**
      * Gets the number of columns in this row.
@@ -40,7 +66,16 @@ public class Row {
      * @return the column count
      */
     public int getColumnCount() {
-        return values != null ? values.length : 0;
+        return values.size();
+    }
+
+    /**
+     * Gets the number of columns in this row (alias for getColumnCount).
+     *
+     * @return the column count
+     */
+    public int size() {
+        return values.size();
     }
 
     /**
@@ -52,7 +87,61 @@ public class Row {
      */
     public Object getObject(final int index) {
         checkIndex(index);
-        return values[index];
+        return values.get(index);
+    }
+
+    /**
+     * Gets a column value by index (alias for getObject).
+     *
+     * @param index zero-based column index
+     * @return the column value
+     * @throws IndexOutOfBoundsException if index is out of range
+     */
+    public Object getValue(final int index) {
+        return getObject(index);
+    }
+
+    /**
+     * Gets a column value by column name.
+     *
+     * @param columnName the column name
+     * @return the column value
+     * @throws IllegalArgumentException if the column name is not found
+     */
+    public Object getValue(final String columnName) {
+        final int index = getColumnIndex(columnName);
+        if (index < 0) {
+            throw new IllegalArgumentException("Column not found: " + columnName);
+        }
+        return values.get(index);
+    }
+
+    /**
+     * Gets the column index by name.
+     *
+     * @param columnName the column name
+     * @return the column index, or -1 if not found
+     */
+    public int getColumnIndex(final String columnName) {
+        return columnNames.indexOf(columnName);
+    }
+
+    /**
+     * Gets all column values as a list.
+     *
+     * @return the list of values
+     */
+    public List<Object> getValues() {
+        return Collections.unmodifiableList(values);
+    }
+
+    /**
+     * Gets all column names.
+     *
+     * @return the list of column names
+     */
+    public List<String> getColumnNames() {
+        return Collections.unmodifiableList(columnNames);
     }
 
     /**
@@ -273,7 +362,7 @@ public class Row {
      */
     public boolean isNull(final int index) {
         checkIndex(index);
-        return values[index] == null;
+        return values.get(index) == null;
     }
 
     /**
@@ -283,13 +372,13 @@ public class Row {
      * @throws IndexOutOfBoundsException if index is out of range
      */
     private void checkIndex(final int index) {
-        if (values == null || index < 0 || index >= values.length) {
+        if (values == null || index < 0 || index >= values.size()) {
             throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + getColumnCount());
         }
     }
 
     /**
-     * Creates a new Row with the given values.
+     * Creates a new Row with the given values array.
      *
      * @param values the column values
      * @return a new Row instance

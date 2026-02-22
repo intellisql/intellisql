@@ -26,28 +26,25 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.cluster.health.ClusterHealthStatus;
+
 import com.intellisql.connector.api.Connection;
 import com.intellisql.connector.api.DataSourceConnector;
 import com.intellisql.connector.config.DataSourceConfig;
 import com.intellisql.connector.enums.DataSourceType;
 import com.intellisql.connector.model.Schema;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch.cluster.HealthResponse;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Elasticsearch implementation of DataSourceConnector. Provides connection management and schema
- * discovery for Elasticsearch clusters. Uses Elasticsearch Java Client 8.12.0 with HTTP/HTTPS
- * support.
+ * discovery for Elasticsearch clusters. Uses Elasticsearch RestHighLevelClient 7.x for JDK 8 compatibility.
  */
 @Slf4j
 public class ElasticsearchConnector implements DataSourceConnector {
 
-    private final Map<String, ElasticsearchClient> clients = new ConcurrentHashMap<>();
+    private final Map<String, RestHighLevelClient> clients = new ConcurrentHashMap<>();
 
     private final ElasticsearchSchemaDiscoverer schemaDiscoverer =
             new ElasticsearchSchemaDiscoverer();
@@ -59,16 +56,19 @@ public class ElasticsearchConnector implements DataSourceConnector {
 
     @Override
     public Connection connect(final DataSourceConfig config) throws Exception {
-        ElasticsearchClient client = getOrCreateClient(config);
+        RestHighLevelClient client = getOrCreateClient(config);
         return new ElasticsearchConnection(client);
     }
 
     @Override
     public boolean testConnection(final DataSourceConfig config) {
         try {
-            ElasticsearchClient client = getOrCreateClient(config);
-            HealthResponse health = client.cluster().health();
-            boolean success = health != null && !"red".equals(health.status().jsonValue());
+            RestHighLevelClient client = getOrCreateClient(config);
+            org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse health =
+                    client.cluster().health(
+                            new org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest(),
+                            org.elasticsearch.client.RequestOptions.DEFAULT);
+            boolean success = health != null && health.getStatus() != ClusterHealthStatus.RED;
             log.info(
                     "Elasticsearch connection test for '{}': {}",
                     config.getName(),
@@ -85,11 +85,11 @@ public class ElasticsearchConnector implements DataSourceConnector {
 
     @Override
     public Schema discoverSchema(final DataSourceConfig config) throws Exception {
-        ElasticsearchClient client = getOrCreateClient(config);
-        return schemaDiscoverer.discoverSchema(client, config.getSchema());
+        RestHighLevelClient client = getOrCreateClient(config);
+        return schemaDiscoverer.discoverSchema(client, config.getSchema(), config.getName());
     }
 
-    private ElasticsearchClient getOrCreateClient(final DataSourceConfig config) {
+    private RestHighLevelClient getOrCreateClient(final DataSourceConfig config) {
         return clients.computeIfAbsent(
                 config.getName(),
                 name -> {
@@ -98,7 +98,7 @@ public class ElasticsearchConnector implements DataSourceConnector {
                 });
     }
 
-    private ElasticsearchClient createClient(final DataSourceConfig config) {
+    private RestHighLevelClient createClient(final DataSourceConfig config) {
         String scheme = getScheme(config);
         String host = config.getHost() != null ? config.getHost() : "localhost";
         int port = config.getPort() > 0 ? config.getPort() : 9200;
@@ -126,10 +126,7 @@ public class ElasticsearchConnector implements DataSourceConnector {
                         requestConfigBuilder -> requestConfigBuilder.setSocketTimeout(socketTimeout));
             }
         }
-        RestClient restClient = builder.build();
-        ElasticsearchTransport transport =
-                new RestClientTransport(restClient, new JacksonJsonpMapper());
-        return new ElasticsearchClient(transport);
+        return new RestHighLevelClient(builder);
     }
 
     private String getScheme(final DataSourceConfig config) {
@@ -150,7 +147,7 @@ public class ElasticsearchConnector implements DataSourceConnector {
                 .forEach(
                         client -> {
                             try {
-                                client._transport().close();
+                                client.close();
                                 // CHECKSTYLE:OFF: IllegalCatch
                             } catch (final Exception ex) {
                                 // CHECKSTYLE:ON: IllegalCatch
@@ -166,10 +163,10 @@ public class ElasticsearchConnector implements DataSourceConnector {
      * @param name the data source name
      */
     public void closeClient(final String name) {
-        ElasticsearchClient client = clients.remove(name);
+        RestHighLevelClient client = clients.remove(name);
         if (client != null) {
             try {
-                client._transport().close();
+                client.close();
                 log.info("Closed Elasticsearch client for: {}", name);
                 // CHECKSTYLE:OFF: IllegalCatch
             } catch (final Exception ex) {

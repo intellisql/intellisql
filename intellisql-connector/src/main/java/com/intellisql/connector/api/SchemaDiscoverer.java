@@ -32,10 +32,11 @@ public interface SchemaDiscoverer {
      *
      * @param connection the JDBC connection
      * @param schemaName the schema name to discover (null for all schemas)
+     * @param dataSourceName the data source configuration name (e.g., "mysql_source")
      * @return the discovered schema
      * @throws Exception if schema discovery fails
      */
-    Schema discoverSchema(Connection connection, String schemaName) throws Exception;
+    Schema discoverSchema(Connection connection, String schemaName, String dataSourceName) throws Exception;
 
     /**
      * Discovers tables from the given connection.

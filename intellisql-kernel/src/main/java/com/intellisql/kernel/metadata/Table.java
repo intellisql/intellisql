@@ -36,6 +36,8 @@ public final class Table {
 
     private final String schemaName;
 
+    private final String dataSourceId;
+
     private final List<Column> columns;
 
     private final List<String> primaryKey;

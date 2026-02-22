@@ -45,8 +45,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MySQLSchemaDiscoverer implements SchemaDiscoverer {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public Schema discoverSchema(final Connection connection, final String schemaName) throws Exception {
+    public Schema discoverSchema(final Connection connection, final String schemaName,
+                                 final String dataSourceName) throws Exception {
         DatabaseMetaData metaData = connection.getMetaData();
         String catalog = schemaName != null ? schemaName : connection.getCatalog();
         Schema schema = discoverTables(connection, schemaName, null);
@@ -55,7 +59,8 @@ public class MySQLSchemaDiscoverer implements SchemaDiscoverer {
             discoverPrimaryKeys(metaData, catalog, table);
             discoverIndexes(metaData, catalog, table);
         }
-        return schema;
+        // Use the data source configuration name, not the catalog name
+        return schema.toBuilder().dataSourceName(dataSourceName).build();
     }
 
     @Override

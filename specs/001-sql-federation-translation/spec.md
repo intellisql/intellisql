@@ -215,7 +215,7 @@
 | 模块 | 职责 |
 |------|------|
 | **intellisql-parser** | SQL 解析与翻译，基于 Calcite Parser.jj 模板（参考 Quicksql 实现，使用 JavaCC + FreeMarker），支持多方言解析和方言间转换，通过 parserImpls.ftl 扩展语法规则 |
-| **intellisql-optimizer** | SQL 优化器，包含查询优化规则、逻辑计划转换、元数据管理（翻译和执行共用） |
+| **intellisql-optimizer** | SQL 优化器，包含查询优化规则、逻辑计划转换、元数据管理（翻译和执行共用）。采用混合优化策略：HepPlanner 用于 RBO（基于规则的优化），VolcanoPlanner 用于 CBO（基于代价的优化） |
 | **intellisql-executor** | SQL 执行引擎，负责查询执行、结果集处理（联邦查询专用） |
 | **intellisql-connector** | 数据源连接器，包含各数据源的 Schema 映射和查询下推规则 |
 
@@ -306,6 +306,14 @@
 - Q: Java 源码空行规范？ → A: Java 源码中不允许有无用空行，所有代码连续编写，方法之间、逻辑块之间无需额外空行分隔
 - Q: Apache Calcite 和 Avatica 版本？ → A: Apache Calcite 使用 1.41.0，Avatica 使用 1.27.0
 - Q: 数据源配置格式与 schemaMappings？ → A: 数据源配置使用扁平化结构，MVP 阶段不支持 schemaMappings（后续根据情况再支持），healthCheckIntervalSeconds > 0 时开启健康检查，否则关闭
+
+### Session 2026-02-20
+
+- Q: Calcite 优化器策略选择？ → A: 混合模式（HepPlanner 用于 RBO 阶段，VolcanoPlanner 用于 CBO 阶段），参考 ShardingSphere sql-federation 实现
+- Q: CBO 代价模型包含哪些因素？ → A: 完整代价模型（CPU + I/O + 网络 + 内存），提供最准确的计划选择
+- Q: RBO 规则集选择？ → A: 参考 ShardingSphere 的规则集实现（包括 filter pushdown、projection pushdown、join reorder、subquery rewrite、aggregate split 等）
+- Q: 联邦查询执行模型？ → A: Volcano 迭代器模型（operator tree with open-next-close 协议）
+- Q: 优化器元数据提供方式？ → A: 使用 Calcite RelMetadataQuery（标准 Calcite 集成，内置统计信息支持）
 
 ### Session 2026-02-19
 

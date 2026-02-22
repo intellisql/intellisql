@@ -412,12 +412,12 @@ public class FederatedQueryExecutor {
      * @return the merged row
      */
     private Row mergeRows(final Row left, final Row right) {
-        Object[] leftValues = left.getValues();
-        Object[] rightValues = right.getValues();
-        Object[] merged = new Object[leftValues.length + rightValues.length];
-        System.arraycopy(leftValues, 0, merged, 0, leftValues.length);
-        System.arraycopy(rightValues, 0, merged, leftValues.length, rightValues.length);
-        return new Row(merged);
+        List<Object> leftValues = left.getValues();
+        List<Object> rightValues = right.getValues();
+        List<Object> merged = new ArrayList<>(leftValues.size() + rightValues.size());
+        merged.addAll(leftValues);
+        merged.addAll(rightValues);
+        return new Row(merged, new ArrayList<>());
     }
 
     /**
@@ -428,13 +428,13 @@ public class FederatedQueryExecutor {
      * @return the extended row
      */
     private Row createNullExtendedRow(final Row source, final int nullColumnCount) {
-        Object[] sourceValues = source.getValues();
-        Object[] extended = new Object[sourceValues.length + nullColumnCount];
-        System.arraycopy(sourceValues, 0, extended, 0, sourceValues.length);
-        for (int i = sourceValues.length; i < extended.length; i++) {
-            extended[i] = null;
+        List<Object> sourceValues = source.getValues();
+        List<Object> extended = new ArrayList<>(sourceValues.size() + nullColumnCount);
+        extended.addAll(sourceValues);
+        for (int i = 0; i < nullColumnCount; i++) {
+            extended.add(null);
         }
-        return new Row(extended);
+        return new Row(extended, new ArrayList<>());
     }
 
     /**

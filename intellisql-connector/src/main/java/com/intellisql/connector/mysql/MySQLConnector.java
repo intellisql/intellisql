@@ -71,7 +71,7 @@ public class MySQLConnector implements DataSourceConnector {
     public Schema discoverSchema(final DataSourceConfig config) throws Exception {
         MySQLConnectionPool pool = getOrCreatePool(config);
         try (java.sql.Connection connection = pool.getConnection()) {
-            return schemaDiscoverer.discoverSchema(connection, config.getSchema());
+            return schemaDiscoverer.discoverSchema(connection, config.getSchema(), config.getName());
         }
     }
 
