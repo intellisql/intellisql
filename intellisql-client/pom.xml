@@ -38,6 +38,11 @@
             <artifactId>intellisql-parser</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-translator</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         
         <!-- JLine for interactive CLI with history support -->
         <dependency>

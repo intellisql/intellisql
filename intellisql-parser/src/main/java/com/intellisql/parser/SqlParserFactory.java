@@ -21,7 +21,7 @@ import org.apache.calcite.config.Lex;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParser.Config;
-import com.intellisql.parser.dialect.SqlDialect;
+import com.intellisql.common.dialect.SqlDialect;
 import com.intellisql.parser.impl.IntelliSqlParserImpl;
 
 import lombok.AccessLevel;

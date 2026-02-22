@@ -34,11 +34,11 @@ dataSources:
   # MySQL source database
   - name: mysql_source
     type: mysql
-    host: localhost
+    host: 127.0.0.1
     port: 3306
-    database: source_db
+    database: test
     username: root
-    password: ${MYSQL_PASSWORD}
+    password: 123456
     # Connection pool settings for this data source
     pool:
       maxPoolSize: 10
@@ -49,32 +49,31 @@ dataSources:
       serverTimezone: UTC
       allowPublicKeyRetrieval: true
 
-  # PostgreSQL source database
-  - name: pg_source
-    type: postgresql
-    host: localhost
-    port: 5432
-    database: source_db
-    username: postgres
-    password: ${PG_PASSWORD}
-    pool:
-      maxPoolSize: 10
-      minIdle: 2
-    properties:
-      ssl: false
+  # PostgreSQL source database (disabled)
+  # - name: pg_source
+  #   type: postgresql
+  #   host: localhost
+  #   port: 5432
+  #   database: source_db
+  #   username: postgres
+  #   password: postgres
+  #   pool:
+  #     maxPoolSize: 10
+  #     minIdle: 2
+  #   properties:
+  #     ssl: false
 
-  # Elasticsearch source
-  - name: es_source
-    type: elasticsearch
-    host: localhost
-    port: 9200
-    username: elastic
-    password: ${ES_PASSWORD}
-    # Index pattern for mapping
-    indexPattern: "*"
-    properties:
-      ssl: false
-      verifyCerts: false
+  # Elasticsearch source (disabled)
+  # - name: es_source
+  #   type: elasticsearch
+  #   host: localhost
+  #   port: 9200
+  #   username: elastic
+  #   password: elastic
+  #   indexPattern: "*"
+  #   properties:
+  #     ssl: false
+  #     verifyCerts: false
 
 # SQL Federation configuration
 federation:

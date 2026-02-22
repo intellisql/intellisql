@@ -18,7 +18,7 @@
 package com.intellisql.parser;
 
 import org.apache.calcite.sql.SqlNode;
-import com.intellisql.parser.dialect.SqlDialect;
+import com.intellisql.common.dialect.SqlDialect;
 
 import lombok.extern.slf4j.Slf4j;
 
