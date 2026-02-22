@@ -143,11 +143,13 @@ isql> \q
 
 ```
 intellisql/
+├── intellisql-common/      # Common utilities and shared models
 ├── intellisql-parser/      # SQL parsing module
-├── intellisql-optimizer/   # Query optimization module
-├── intellisql-executor/    # Query execution module
+├── intellisql-features/    # Core features aggregation
+│   ├── intellisql-federation/  # SQL federation engine (metadata, execution)
+│   ├── intellisql-translator/  # SQL translation module
+│   └── intellisql-optimizer/   # Query optimization module
 ├── intellisql-connector/   # Database connectors
-├── intellisql-kernel/      # Core kernel module
 ├── intellisql-jdbc/        # JDBC driver implementation
 ├── intellisql-server/      # Server implementation
 │   └── src/main/resources/
@@ -166,25 +168,25 @@ intellisql/
 
 ## Module Descriptions
 
+### intellisql-common
+
+Common module containing shared utilities, configuration management, metadata definitions, and common interfaces used across the platform.
+
 ### intellisql-parser
 
 SQL parsing module based on Apache Calcite. Parses SQL statements into abstract syntax trees (AST).
 
-### intellisql-optimizer
+### intellisql-features
 
-Query optimization module. Implements cost-based optimization, predicate pushdown, and join optimization.
+Aggregation module for core features:
 
-### intellisql-executor
-
-Query execution engine. Executes optimized query plans across multiple data sources.
+- **intellisql-federation**: The core federation engine handling metadata management, schema discovery, and distributed query execution.
+- **intellisql-translator**: SQL translation module for converting between different SQL dialects.
+- **intellisql-optimizer**: Cost-based query optimization module with predicate pushdown capabilities.
 
 ### intellisql-connector
 
 Database connector implementations. Provides unified interface for MySQL, PostgreSQL, and Elasticsearch.
-
-### intellisql-kernel
-
-Core kernel module containing shared utilities, configuration management, and common interfaces.
 
 ### intellisql-jdbc
 
