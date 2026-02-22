@@ -158,8 +158,12 @@
 **命令行工具：**
 
 - **FR-015**: 系统 MUST 提供 isql 命令行工具，支持交互式和脚本执行模式
-- **FR-016**: isql MUST 支持语法高亮和自定义提示符
-- **FR-017**: isql MUST 打包为单一可执行包，简化部署
+- **FR-015a**: isql MUST 内置自定义的分页渲染引擎（类似 Unix `less`），支持对超大结果集的流式渲染、按页滚动及 CJK 字符的正确对齐，严禁一次性加载所有数据到内存
+- **FR-016**: isql MUST 支持基于 nanorc 规则的 SQL 语法高亮（包括多行注释、字符串字面量识别）和自定义提示符
+- **FR-016a**: isql MUST 支持基于上下文的智能补全（提示关键字、表名、列名），元数据需异步加载
+- **FR-016b**: isql MUST 支持持久化的命令历史记录，并通过上下箭头键进行导航
+- **FR-016c**: isql MUST 能够捕获 SIGINT 信号（Ctrl+C），并在用户触发时仅取消当前执行的 SQL 查询而不退出程序
+- **FR-017**: isql MUST 提供两种分发形式：GraalVM Native Image 原生二进制包（主推，支持 Linux/macOS/Windows，启动时间 < 0.5s）和标准可执行 JAR 包（备选，依赖 JVM）
 
 **元数据管理：**
 
@@ -208,22 +212,24 @@
 
 ### Module Architecture
 
-系统采用多模块架构设计，参考 QuickSQL 的分层理念，按职责分为三层：
+系统采用多模块架构设计，参考 QuickSQL 的分层理念，按职责分为四层：
 
-**基础功能层（Functional Layer）**
-
-| 模块 | 职责 |
-|------|------|
-| **intellisql-parser** | SQL 解析与翻译，基于 Calcite Parser.jj 模板（参考 Quicksql 实现，使用 JavaCC + FreeMarker），支持多方言解析和方言间转换，通过 parserImpls.ftl 扩展语法规则 |
-| **intellisql-optimizer** | SQL 优化器，包含查询优化规则、逻辑计划转换、元数据管理（翻译和执行共用）。采用混合优化策略：HepPlanner 用于 RBO（基于规则的优化），VolcanoPlanner 用于 CBO（基于代价的优化） |
-| **intellisql-executor** | SQL 执行引擎，负责查询执行、结果集处理（联邦查询专用） |
-| **intellisql-connector** | 数据源连接器，包含各数据源的 Schema 映射和查询下推规则 |
-
-**核心处理层（Kernel Layer）**
+**公共基础层（Common Layer）**
 
 | 模块 | 职责 |
 |------|------|
-| **intellisql-kernel** | 核心处理层，编排 parser、optimizer、executor、connector，提供统一的处理流程入口 |
+| **intellisql-common** | 公共基础设施，包含配置加载（ConfigLoader）、日志（StructuredLogger）、重试机制（RetryPolicy）、元数据实体（Column, Table, Schema, DataSource）、方言枚举（SqlDialect）等 |
+
+**功能特性层（Features Layer）**
+
+| 模块 | 职责 |
+|------|------|
+| **intellisql-parser** | SQL 解析模块，基于 Calcite Parser.jj 模板（参考 Quicksql 实现，使用 JavaCC + FreeMarker），支持多方言解析和方言间转换，通过 parserImpls.ftl 扩展语法规则 |
+| **intellisql-features** | 功能特性父模块，聚合核心功能子模块 |
+| ├─ **intellisql-optimizer** | SQL 优化器，包含查询优化规则、逻辑计划转换、元数据管理。采用混合优化策略：HepPlanner 用于 RBO，VolcanoPlanner 用于 CBO |
+| ├─ **intellisql-translator** | SQL 翻译器，支持多种数据库方言间的 SQL 转换，提供在线模式（连接数据库获取元数据）和离线模式（纯语法转换） |
+| └─ **intellisql-federation** | 联邦查询核心，包含执行引擎（QueryExecutor, FederatedQueryExecutor）、迭代器模型（QueryIterator 系列算子）、元数据管理（MetadataManager）、核心编排（IntelliSqlKernel, QueryProcessor） |
+| **intellisql-connector** | 数据源连接器，包含各数据源（MySQL/PostgreSQL/Elasticsearch）的 Schema 映射和查询下推规则 |
 
 **协议适配层（Protocol Layer）**
 
@@ -249,15 +255,15 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                  Protocol Layer (driver/server)              │
-│                 依赖 kernel，提供协议适配                      │
+│                  Protocol Layer (jdbc/server)                │
+│                 依赖 features，提供协议适配                    │
 ├─────────────────────────────────────────────────────────────┤
-│                    Kernel Layer (kernel)                     │
-│          编排功能模块，提供统一处理流程入口                      │
+│                    Features Layer                            │
+│         (parser/features/connector)                          │
+│          核心功能：解析、优化、翻译、联邦查询、连接器            │
 ├─────────────────────────────────────────────────────────────┤
-│          Functional Layer (parser/optimizer/executor/        │
-│                       connector)                             │
-│               基础功能与适配模块                               │
+│                    Common Layer (common)                     │
+│          公共基础设施：配置、日志、重试、元数据实体              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -322,6 +328,17 @@
 - Q: MySQL/PostgreSQL 方言语法覆盖范围？ → A: 全部语法扩展，完整覆盖两个方言的所有语法特性
 - Q: Parser 错误处理策略？ → A: 详细错误信息，包含位置、上下文片段和修复建议
 - Q: Parser AST 节点结构？ → A: 继承 Calcite 基础 SqlNode 类，扩展方言特定的子类
+- Q: isql 命令行工具的发布形式？ → A: 同时发布 GraalVM Native Image 原生二进制包（主推，无 JVM 依赖）和标准可执行 JAR 包（兼容性备选）
+- Q: isql 智能补全策略？ → A: 实现基于上下文的元数据驱动补全（Context-aware），提示表名/列名；支持通过上下箭头键切换历史 SQL 记录
+- Q: isql 信号处理策略（Ctrl+C）？ → A: 使用 JLine3 捕获 SIGINT 信号，仅取消当前正在执行的 SQL 查询（Statement.cancel），不退出 Shell 会话
+- Q: isql 语法高亮实现方案？ → A: 使用 JLine3 内置的 nanorc 语法高亮引擎，通过配置 sql.nanorc 文件实现对关键字、字符串、注释的精确着色
+- Q: isql 结果集渲染与分页策略？ → A: 采用自定义的原生分页渲染引擎（类似 Unix `less`），支持流式读取 ResultSet，自动计算列宽（处理 CJK 字符对齐），避免全量加载导致的 OOM
+
+### Session 2026-02-22
+
+- Q: 最终模块结构确认？ → A: 采用四层架构：(1) Common Layer - intellisql-common（配置、日志、重试、元数据实体）；(2) Features Layer - intellisql-features 父模块，包含 intellisql-optimizer、intellisql-translator、intellisql-federation；(3) Protocol Layer - intellisql-jdbc、intellisql-server；(4) Tooling Layer - intellisql-client、intellisql-distribution、intellisql-test
+- Q: intellisql-kernel 和 intellisql-executor 的最终归属？ → A: 合并到 intellisql-features/intellisql-federation 模块中，federation 模块现在包含核心编排（IntelliSqlKernel, QueryProcessor）、执行引擎（FederatedQueryExecutor, QueryIterator 系列算子）、元数据管理（MetadataManager）
+- Q: 翻译器模块位置？ → A: 独立为 intellisql-features/intellisql-translator，与 optimizer 和 federation 平级
 
 ## Assumptions
 

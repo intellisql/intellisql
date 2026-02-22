@@ -165,7 +165,65 @@ jdbc:intellisql://hostname:port/database
 - 使用 Protobuf 而非 JSON 以提高性能（NFR-011）
 - 实现语句缓存以支持重复查询
 - 使用异步 HTTP 客户端以提高可扩展性
-- 配置合理的连接超时时间
+- 配置合理的连接超时值
+
+### JLine (终端交互)
+
+**决策**: JLine 3.25.1（最新稳定版）
+
+**理由**:
+- Java 生态中最成熟的终端交互库
+- 支持 Native Signals (SIGINT/Ctrl+C) 捕获（FR-016c）
+- 内置 nanorc 语法高亮引擎（FR-016）
+- 强大的 LineReader 和 Completer 体系
+- GraalVM 兼容性良好
+
+**使用的关键特性**:
+- **LineReader**: 处理行输入、历史记录
+- **SyntaxHighlighter**: 基于 nanorc 的 SQL 高亮
+- **Completer**: 上下文感知的自动补全
+- **Terminal**: 抽象底层终端操作（ANSI 转义）
+
+**最佳实践**:
+- 使用 `TerminalBuilder.builder().nativeSignals(true).build()` 启用信号捕获
+- 将历史记录文件路径设置为 `~/.intellisql_history`
+- 在渲染大量输出时使用 `Terminal.writer()` 配合缓冲
+
+### Picocli (命令行框架)
+
+**决策**: Picocli 4.7.5（最新稳定版）
+
+**理由**:
+- 现代 Java 命令行解析框架的标准
+- 对 GraalVM Native Image 的一流支持（编译时反射配置生成）
+- 支持子命令（isql connect, isql translate）
+- 丰富的 ANSI 颜色输出支持
+- 与 JLine3 集成顺滑
+
+**使用的关键特性**:
+- `@Command`, `@Option`, `@Parameters`: 声明式命令定义
+- `AutoComplete`: 生成 Shell 补全脚本
+- `GraalVM Integration`: 自动生成 reflect-config.json
+
+### GraalVM Native Image
+
+**决策**: GraalVM SDK 23.1.2 (JDK 17/21 base)
+
+**理由**:
+- 实现 <0.5s 的瞬时启动（SC-007）
+- 生成独立的二进制可执行文件（无 JVM 依赖分发）
+- 显著降低运行时内存占用
+
+**构建配置**:
+- 使用 `native-maven-plugin`
+- 配置 `--no-fallback` 确保纯原生构建
+- 使用 `native-image-agent` 收集 JDBC 驱动的反射元数据
+- 包含资源配置以支持 nanorc 文件和日志配置
+
+**最佳实践**:
+- 在 CI 中分离 Native 构建任务（耗时较长）
+- 为 JDBC 驱动维护 `reflect-config.json`
+- 避免在静态初始化块中进行复杂的 I/O 操作
 
 ### Lombok
 
