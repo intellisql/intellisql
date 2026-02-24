@@ -134,7 +134,6 @@ fi
 JAVA_OPTS=(
     "-Dlogback.configurationFile=${CONF_DIR}/logback.xml"
     "-Dfile.encoding=UTF-8"
-    "-Djline.terminal=jline.UnsupportedTerminal"
 )
 
 # Build JDBC URL

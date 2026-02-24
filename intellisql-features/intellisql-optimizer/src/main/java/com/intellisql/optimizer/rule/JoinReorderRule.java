@@ -95,11 +95,9 @@ public class JoinReorderRule extends RelOptRule {
     private boolean isReorderBeneficial(final LogicalJoin join) {
         final RelNode left = join.getLeft();
         final RelNode right = join.getRight();
-
         // Estimate row counts
         final double leftRows = left.estimateRowCount(left.getCluster().getMetadataQuery());
         final double rightRows = right.estimateRowCount(right.getCluster().getMetadataQuery());
-
         // Reorder if right side is significantly larger than left side
         // (we want smaller table on build side)
         return rightRows > leftRows * 1.5;
@@ -114,17 +112,13 @@ public class JoinReorderRule extends RelOptRule {
     public void onMatch(final RelOptRuleCall call) {
         final LogicalJoin join = call.rel(0);
         log.debug("Reordering join: {}", join);
-
         final RelNode left = join.getLeft();
         final RelNode right = join.getRight();
-
         // Swap left and right
         final RelNode newLeft = right;
         final RelNode newRight = left;
-
         // Adjust the join condition for swapped inputs
         final RexNode newCondition = swapJoinCondition(join, left, right);
-
         // Create new join with swapped inputs
         final LogicalJoin newJoin = join.copy(
                 join.getTraitSet(),
@@ -133,7 +127,6 @@ public class JoinReorderRule extends RelOptRule {
                 newRight,
                 join.getJoinType(),
                 join.isSemiJoinDone());
-
         log.debug("Created reordered join with swapped inputs");
         call.transformTo(newJoin);
     }
@@ -154,7 +147,6 @@ public class JoinReorderRule extends RelOptRule {
         // Field counts would be used for swapping input references in full implementation
         // final int leftFieldCount = left.getRowType().getFieldCount();
         // final int rightFieldCount = right.getRowType().getFieldCount();
-
         // For now, return the original condition
         // Full implementation would swap input references
         return condition;

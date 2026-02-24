@@ -79,13 +79,11 @@ public class ProjectOperator extends AbstractOperator<Row> {
     @Override
     protected Row doNext() throws Exception {
         final Row inputRow = child.next();
-
         // Apply projections
         final List<Object> projectedValues = new ArrayList<>(projections.size());
         for (final Function<Row, Object> projection : projections) {
             projectedValues.add(projection.apply(inputRow));
         }
-
         return new Row(projectedValues, outputColumnNames);
     }
 
@@ -103,12 +101,10 @@ public class ProjectOperator extends AbstractOperator<Row> {
                                                 final List<String> columnNames) {
         final List<Function<Row, Object>> projections = new ArrayList<>(columnIndices.length);
         final List<String> outputNames = new ArrayList<>(columnIndices.length);
-
         for (final int index : columnIndices) {
             projections.add(row -> row.getValue(index));
             outputNames.add(columnNames.get(index));
         }
-
         return new ProjectOperator(child, projections, outputNames);
     }
 
@@ -123,11 +119,9 @@ public class ProjectOperator extends AbstractOperator<Row> {
                                                       final QueryIterator<Row> child,
                                                       final List<String> columnNames) {
         final List<Function<Row, Object>> projections = new ArrayList<>(columnNames.size());
-
         for (final String name : columnNames) {
             projections.add(row -> row.getValue(name));
         }
-
         return new ProjectOperator(child, projections, columnNames);
     }
 }

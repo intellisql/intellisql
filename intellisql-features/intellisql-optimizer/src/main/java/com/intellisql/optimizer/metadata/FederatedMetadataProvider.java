@@ -74,13 +74,10 @@ public class FederatedMetadataProvider {
                               final long rowCount) {
         final String qualifiedName = schemaName + "." + tableName;
         log.debug("Registering table: {}", qualifiedName);
-
         // Store column definitions
         tableColumns.put(qualifiedName, new ArrayList<>(columns));
-
         // Store statistics
         tableStatistics.put(qualifiedName, TableStatistics.of(qualifiedName, rowCount));
-
         // Update Calcite schema
         calciteSchemas.computeIfAbsent(schemaName, k -> new AbstractSchema() {
 

@@ -105,14 +105,12 @@ public class AggregateSplitRule extends RelOptRule {
         if (aggregate.getGroupSet().isEmpty() && aggregate.getAggCallList().isEmpty()) {
             return false;
         }
-
         // Check if all aggregate functions are splittable
         for (final AggregateCall aggCall : aggregate.getAggCallList()) {
             if (!isSplittable(aggCall)) {
                 return false;
             }
         }
-
         return true;
     }
 
@@ -147,16 +145,13 @@ public class AggregateSplitRule extends RelOptRule {
         log.debug("Splitting aggregate with {} group keys and {} agg calls",
                 aggregate.getGroupSet().cardinality(),
                 aggregate.getAggCallList().size());
-
         // For now, we don't transform - the splitting logic is complex
         // and is typically handled during execution planning
         // This rule serves as a marker for federated aggregate execution
-
         // Full implementation would:
         // 1. Create local aggregate (partial aggregation at source)
         // 2. Create global aggregate (final aggregation at federated layer)
         // 3. Handle AVG specially (split into SUM and COUNT)
-
         log.debug("Aggregate split analysis completed");
     }
 

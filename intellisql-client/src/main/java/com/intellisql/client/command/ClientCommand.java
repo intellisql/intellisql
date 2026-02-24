@@ -15,27 +15,38 @@
  * limitations under the License.
  */
 
-package com.intellisql.client;
+package com.intellisql.client.command;
 
-/** Custom exception for client operations. */
-public class ClientException extends Exception {
+import com.intellisql.client.console.ConsoleReader;
 
-    /**
-     * Creates a new ClientException with a message.
-     *
-     * @param message the error message
-     */
-    public ClientException(final String message) {
-        super(message);
-    }
+import java.sql.Connection;
+
+/**
+ * Interface for isql commands.
+ */
+public interface ClientCommand {
 
     /**
-     * Creates a new ClientException with a message and cause.
+     * Executes the command.
      *
-     * @param message the error message
-     * @param cause the underlying cause
+     * @param console    The console reader for input/output
+     * @param connection Current active connection (can be null)
+     * @param args       Command arguments
+     * @return New or existing connection after command execution
      */
-    public ClientException(final String message, final Throwable cause) {
-        super(message, cause);
-    }
+    Connection execute(ConsoleReader console, Connection connection, String[] args);
+
+    /**
+     * Returns the command name (e.g., "\\connect").
+     *
+     * @return the command name
+     */
+    String getName();
+
+    /**
+     * Returns a brief description of the command.
+     *
+     * @return the command description
+     */
+    String getDescription();
 }

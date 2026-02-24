@@ -17,333 +17,250 @@
 
 package com.intellisql.client;
 
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import com.intellisql.client.command.QueryCommand;
-import com.intellisql.client.command.ScriptCommand;
+import com.intellisql.client.command.ClientCommand;
+import com.intellisql.client.command.ConnectCommand;
+import com.intellisql.client.command.ExecuteCommand;
+import com.intellisql.client.command.HelpCommand;
 import com.intellisql.client.command.TranslateCommand;
+import com.intellisql.client.console.CompleterFactory;
+import com.intellisql.client.console.ConsoleReader;
+import com.intellisql.client.console.MetaDataLoader;
+import org.jline.reader.Completer;
 import org.jline.reader.EndOfFileException;
-import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
-import org.jline.reader.impl.history.DefaultHistory;
-import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
-import java.io.IOError;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.Callable;
 
 /**
- * Main entry point for the IntelliSql command-line client (isql). Provides interactive REPL and
- * script execution modes.
+ * IntelliSQL Command Line Interface.
  */
-@Slf4j
-@Getter
-public class IntelliSqlClient {
+@Command(name = "isql", mixinStandardHelpOptions = true, version = "isql 1.0.0",
+        description = "IntelliSQL Command Line Interface")
+public class IntelliSqlClient implements Callable<Integer> {
 
-    private static final String VERSION = "1.0.0-SNAPSHOT";
+    @Parameters(index = "0", arity = "0..1", description = "JDBC URL to connect to")
+    private String url;
 
-    private static final String PROMPT = "isql> ";
+    @Parameters(index = "1", arity = "0..1", description = "Username")
+    private String user;
 
-    private final String url;
+    @Parameters(index = "2", arity = "0..1", description = "Password")
+    private String password;
 
-    private final String username;
+    @Option(names = {"-e", "--execute"}, description = "Execute command and quit")
+    private String command;
 
-    private final String password;
+    @Option(names = {"-f", "--file"}, description = "Execute commands from file")
+    private String file;
+
+    private final Map<String, ClientCommand> commands = new HashMap<>();
 
     private Connection connection;
 
-    private final CommandParser commandParser;
-
-    private final ResultFormatter resultFormatter;
-
-    private final ReplHandler replHandler;
-
-    private boolean running;
+    /**
+     * Creates a new IntelliSqlClient instance.
+     */
+    public IntelliSqlClient() {
+        registerCommand(new ConnectCommand());
+        registerCommand(new ExecuteCommand());
+        registerCommand(new TranslateCommand());
+        registerCommand(new HelpCommand());
+    }
 
     /**
-     * Creates a new IntelliSqlClient with the given connection parameters.
+     * Registers a command.
      *
-     * @param url the JDBC URL to connect to
-     * @param username the database username
-     * @param password the database password
+     * @param cmd the command to register
      */
-    public IntelliSqlClient(final String url, final String username, final String password) {
-        this.url = url;
-        this.username = username;
-        this.password = password;
-        this.commandParser = new CommandParser();
-        this.resultFormatter = new ResultFormatter();
-        this.replHandler = new ReplHandler(this);
+    private void registerCommand(final ClientCommand cmd) {
+        commands.put(cmd.getName(), cmd);
     }
 
-    /**
-     * Main entry point for the IntelliSql client.
-     *
-     * @param args command line arguments
-     */
-    // allow main method for CLI entry point
-    // CHECKSTYLE:OFF:UncommentedMain
-    public static void main(final String[] args) {
-        if (args.length == 0) {
-            printUsage();
-            System.exit(1);
-        }
-        String url = args[0];
-        String username = args.length > 1 ? args[1] : "";
-        String password = args.length > 2 ? args[2] : "";
-        IntelliSqlClient client = new IntelliSqlClient(url, username, password);
-        if (args.length > 3 && "-f".equals(args[3])) {
-            String scriptFile = args.length > 4 ? args[4] : null;
-            client.executeScript(scriptFile);
-        } else {
-            client.start();
-        }
-    }
-    // CHECKSTYLE:ON:UncommentedMain
-
-    private static void printUsage() {
-        System.out.println("IntelliSql Client (isql) v" + VERSION);
-        System.out.println();
-        System.out.println("Usage: isql <url> [username] [password] [-f script.sql]");
-        System.out.println();
-        System.out.println("Options:");
-        System.out.println("  <url>       JDBC URL to connect to IntelliSql Server");
-        System.out.println("  <username>  Database username (optional)");
-        System.out.println("  <password>  Database password (optional)");
-        System.out.println("  -f <file>   Execute SQL script and exit");
-        System.out.println();
-        System.out.println("Interactive Commands:");
-        System.out.println("  \\q          Quit the client");
-        System.out.println("  \\h          Show help");
-        System.out.println("  \\d          Show data sources");
-        System.out.println("  \\t <sql>    Translate SQL to target dialect");
-        System.out.println("  \\s <file>   Execute script file");
-    }
-
-    /**
-     * Starts the interactive REPL session.
-     */
-    public void start() {
-        System.out.println("IntelliSql Client v" + VERSION);
-        System.out.println("Connecting to " + url + "...");
-        try {
-            connect();
-            System.out.println("Connected successfully.");
-            System.out.println("Type \\h for help, \\q to quit.");
-            running = true;
-            runRepl();
-        } catch (final SQLException ex) {
-            System.err.println("Failed to connect: " + ex.getMessage());
-            log.error("Connection failed", ex);
-            System.exit(1);
-        }
-    }
-
-    /**
-     * Executes a SQL script file and exits.
-     *
-     * @param scriptFile the path to the script file
-     */
-    public void executeScript(final String scriptFile) {
-        try {
-            connect();
-            ScriptCommand command = new ScriptCommand(this, scriptFile);
-            command.execute();
-        } catch (final SQLException ex) {
-            System.err.println("Failed to connect: " + ex.getMessage());
-            log.error("Connection failed", ex);
-            System.exit(1);
-        } catch (final ClientException ex) {
-            System.err.println("Script execution failed: " + ex.getMessage());
-            log.error("Script execution failed", ex);
-            System.exit(1);
-        } finally {
-            disconnect();
-        }
-    }
-
-    private void connect() throws SQLException {
-        log.debug("Connecting to {}", url);
-        try {
-            Class.forName("com.intellisql.jdbc.IntelliSqlDriver");
-            // CHECKSTYLE:OFF
-        } catch (final ClassNotFoundException ex) {
-            // CHECKSTYLE:ON
-            throw new SQLException("IntelliSql JDBC driver not found", ex);
-        }
-        connection = DriverManager.getConnection(url, username, password);
-        log.info("Connected to {}", url);
-    }
-
-    /** Disconnects from the server. */
-    public void disconnect() {
-        if (connection != null) {
+    @Override
+    public Integer call() throws Exception {
+        // Auto-connect if URL is provided
+        if (url != null && !url.isEmpty()) {
             try {
-                connection.close();
-                log.info("Disconnected from {}", url);
+                Properties props = new Properties();
+                if (user != null && !user.isEmpty()) {
+                    props.setProperty("user", user);
+                }
+                if (password != null && !password.isEmpty()) {
+                    props.setProperty("password", password);
+                }
+                connection = DriverManager.getConnection(url, props);
             } catch (final SQLException ex) {
-                log.warn("Error closing connection", ex);
+                System.err.println("Connection failed: " + ex.getMessage());
+                System.err.println("Starting in disconnected mode.");
             }
-            connection = null;
         }
+        if (command != null) {
+            System.out.println("Executing command: " + command);
+            return 0;
+        }
+        if (file != null) {
+            System.out.println("Executing file: " + file);
+            return 0;
+        }
+        System.out.println("Welcome to IntelliSQL CLI (isql)");
+        System.out.println("Type \\help for help, \\quit to exit.");
+        MetaDataLoader metaDataLoader = new MetaDataLoader();
+        if (connection != null) {
+            metaDataLoader.load(connection);
+        }
+        Completer completer = CompleterFactory.create(metaDataLoader);
+        try (ConsoleReader console = new ConsoleReader(completer)) {
+            runInteractiveLoop(console, metaDataLoader);
+        } finally {
+            closeConnection();
+        }
+        return 0;
     }
 
-    private void runRepl() {
-        Terminal terminal = null;
-        LineReader reader = null;
-        try {
-            terminal = TerminalBuilder.builder().system(true).build();
-            reader = LineReaderBuilder.builder()
-                    .terminal(terminal)
-                    .history(new DefaultHistory())
-                    .build();
-            reader.setVariable(LineReader.HISTORY_FILE, System.getProperty("user.home") + "/.isql_history");
-        } catch (final IOException ex) {
-            log.error("Failed to initialize terminal, falling back to simple input", ex);
-            runSimpleRepl();
-            return;
-        }
-
-        StringBuilder queryBuilder = new StringBuilder();
-        while (running) {
+    /**
+     * Runs the interactive command loop.
+     *
+     * @param console         the console reader
+     * @param metaDataLoader  the metadata loader
+     */
+    private void runInteractiveLoop(final ConsoleReader console, final MetaDataLoader metaDataLoader) {
+        while (true) {
             try {
-                String prompt = queryBuilder.length() == 0 ? PROMPT : "    > ";
-                String line = reader.readLine(prompt).trim();
+                String line = console.readLine("isql> ");
+                if (line == null) {
+                    break;
+                }
+                line = line.trim();
                 if (line.isEmpty()) {
                     continue;
                 }
-                if (line.startsWith("\\")) {
-                    processMetaCommand(line);
-                    continue;
+                if (isQuitCommand(line)) {
+                    break;
                 }
-                queryBuilder.append(line).append(" ");
-                if (line.endsWith(";")) {
-                    String query = queryBuilder.toString().trim();
-                    queryBuilder.setLength(0);
-                    executeQuery(query);
+                if (line.startsWith("\\")) {
+                    handleSlashCommand(console, line, metaDataLoader);
+                } else {
+                    handleSqlCommand(console, line, metaDataLoader);
                 }
             } catch (final UserInterruptException ex) {
-                // Ctrl+C - clear current input or exit
-                if (queryBuilder.length() == 0) {
-                    System.out.println("\nGoodbye!");
-                    running = false;
-                } else {
-                    queryBuilder.setLength(0);
-                    System.out.println("^C");
-                }
+                // Ignore user interrupt
             } catch (final EndOfFileException ex) {
-                // Ctrl+D - exit
-                System.out.println("\nGoodbye!");
-                running = false;
-            } catch (final IOError ex) {
-                log.error("IO error", ex);
-                running = false;
+                // End of input, exit loop
+                break;
             }
         }
-        try {
-            reader.getHistory().save();
-            terminal.close();
-        } catch (final IOException ex) {
-            log.warn("Error closing terminal", ex);
-        }
-        disconnect();
     }
 
-    /** Fallback simple REPL without history support. */
-    private void runSimpleRepl() {
-        java.util.Scanner scanner = new java.util.Scanner(System.in);
-        StringBuilder queryBuilder = new StringBuilder();
-        while (running) {
-            System.out.print(queryBuilder.length() == 0 ? PROMPT : "    > ");
-            String line = scanner.nextLine().trim();
-            if (line.isEmpty()) {
-                continue;
-            }
-            if (line.startsWith("\\")) {
-                processMetaCommand(line);
-                continue;
-            }
-            queryBuilder.append(line).append(" ");
-            if (line.endsWith(";")) {
-                String query = queryBuilder.toString().trim();
-                queryBuilder.setLength(0);
-                executeQuery(query);
-            }
-        }
-        scanner.close();
-        disconnect();
+    /**
+     * Checks if the line is a quit command.
+     *
+     * @param line the input line
+     * @return true if it's a quit command
+     */
+    private boolean isQuitCommand(final String line) {
+        return "\\q".equalsIgnoreCase(line)
+                || "\\quit".equalsIgnoreCase(line)
+                || "exit".equalsIgnoreCase(line);
     }
 
-    private void processMetaCommand(final String command) {
-        String cmd = command.substring(1).toLowerCase();
-        switch (cmd) {
-            case "q":
-            case "quit":
-                System.out.println("Goodbye!");
-                running = false;
-                break;
-            case "h":
-            case "help":
-                printUsage();
-                break;
-            case "d":
-            case "datasources":
-                showDataSources();
-                break;
-            default:
-                if (cmd.startsWith("t ") || cmd.startsWith("translate ")) {
-                    String sql = command.substring(command.indexOf(' ') + 1);
-                    translateSql(sql);
-                } else if (cmd.startsWith("s ") || cmd.startsWith("script ")) {
-                    String file = command.substring(command.indexOf(' ') + 1);
-                    executeScriptFile(file);
-                } else {
-                    System.err.println("Unknown command: " + command);
-                    System.err.println("Type \\h for help.");
+    /**
+     * Handles a slash command.
+     *
+     * @param console         the console reader
+     * @param line            the input line
+     * @param metaDataLoader  the metadata loader
+     */
+    private void handleSlashCommand(final ConsoleReader console, final String line,
+                                    final MetaDataLoader metaDataLoader) {
+        String[] parts = line.split("\\s+");
+        String cmdName = parts[0];
+        ClientCommand cmd = commands.get(cmdName);
+        if (cmd != null) {
+            String[] cmdArgs = new String[parts.length - 1];
+            System.arraycopy(parts, 1, cmdArgs, 0, parts.length - 1);
+            Connection newConn = executeCommand(cmd, console, cmdArgs);
+            updateConnection(newConn, metaDataLoader);
+        } else {
+            console.getPrinter().println("Unknown command: " + cmdName);
+        }
+    }
+
+    /**
+     * Handles an SQL command.
+     *
+     * @param console         the console reader
+     * @param line            the input line
+     * @param metaDataLoader  the metadata loader
+     */
+    private void handleSqlCommand(final ConsoleReader console, final String line,
+                                  final MetaDataLoader metaDataLoader) {
+        ClientCommand execCmd = commands.get("execute");
+        if (execCmd != null) {
+            Connection newConn = executeCommand(execCmd, console, line.split("\\s+"));
+            updateConnection(newConn, metaDataLoader);
+        }
+    }
+
+    /**
+     * Executes a command and returns the resulting connection.
+     *
+     * @param cmd     the command to execute
+     * @param console the console reader
+     * @param args    the command arguments
+     * @return the resulting connection or null
+     */
+    private Connection executeCommand(final ClientCommand cmd, final ConsoleReader console,
+                                      final String[] args) {
+        return cmd.execute(console, connection, args);
+    }
+
+    /**
+     * Updates the connection and reloads metadata if changed.
+     *
+     * @param newConn         the new connection
+     * @param metaDataLoader  the metadata loader
+     */
+    private void updateConnection(final Connection newConn, final MetaDataLoader metaDataLoader) {
+        if (newConn != null && newConn != connection) {
+            connection = newConn;
+            metaDataLoader.clear();
+            metaDataLoader.load(connection);
+        }
+    }
+
+    /**
+     * Closes the current connection if open.
+     */
+    private void closeConnection() {
+        if (connection != null) {
+            try {
+                if (!connection.isClosed()) {
+                    connection.close();
                 }
+            } catch (final SQLException ex) {
+                System.err.println("Error closing connection: " + ex.getMessage());
+            }
         }
     }
 
-    private void executeQuery(final String sql) {
-        try {
-            QueryCommand command = new QueryCommand(this, sql);
-            command.execute();
-        } catch (final ClientException ex) {
-            System.err.println("Error: " + ex.getMessage());
-            log.error("Query execution failed", ex);
-        }
-    }
-
-    private void translateSql(final String sql) {
-        try {
-            TranslateCommand command = new TranslateCommand(this, sql, null, null);
-            command.execute();
-        } catch (final ClientException ex) {
-            System.err.println("Error: " + ex.getMessage());
-            log.error("Translation failed", ex);
-        }
-    }
-
-    private void executeScriptFile(final String file) {
-        try {
-            ScriptCommand command = new ScriptCommand(this, file);
-            command.execute();
-        } catch (final ClientException ex) {
-            System.err.println("Error: " + ex.getMessage());
-            log.error("Script execution failed", ex);
-        }
-    }
-
-    private void showDataSources() {
-        System.out.println("Data sources: (not implemented)");
-    }
-
-    /** Stops the client. */
-    public void stop() {
-        running = false;
+    /**
+     * Main entry point for the IntelliSQL CLI application.
+     * This method initializes the command line interface and processes user input.
+     *
+     * @param args command line arguments for configuring the CLI connection and execution
+     */
+    public static void main(final String[] args) {
+        int exitCode = new CommandLine(new IntelliSqlClient()).execute(args);
+        System.exit(exitCode);
     }
 }

@@ -380,7 +380,6 @@ public class IntelliSqlMeta implements Meta {
                     MetaResultSet.create(h.connectionId, h.id, true, h.signature, frame, -1L);
             return new ExecuteResult(Collections.singletonList(resultSet));
         }
-
         try {
             // Remove trailing semicolon if present (Calcite doesn't like it)
             String cleanSql = sql.trim();
@@ -396,7 +395,6 @@ public class IntelliSqlMeta implements Meta {
             if (!queryResult.isSuccess()) {
                 log.error("Query failed: {}", queryResult.getErrorMessage());
             }
-
             // Build column metadata from query result
             List<ColumnMetaData> columns = new ArrayList<>();
             if (queryResult.getColumnNames() != null) {
@@ -414,7 +412,6 @@ public class IntelliSqlMeta implements Meta {
                     colIndex++;
                 }
             }
-
             // Build rows from query result
             List<Object> rows = new ArrayList<>();
             if (queryResult.getRows() != null) {
@@ -422,7 +419,6 @@ public class IntelliSqlMeta implements Meta {
                     rows.add(new ArrayList<Object>(row));
                 }
             }
-
             log.info("Returning {} columns and {} rows", columns.size(), rows.size());
             Meta.Signature signature = new Meta.Signature(
                     columns, cleanSql, Collections.emptyList(),

@@ -113,13 +113,11 @@ public final class FederatedCostFactory implements RelOptCostFactory {
         // For hash join: build hash table on smaller side + probe
         final double buildSide = Math.min(leftRows, rightRows);
         final double probeSide = Math.max(leftRows, rightRows);
-
         final double cpu = isCrossJoin ? leftRows * rightRows : buildSide + probeSide;
         // 64 bytes per entry in hash table
         final double memory = buildSide * 64;
         // Join is done locally after data fetch
         final double network = 0;
-
         return makeCost(outputRows, cpu, 0, network, memory);
     }
 

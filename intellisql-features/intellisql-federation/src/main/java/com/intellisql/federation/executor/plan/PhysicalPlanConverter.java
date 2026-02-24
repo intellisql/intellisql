@@ -133,19 +133,14 @@ public class PhysicalPlanConverter {
         final List<String> qualifiedName = tableScan.getTable().getQualifiedName();
         final String tableName = qualifiedName.get(qualifiedName.size() - 1);
         final String dataSourceId = tableToDataSourceMap.getOrDefault(tableName, "default");
-
         log.debug("Converting TableScan for table: {}, dataSource: {}", tableName, dataSourceId);
-
         final Connection connection = connections.get(dataSourceId);
         final QueryExecutor queryExecutor = queryExecutors.get(dataSourceId);
-
         if (connection == null || queryExecutor == null) {
             throw new IllegalStateException("No connection or executor found for data source: " + dataSourceId);
         }
-
         // Generate simple SELECT * query
         final String sql = "SELECT * FROM " + String.join(".", qualifiedName);
-
         return new TableScanOperator(connection, queryExecutor, sql);
     }
 
@@ -158,10 +153,8 @@ public class PhysicalPlanConverter {
      */
     private QueryIterator<Row> convertFilter(final Filter filter, final Map<String, List<String>> columnNames) {
         log.debug("Converting Filter: {}", filter.getCondition());
-
         final QueryIterator<Row> child = convertNode(filter.getInput(), columnNames);
         final Predicate<Row> rowPredicate = createRowPredicate(filter.getCondition(), columnNames);
-
         return new FilterOperator(child, rowPredicate);
     }
 
@@ -174,20 +167,15 @@ public class PhysicalPlanConverter {
      */
     private QueryIterator<Row> convertProject(final Project project, final Map<String, List<String>> columnNames) {
         log.debug("Converting Project with {} columns", project.getProjects().size());
-
         final QueryIterator<Row> child = convertNode(project.getInput(), columnNames);
-
         final List<java.util.function.Function<Row, Object>> projections = new ArrayList<>();
         final List<String> outputColumnNames = new ArrayList<>();
-
         for (int i = 0; i < project.getProjects().size(); i++) {
             final RexNode expr = project.getProjects().get(i);
             final String alias = project.getRowType().getFieldNames().get(i);
-
             projections.add(createProjectionFunction(expr));
             outputColumnNames.add(alias);
         }
-
         return new ProjectOperator(child, projections, outputColumnNames);
     }
 
@@ -200,19 +188,15 @@ public class PhysicalPlanConverter {
      */
     private QueryIterator<Row> convertJoin(final Join join, final Map<String, List<String>> columnNames) {
         log.debug("Converting Join: {}", join.getJoinType());
-
         final QueryIterator<Row> left = convertNode(join.getLeft(), columnNames);
         final QueryIterator<Row> right = convertNode(join.getRight(), columnNames);
-
         // Extract join keys from condition
         final JoinKeyExtractor extractor = new JoinKeyExtractor(join);
         final java.util.function.Function<Row, Object> leftKeyExtractor = extractor.getLeftKeyExtractor();
         final java.util.function.Function<Row, Object> rightKeyExtractor = extractor.getRightKeyExtractor();
-
         // Get column names for output
         final List<String> leftColumnNames = join.getLeft().getRowType().getFieldNames();
         final List<String> rightColumnNames = join.getRight().getRowType().getFieldNames();
-
         // No additional condition for now
         return new JoinOperator(
                 left, right,
@@ -230,9 +214,7 @@ public class PhysicalPlanConverter {
      */
     private QueryIterator<Row> convertAggregate(final Aggregate aggregate, final Map<String, List<String>> columnNames) {
         log.debug("Converting Aggregate with {} group keys", aggregate.getGroupSet().cardinality());
-
         final QueryIterator<Row> child = convertNode(aggregate.getInput(), columnNames);
-
         // Create group by key extractors
         final List<java.util.function.Function<Row, Object>> groupByKeyExtractors = new ArrayList<>();
         final ImmutableBitSet groupSet = aggregate.getGroupSet();
@@ -240,7 +222,6 @@ public class PhysicalPlanConverter {
             final int groupIndex = groupSet.nth(i);
             groupByKeyExtractors.add(row -> row.getValue(groupIndex));
         }
-
         // Create aggregate functions (simplified - just COUNT for now)
         final List<AggregateOperator.AggregateFunction> aggFunctions = new ArrayList<>();
         for (org.apache.calcite.rel.core.AggregateCall aggCall : aggregate.getAggCallList()) {
@@ -271,7 +252,6 @@ public class PhysicalPlanConverter {
                         row -> row.getValue(argIndex)));
             }
         }
-
         // Build output column names
         final List<String> outputColumnNames = new ArrayList<>();
         for (int i = 0; i < groupSet.cardinality(); i++) {
@@ -280,7 +260,6 @@ public class PhysicalPlanConverter {
         for (int i = 0; i < aggFunctions.size(); i++) {
             outputColumnNames.add(aggregate.getRowType().getFieldNames().get(groupSet.cardinality() + i));
         }
-
         return new AggregateOperator(child, groupByKeyExtractors, aggFunctions, outputColumnNames);
     }
 
@@ -293,26 +272,20 @@ public class PhysicalPlanConverter {
      */
     private QueryIterator<Row> convertSort(final Sort sort, final Map<String, List<String>> columnNames) {
         log.debug("Converting Sort with {} collations", sort.getCollation().getFieldCollations().size());
-
         final QueryIterator<Row> child = convertNode(sort.getInput(), columnNames);
-
         // Build comparator from sort specification
         final List<org.apache.calcite.rel.RelFieldCollation> collations = sort.getCollation().getFieldCollations();
         final int[] columnIndices = new int[collations.size()];
         final boolean[] ascendings = new boolean[collations.size()];
-
         for (int i = 0; i < collations.size(); i++) {
             final org.apache.calcite.rel.RelFieldCollation fc = collations.get(i);
             columnIndices[i] = fc.getFieldIndex();
             ascendings[i] = !fc.direction.isDescending();
         }
-
         final java.util.Comparator<Row> comparator = SortOperator.compositeComparator(columnIndices, ascendings);
-
         // Handle LIMIT and OFFSET
         final int limit = sort.fetch != null ? RexLiteral.intValue(sort.fetch) : -1;
         final int offset = sort.offset != null ? RexLiteral.intValue(sort.offset) : 0;
-
         return new SortOperator(child, comparator, limit, offset);
     }
 

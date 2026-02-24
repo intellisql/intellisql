@@ -38,8 +38,11 @@ IntelliSql is a distributed SQL federation and translation platform that enables
 git clone https://github.com/intellisql/intellisql.git
 cd intellisql
 
-# Build the project
+# Build the project (generates Server and Client JARs)
 ./mvnw clean install -DskipTests
+
+# Build Native Client (requires GraalVM)
+./mvnw package -Pnative -pl intellisql-distribution/intellisql-distribution-client
 
 # Build with tests
 ./mvnw clean install
@@ -124,12 +127,11 @@ Once connected, you can use these commands:
 
 | Command | Description |
 |---------|-------------|
-| `\h` or `\help` | Show help |
+| `\connect <url> [user] [password]` | Connect to a database via JDBC URL |
+| `\translate [options] <sql>` | Translate SQL between dialects |
 | `\q` or `\quit` | Exit the client |
-| `\c` or `\clear` | Clear input buffer |
-| `\t <sql>` | Translate SQL between dialects |
-| `\s <file>` | Execute script file |
-| `\d` | List data sources |
+
+> **Note**: Interactive mode supports **syntax highlighting** and **tab completion** for SQL keywords, tables, and columns once connected.
 
 ```bash
 # Interactive session example

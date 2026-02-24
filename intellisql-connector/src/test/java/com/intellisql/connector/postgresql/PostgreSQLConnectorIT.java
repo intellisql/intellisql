@@ -41,7 +41,6 @@ class PostgreSQLConnectorIT {
     void setUp() {
         final String pgUrl = System.getenv("POSTGRESQL_TEST_URL");
         assumeTrue(pgUrl != null, "PostgreSQL test URL not set, skipping test");
-
         config = DataSourceConfig.builder()
                 .type(DataSourceType.POSTGRESQL)
                 .jdbcUrl(pgUrl)
@@ -49,7 +48,6 @@ class PostgreSQLConnectorIT {
                 .password(System.getenv().getOrDefault("POSTGRESQL_TEST_PASSWORD", ""))
                 .maxPoolSize(5)
                 .build();
-
         connector = new PostgreSQLConnector();
     }
 

@@ -268,25 +268,20 @@ public final class MetadataManager {
      */
     public SchemaPlus getRootSchema() {
         log.info("Creating root schema with {} tables and {} schemas", tables.size(), schemas.size());
-
         // Create root schema with tables directly accessible (no schema prefix needed)
         final com.intellisql.federation.metadata.calcite.FederatedSchema rootFederatedSchema =
                 new com.intellisql.federation.metadata.calcite.FederatedSchema("root");
-
         // Add all tables to root schema for unqualified table access
         for (final Table table : tables.values()) {
             rootFederatedSchema.addTable(table.getName(), createCalciteTable(table));
             log.debug("Added table to root schema: {}", table.getName());
         }
-
         final SchemaPlus rootSchema = CalciteSchema.createRootSchema(false, true).plus();
         rootSchema.add("root", rootFederatedSchema);
-
         // Also add tables directly to root for default schema path lookup
         for (final Table table : tables.values()) {
             rootSchema.add(table.getName(), createCalciteTable(table));
         }
-
         // Create sub-schemas for qualified access (schema.table)
         for (final Schema schema : schemas.values()) {
             final com.intellisql.federation.metadata.calcite.FederatedSchema federatedSchema =
@@ -298,7 +293,6 @@ public final class MetadataManager {
             }
             rootSchema.add(schema.getName(), federatedSchema);
         }
-
         return rootSchema;
     }
 
@@ -381,14 +375,12 @@ public final class MetadataManager {
     private org.apache.calcite.schema.Table createCalciteTable(final Table table) {
         final java.util.List<String> columnNames = new java.util.ArrayList<>();
         final java.util.List<org.apache.calcite.sql.type.SqlTypeName> columnTypes = new java.util.ArrayList<>();
-
         if (table.getColumns() != null) {
             for (final Column column : table.getColumns()) {
                 columnNames.add(column.getName());
                 columnTypes.add(org.apache.calcite.sql.type.SqlTypeName.VARCHAR);
             }
         }
-
         return new com.intellisql.federation.metadata.calcite.FederatedTable(
                 table.getName(), table.getDataSourceId(), columnNames, columnTypes);
     }
