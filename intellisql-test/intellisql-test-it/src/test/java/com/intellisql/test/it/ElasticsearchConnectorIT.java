@@ -235,7 +235,6 @@ public class ElasticsearchConnectorIT extends AbstractIntegrationTest {
         connection.setConnectTimeout(CONNECT_TIMEOUT);
         connection.setReadTimeout(READ_TIMEOUT);
         connection.setRequestProperty("Content-Type", "application/json");
-
         if (body != null && !body.isEmpty()) {
             connection.setDoOutput(true);
             try (OutputStream os = connection.getOutputStream()) {
@@ -243,17 +242,14 @@ public class ElasticsearchConnectorIT extends AbstractIntegrationTest {
                 os.write(input, 0, input.length);
             }
         }
-
         int statusCode = connection.getResponseCode();
         String responseBody;
-
         InputStream inputStream;
         if (statusCode >= 200 && statusCode < 300) {
             inputStream = connection.getInputStream();
         } else {
             inputStream = connection.getErrorStream();
         }
-
         if (inputStream != null) {
             try (
                     BufferedReader reader = new BufferedReader(
@@ -268,7 +264,6 @@ public class ElasticsearchConnectorIT extends AbstractIntegrationTest {
         } else {
             responseBody = "";
         }
-
         connection.disconnect();
         return new HttpResponse(statusCode, responseBody);
     }

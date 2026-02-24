@@ -41,7 +41,6 @@ class ElasticsearchConnectorIT {
     void setUp() {
         final String esUrl = System.getenv("ELASTICSEARCH_TEST_URL");
         assumeTrue(esUrl != null, "Elasticsearch test URL not set, skipping test");
-
         config = DataSourceConfig.builder()
                 .type(DataSourceType.ELASTICSEARCH)
                 .jdbcUrl(esUrl)
@@ -49,7 +48,6 @@ class ElasticsearchConnectorIT {
                 .password(System.getenv().getOrDefault("ELASTICSEARCH_TEST_PASSWORD", ""))
                 .maxPoolSize(5)
                 .build();
-
         connector = new ElasticsearchConnector();
     }
 

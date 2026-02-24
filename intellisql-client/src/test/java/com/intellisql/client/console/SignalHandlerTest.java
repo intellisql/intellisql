@@ -15,27 +15,23 @@
  * limitations under the License.
  */
 
-package com.intellisql.client.command;
+package com.intellisql.client.console;
 
-import com.intellisql.client.ClientException;
+import org.jline.terminal.Terminal;
+import org.junit.jupiter.api.Test;
 
-/** Interface for executable commands in the CLI. */
-public interface Command {
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
-    /**
-     * Executes the command.
-     *
-     * @throws ClientException if execution fails
-     * @throws Exception if unexpected error occurs
-     */
-    void execute() throws ClientException, Exception;
+class SignalHandlerTest {
 
-    /**
-     * Returns a description of the command.
-     *
-     * @return command description
-     */
-    default String getDescription() {
-        return this.getClass().getSimpleName();
+    @Test
+    void testHandleInterrupt() {
+        Terminal terminal = mock(Terminal.class);
+        SignalHandler handler = new SignalHandler(terminal);
+        handler.handleInterrupt();
+        verify(terminal).handle(eq(Terminal.Signal.INT), any(Terminal.SignalHandler.class));
     }
 }

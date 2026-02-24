@@ -77,22 +77,18 @@ public class TableStatistics {
             // Default 10% selectivity
             return 0.1;
         }
-
         // Equality predicates have selectivity = 1/distinct
         if ("=".equals(operator) || "==".equals(operator)) {
             return 1.0 / distinctCount;
         }
-
         // Range predicates typically select ~30% of data
         if (">".equals(operator) || "<".equals(operator) || ">=".equals(operator) || "<=".equals(operator)) {
             return 0.3;
         }
-
         // LIKE predicates vary widely
         if ("LIKE".equalsIgnoreCase(operator)) {
             return 0.1;
         }
-
         // IN predicate selectivity depends on number of values
         return 0.2;
     }

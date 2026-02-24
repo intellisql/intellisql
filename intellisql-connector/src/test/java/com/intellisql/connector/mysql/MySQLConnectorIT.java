@@ -41,7 +41,6 @@ class MySQLConnectorIT {
     void setUp() {
         final String mysqlUrl = System.getenv("MYSQL_TEST_URL");
         assumeTrue(mysqlUrl != null, "MySQL test URL not set, skipping test");
-
         config = DataSourceConfig.builder()
                 .type(DataSourceType.MYSQL)
                 .jdbcUrl(mysqlUrl)
@@ -49,7 +48,6 @@ class MySQLConnectorIT {
                 .password(System.getenv().getOrDefault("MYSQL_TEST_PASSWORD", ""))
                 .maxPoolSize(5)
                 .build();
-
         connector = new MySQLConnector();
     }
 

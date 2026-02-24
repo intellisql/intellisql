@@ -38,8 +38,11 @@ IntelliSql 是一个分布式 SQL 联邦查询与翻译平台，支持通过统�
 git clone https://github.com/intellisql/intellisql.git
 cd intellisql
 
-# 构建项目（跳过测试）
+# 构建项目（跳过测试，生成 Server 和 Client JAR）
 ./mvnw clean install -DskipTests
+
+# 构建原生客户端（需要 GraalVM）
+./mvnw package -Pnative -pl intellisql-distribution/intellisql-distribution-client
 
 # 构建项目（包含测试）
 ./mvnw clean install
@@ -124,12 +127,11 @@ cd intellisql-server-1.0.0-SNAPSHOT
 
 | 命令 | 说明 |
 |------|------|
-| `\h` 或 `\help` | 显示帮助 |
+| `\connect <url> [user] [password]` | 连接数据库（如 jdbc:mysql://...） |
+| `\translate [options] <sql>` | 翻译 SQL 方言 |
 | `\q` 或 `\quit` | 退出客户端 |
-| `\c` 或 `\clear` | 清空输入缓冲区 |
-| `\t <sql>` | 翻译 SQL 方言 |
-| `\s <file>` | 执行脚本文件 |
-| `\d` | 列出数据源 |
+
+> **注意**：交互模式支持 SQL 关键字、表名和列名的**语法高亮**和**自动补全**（连接后）。
 
 ```bash
 # 交互会话示例

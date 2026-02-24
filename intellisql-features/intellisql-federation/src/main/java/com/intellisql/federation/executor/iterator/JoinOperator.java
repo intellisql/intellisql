@@ -91,7 +91,6 @@ public class JoinOperator extends AbstractOperator<Row> {
         this.leftKeyExtractor = leftKeyExtractor;
         this.rightKeyExtractor = rightKeyExtractor;
         this.joinCondition = joinCondition;
-
         // Combine column names from both sides
         this.outputColumnNames = new ArrayList<>(leftColumnNames);
         this.outputColumnNames.addAll(rightColumnNames);
@@ -102,7 +101,6 @@ public class JoinOperator extends AbstractOperator<Row> {
         log.debug("Opening join operator - building hash table");
         leftChild.open();
         rightChild.open();
-
         // Build phase: read all left rows into hash table
         hashTable = new HashMap<>();
         long leftRowCount = 0;
@@ -113,7 +111,6 @@ public class JoinOperator extends AbstractOperator<Row> {
             leftRowCount++;
         }
         log.debug("Hash table built with {} rows from left side", leftRowCount);
-
         // Probe phase: start reading right rows
         fetchNextRightRow();
     }
@@ -139,15 +136,12 @@ public class JoinOperator extends AbstractOperator<Row> {
         if (currentLeftMatches == null || currentMatchIndex >= currentLeftMatches.size()) {
             throw new IllegalStateException("No more rows available");
         }
-
         final Row leftRow = currentLeftMatches.get(currentMatchIndex++);
         final Row result = mergeRows(leftRow, currentRightRow);
-
         // Check if we need to fetch more matches
         if (currentMatchIndex >= currentLeftMatches.size()) {
             fetchNextRightRow();
         }
-
         return result;
     }
 
@@ -159,11 +153,9 @@ public class JoinOperator extends AbstractOperator<Row> {
     private void fetchNextRightRow() throws Exception {
         currentLeftMatches = null;
         currentMatchIndex = 0;
-
         while (rightChild.hasNext()) {
             currentRightRow = rightChild.next();
             final Object key = rightKeyExtractor.apply(currentRightRow);
-
             final List<Row> matches = hashTable.get(key);
             if (matches != null && !matches.isEmpty()) {
                 currentLeftMatches = filterMatchesIfNeeded(matches);

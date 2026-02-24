@@ -85,7 +85,6 @@ public class SortOperator extends AbstractOperator<Row> {
     protected void doOpen() throws Exception {
         log.debug("Opening sort operator");
         child.open();
-
         // Read all rows and sort
         sortedResults = performSort();
         // Start after offset
@@ -138,17 +137,13 @@ public class SortOperator extends AbstractOperator<Row> {
      */
     private List<Row> performSort() throws Exception {
         final List<Row> rows = new ArrayList<>();
-
         // Read all rows
         while (child.hasNext()) {
             rows.add(child.next());
         }
-
         log.debug("Read {} rows for sorting", rows.size());
-
         // Sort
         rows.sort(comparator);
-
         return rows;
     }
 
