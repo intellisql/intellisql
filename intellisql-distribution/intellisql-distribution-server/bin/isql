@@ -159,6 +159,26 @@ if [ -n "$FILE" ]; then
     PROGRAM_ARGS+=("-f" "${FILE}")
 fi
 
+# Check for Native Image binary
+NATIVE_BINARY=""
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
+    BINARY_NAME="isql.exe"
+else
+    BINARY_NAME="isql"
+fi
+
+# Search priority: 1. same directory, 2. target directory (for dev/CI)
+if [ -f "${SCRIPT_DIR}/${BINARY_NAME}" ]; then
+    NATIVE_BINARY="${SCRIPT_DIR}/${BINARY_NAME}"
+elif [ -f "${PROJECT_HOME}/target/${BINARY_NAME}" ]; then
+    NATIVE_BINARY="${PROJECT_HOME}/target/${BINARY_NAME}"
+fi
+
+# Run using Native Binary if found
+if [ -n "${NATIVE_BINARY}" ]; then
+    exec "${NATIVE_BINARY}" "$@"
+fi
+
 # Print connection info
 echo "IntelliSQL CLI v1.0.0"
 echo "Connecting to ${HOST}:${PORT}/${DATABASE}..."
