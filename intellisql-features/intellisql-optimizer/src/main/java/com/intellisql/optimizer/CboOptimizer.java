@@ -106,19 +106,15 @@ public class CboOptimizer {
      */
     public RelNode optimize(final RelNode logicalPlan) {
         log.debug("Starting CBO optimization for logical plan: {}", logicalPlan);
-
         // Set the root of the planner
         planner.setRoot(logicalPlan);
-
         // Find the best plan based on cost
         final RelNode optimizedPlan = planner.findBestExp();
-
         log.debug("CBO optimization completed. Optimized plan: {}", optimizedPlan);
         if (optimizedPlan != null) {
             log.debug("Best plan estimated rows: {}",
                     optimizedPlan.estimateRowCount(optimizedPlan.getCluster().getMetadataQuery()));
         }
-
         return optimizedPlan;
     }
 

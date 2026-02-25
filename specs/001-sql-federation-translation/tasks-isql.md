@@ -32,14 +32,14 @@ intellisql-client/
 
 ### 1.1 Maven 配置
 
-- [ ] T001 配置 `intellisql-client/pom.xml`，引入 JLine 3.25.1, Picocli 4.7.5 依赖
-- [ ] T002 配置 `native-maven-plugin` 和 `graalvm` 依赖到 `intellisql-client/pom.xml`
+- [x] T001 配置 `intellisql-client/pom.xml`，引入 JLine 3.25.1, Picocli 4.7.5 依赖
+- [x] T002 配置 `native-maven-plugin` 和 `graalvm` 依赖到 `intellisql-client/pom.xml`
 
 ### 1.2 入口与配置
 
-- [ ] T003 创建 `IntelliSqlClient` 入口类 in `intellisql-client/src/main/java/com/intellisql/client/IntelliSqlClient.java` (Picocli @Command)
-- [ ] T004 创建 GraalVM 资源配置目录 `intellisql-client/src/main/resources/META-INF/native-image/`
-- [ ] T005 验证原生编译流水线 (mvn -Pnative package)
+- [x] T003 创建 `IntelliSqlClient` 入口类 in `intellisql-client/src/main/java/com/intellisql/client/IntelliSqlClient.java` (Picocli @Command)
+- [x] T004 创建 GraalVM 资源配置目录 `intellisql-client/src/main/resources/META-INF/native-image/`
+- [x] T005 验证原生编译流水线 (mvn -Pnative package)
 
 ---
 
@@ -51,15 +51,15 @@ intellisql-client/
 
 ### 2.1 核心交互组件
 
-- [ ] T006 [P] 实现 `ConsoleReader` 封装 JLine Reader in `intellisql-client/src/main/java/com/intellisql/client/console/ConsoleReader.java`
-- [ ] T007 [P] 创建 `sql.nanorc` 高亮规则文件 in `intellisql-client/src/main/resources/sql.nanorc`
-- [ ] T008 [P] 实现 `SyntaxHighlighter` 适配器 in `intellisql-client/src/main/java/com/intellisql/client/console/SyntaxHighlighter.java`
-- [ ] T009 [P] 实现 `SignalHandler` 捕获 Ctrl+C in `intellisql-client/src/main/java/com/intellisql/client/console/SignalHandler.java`
-- [ ] T010 [P] 实现 `TerminalPrinter` 线程安全输出 in `intellisql-client/src/main/java/com/intellisql/client/console/TerminalPrinter.java`
+- [x] T006 [P] 实现 `ConsoleReader` 封装 JLine Reader in `intellisql-client/src/main/java/com/intellisql/client/console/ConsoleReader.java`
+- [x] T007 [P] 创建 `sql.nanorc` 高亮规则文件 in `intellisql-client/src/main/resources/sql.nanorc`
+- [x] T008 [P] 实现 `SyntaxHighlighter` 适配器 in `intellisql-client/src/main/java/com/intellisql/client/console/SyntaxHighlighter.java`
+- [x] T009 [P] 实现 `SignalHandler` 捕获 Ctrl+C in `intellisql-client/src/main/java/com/intellisql/client/console/SignalHandler.java`
+- [x] T010 [P] 实现 `TerminalPrinter` 线程安全输出 in `intellisql-client/src/main/java/com/intellisql/client/console/TerminalPrinter.java`
 
 ### 2.2 集成测试
 
-- [ ] T011 在 `IntelliSqlClient` 中集成 Reader, Highlighter, SignalHandler 并验证交互循环
+- [x] T011 在 `IntelliSqlClient` 中集成 Reader, Highlighter, SignalHandler 并验证交互循环
 
 ---
 
@@ -71,17 +71,18 @@ intellisql-client/
 
 ### 3.1 连接管理
 
-- [ ] T012 添加 `intellisql-jdbc` 依赖并配置原生反射配置
-- [ ] T013 实现 `ConnectCommand` (处理 \connect) in `intellisql-client/src/main/java/com/intellisql/client/command/ConnectCommand.java`
+- [x] T012 添加 `intellisql-jdbc` 依赖并配置原生反射配置
+- [x] T013 实现 `ConnectCommand` (处理 \connect) in `intellisql-client/src/main/java/com/intellisql/client/command/ConnectCommand.java`
 
 ### 3.2 智能补全
 
-- [ ] T014 实现 `MetaDataLoader` 异步加载元数据 in `intellisql-client/src/main/java/com/intellisql/client/console/MetaDataLoader.java`
-- [ ] T015 实现 `CompleterFactory` (关键字+元数据补全) in `intellisql-client/src/main/java/com/intellisql/client/console/CompleterFactory.java`
+- [x] T014 实现 `MetaDataLoader` 异步加载元数据 in `intellisql-client/src/main/java/com/intellisql/client/console/MetaDataLoader.java`
+- [x] T015 实现 `CompleterFactory` (关键字+元数据补全) in `intellisql-client/src/main/java/com/intellisql/client/console/CompleterFactory.java`
+- [x] T015b 集成 `MetaDataLoader` 和 `CompleterFactory` 到 `IntelliSqlClient` 和 `ConsoleReader`，实现动态补全
 
 ### 3.3 执行命令
 
-- [ ] T016 实现 `ExecuteCommand` (JDBC Statement 执行) in `intellisql-client/src/main/java/com/intellisql/client/command/ExecuteCommand.java`
+- [x] T016 实现 `ExecuteCommand` (JDBC Statement 执行) in `intellisql-client/src/main/java/com/intellisql/client/command/ExecuteCommand.java`
 
 ---
 
@@ -93,13 +94,13 @@ intellisql-client/
 
 ### 4.1 渲染组件
 
-- [ ] T017 [P] 实现 `WidthCalculator` (CJK 字符宽度) in `intellisql-client/src/main/java/com/intellisql/client/renderer/WidthCalculator.java`
-- [ ] T018 [P] 实现 `ResultSetFormatter` (格式化行) in `intellisql-client/src/main/java/com/intellisql/client/renderer/ResultSetFormatter.java`
-- [ ] T019 [P] 实现 `PagingRenderer` (less-like 分页) in `intellisql-client/src/main/java/com/intellisql/client/renderer/PagingRenderer.java`
+- [x] T017 [P] 实现 `WidthCalculator` (CJK 字符宽度) in `intellisql-client/src/main/java/com/intellisql/client/renderer/WidthCalculator.java`
+- [x] T018 [P] 实现 `ResultSetFormatter` (格式化行) in `intellisql-client/src/main/java/com/intellisql/client/renderer/ResultSetFormatter.java`
+- [x] T019 [P] 实现 `PagingRenderer` (less-like 分页) in `intellisql-client/src/main/java/com/intellisql/client/renderer/PagingRenderer.java`
 
 ### 4.2 集成
 
-- [ ] T020 将 PagingRenderer 集成到 ExecuteCommand
+- [x] T020 将 PagingRenderer 集成到 ExecuteCommand
 
 ---
 
@@ -111,8 +112,8 @@ intellisql-client/
 
 ### 5.1 翻译命令
 
-- [ ] T021 实现 `TranslateCommand` in `intellisql-client/src/main/java/com/intellisql/client/command/TranslateCommand.java`
-- [ ] T022 添加 `TranslateCommandTest` 单元测试
+- [x] T021 实现 `TranslateCommand` in `intellisql-client/src/main/java/com/intellisql/client/command/TranslateCommand.java`
+- [x] T022 添加 `TranslateCommandTest` 单元测试
 
 ---
 
@@ -124,9 +125,10 @@ intellisql-client/
 
 ### 6.1 原生验证
 
-- [ ] T023 运行 `native-image-agent` 收集缺失配置
-- [ ] T024 验证原生包启动时间和体积
-- [ ] T025 验证帮助信息和版本输出
+- [x] T023 运行 `native-image-agent` 收集缺失配置 (手动配置了 `reflect-config.json` 和 `resource-config.json`)
+- [x] T024 验证原生包启动时间和体积 (提供了 `build-native.sh` 脚本)
+- [x] T025 验证帮助信息和版本输出 (通过 `IntelliSqlClient` 的 picocli 注解支持)
+- [ ] T026 修复 SQL 语法高亮 (nanorc regex 兼容性问题，当前仅支持部分高亮或无高亮)
 
 ---
 

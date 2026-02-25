@@ -25,7 +25,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-/** Schema definition representing a logical database schema mapped to a DataSource. */
+/**
+ * Schema definition representing a logical database schema mapped to a DataSource.
+ */
 @Getter
 @RequiredArgsConstructor
 @Builder(toBuilder = true)

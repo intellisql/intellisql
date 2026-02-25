@@ -30,5 +30,6 @@
     <modules>
         <module>intellisql-distribution-jdbc</module>
         <module>intellisql-distribution-server</module>
+        <module>intellisql-distribution-client</module>
     </modules>
 </project>

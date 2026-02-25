@@ -146,7 +146,6 @@ public final class ConfigLoader {
         final String host = getString(config, "host", "localhost");
         final Integer port = getPort(config);
         final String database = getString(config, "database", null);
-
         final StringBuilder url = new StringBuilder("jdbc:");
         switch (type) {
             case "mysql":

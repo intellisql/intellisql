@@ -90,12 +90,10 @@ public class HybridOptimizer {
      */
     public RelNode optimize(final RelNode logicalPlan) {
         log.debug("Starting hybrid optimization pipeline");
-
         // Phase 1: RBO - Apply heuristic transformation rules
         log.debug("Phase 1: Applying RBO rules");
         RelNode currentPlan = rboOptimizer.optimize(logicalPlan);
         log.debug("After RBO: {}", currentPlan);
-
         // Phase 2: CBO - Cost-based optimization (join ordering, etc.)
         // Use the planner from the RelNode's cluster directly (like ShardingSphere does)
         if (enableCbo) {
@@ -110,7 +108,6 @@ public class HybridOptimizer {
                 log.warn("Planner is not VolcanoPlanner, skipping CBO phase");
             }
         }
-
         log.debug("Hybrid optimization completed");
         return currentPlan;
     }

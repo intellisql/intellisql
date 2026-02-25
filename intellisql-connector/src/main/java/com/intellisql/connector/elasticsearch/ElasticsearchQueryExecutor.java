@@ -74,12 +74,10 @@ public class ElasticsearchQueryExecutor {
         try {
             SqlQuery parsedQuery = parseSql(sql);
             SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-
             if (parsedQuery.getWhereClause() != null && !parsedQuery.getWhereClause().isEmpty()) {
                 BoolQueryBuilder query = buildQuery(parsedQuery.getWhereClause());
                 sourceBuilder.query(query);
             }
-
             if (parsedQuery.getOrderBy() != null && !parsedQuery.getOrderBy().isEmpty()) {
                 String[] orderParts = parsedQuery.getOrderBy().trim().split("\\s+");
                 String sortField = orderParts[0];
@@ -89,24 +87,18 @@ public class ElasticsearchQueryExecutor {
                                 : SortOrder.ASC;
                 sourceBuilder.sort(sortField, sortOrder);
             }
-
             int size = parsedQuery.getLimit() > 0 ? parsedQuery.getLimit() : 1000;
             sourceBuilder.size(size);
-
             if (!parsedQuery.getFields().isEmpty() && !parsedQuery.getFields().contains("*")) {
                 sourceBuilder.fetchSource(parsedQuery.getFields().toArray(new String[0]), null);
             }
-
             final SearchRequest searchRequest = new SearchRequest(parsedQuery.getIndex());
             searchRequest.source(sourceBuilder);
-
             SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
-
             List<String> columnNames = new ArrayList<>();
             List<DataType> columnTypes = new ArrayList<>();
             List<List<Object>> rows = new ArrayList<>();
             boolean columnsInitialized = false;
-
             for (SearchHit hit : response.getHits().getHits()) {
                 Map<String, Object> source = hit.getSourceAsMap();
                 if (source == null) {
@@ -125,7 +117,6 @@ public class ElasticsearchQueryExecutor {
                 }
                 rows.add(row);
             }
-
             long executionTime = System.currentTimeMillis() - startTime;
             log.debug(
                     "Elasticsearch query executed in {}ms, returned {} rows", executionTime, rows.size());
@@ -187,7 +178,6 @@ public class ElasticsearchQueryExecutor {
                         .replaceAll("(?i)\\s+" + parts[1] + "$", "")
                         .trim();
         String value = parts[1].trim().replaceAll("^['\"]|['\"]$", "");
-
         switch (operator.toUpperCase()) {
             case "=":
                 boolBuilder.must(new TermQueryBuilder(field, value));

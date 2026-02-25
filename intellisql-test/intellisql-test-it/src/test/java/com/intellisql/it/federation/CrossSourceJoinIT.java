@@ -39,7 +39,6 @@ class CrossSourceJoinIT {
     void setUp() throws Exception {
         final String configPath = System.getenv("INTELLISQL_TEST_CONFIG");
         assumeTrue(configPath != null, "Test config not set, skipping IT");
-
         final ModelConfig config = com.intellisql.common.config.ConfigLoader.load(
                 java.nio.file.Paths.get(configPath));
         kernel = new IntelliSqlKernel(config);

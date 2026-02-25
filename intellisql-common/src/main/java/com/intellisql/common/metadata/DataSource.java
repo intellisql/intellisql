@@ -28,7 +28,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/** DataSource definition representing a connection to an external data source. */
+/**
+ * DataSource definition representing a connection to an external data source.
+ */
 @Getter
 @Builder(toBuilder = true)
 @AllArgsConstructor

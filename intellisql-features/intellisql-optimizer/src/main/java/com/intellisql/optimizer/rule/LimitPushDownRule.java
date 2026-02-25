@@ -108,12 +108,9 @@ public class LimitPushDownRule extends RelOptRule {
     public void onMatch(final RelOptRuleCall call) {
         final LogicalSort sort = call.rel(0);
         final RelNode input = sort.getInput();
-
         final int limit = getLimit(sort);
         final int offset = getOffset(sort);
-
         log.debug("Pushing down LIMIT {} OFFSET {} through: {}", limit, offset, input);
-
         // Check if we can push down through the input
         if (canPushDown(input, limit, offset)) {
             final RelNode newInput = pushDownLimit(input, limit, offset);

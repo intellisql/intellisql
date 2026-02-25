@@ -1,0 +1,192 @@
+description = "Remove blank lines inside Java method bodies to make code more compact."
+
+prompt = """
+---
+description: Remove blank lines inside Java method bodies to make code more compact.
+---
+
+## User Input
+
+```text
+{{args}}
+```
+
+You **MUST** consider the user input before proceeding (if not empty).
+
+## Overview
+
+This command removes blank lines inside Java method bodies while preserving:
+- Blank lines between methods
+- Blank lines between class members (fields, static blocks, etc.)
+- Blank lines between import statements
+- License header formatting
+
+## Execution Steps
+
+1. **Determine target scope** based on user input:
+   - If `{{args}}` contains a file path: Process only that file
+   - If `{{args}}` contains a directory path: Process all `.java` files in that directory (recursively)
+   - If `{{args}}` is empty: Process all `.java` files in the current project's `src` directories
+
+2. **Create a Python script** to remove blank lines inside method bodies:
+
+```python
+#!/usr/bin/env python3
+import sys
+import re
+
+def remove_blank_lines_in_methods(content):
+    \"\"\"Remove blank lines inside method bodies only, preserving field spacing.\"\"\"
+    lines = content.split('\\n')
+    result = []
+    brace_depth = 0
+    method_start_depth = -1  # -1 means not inside a method
+
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+
+        # Track braces before processing the line
+        open_braces = line.count('{')
+        close_braces = line.count('}')
+
+        # Check if this line starts a method (look at current and previous lines)
+        if open_braces > 0 and method_start_depth == -1:
+            # Check if this line or recent lines contain a method signature
+            context = stripped
+            for j in range(max(0, i-3), i):
+                context = lines[j].strip() + ' ' + context
+
+            # Check if it looks like a method/constructor (has parentheses)
+            # but not a class/interface/enum declaration
+            is_class_decl = (stripped.startswith('class ') or
+                           stripped.startswith('public class ') or
+                           stripped.startswith('private class ') or
+                           stripped.startswith('protected class ') or
+                           stripped.startswith('interface ') or
+                           stripped.startswith('public interface ') or
+                           stripped.startswith('enum ') or
+                           stripped.startswith('public enum ') or
+                           'class ' in context[:50])
+
+            if '(' in context and '{' in line and not is_class_decl:
+                # This is likely a method start
+                method_start_depth = brace_depth + 1
+
+        # Check if line is blank
+        is_blank = stripped == ''
+
+        # Determine if we're inside a method body
+        is_inside_method = (method_start_depth != -1 and brace_depth >= method_start_depth)
+
+        # Remove blank lines only inside method bodies
+        if is_blank and is_inside_method:
+            i += 1
+            continue
+
+        result.append(line)
+
+        # Update brace depth after processing
+        brace_depth += open_braces - close_braces
+
+        # Reset method tracking when we exit the method
+        if method_start_depth != -1 and brace_depth < method_start_depth:
+            method_start_depth = -1
+
+        i += 1
+
+    return '\\n'.join(result)
+
+def process_file(filepath):
+    \"\"\"Process a single Java file.\"\"\"
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        new_content = remove_blank_lines_in_methods(content)
+
+        if content != new_content:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(new_content)
+            return True
+        return False
+    except Exception as e:
+        print(f"Error processing {filepath}: {e}", file=sys.stderr)
+        return False
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: python remove_blank_lines.py <file1.java> [file2.java ...]")
+        sys.exit(1)
+
+    processed = 0
+    modified = 0
+    for filepath in sys.argv[1:]:
+        if process_file(filepath):
+            modified += 1
+        processed += 1
+
+    print(f"Processed {processed} files, modified {modified} files")
+
+if __name__ == "__main__":
+    main()
+```
+
+3. **Execute the script** on the target files:
+
+   For a single file:
+   ```bash
+   python3 /tmp/remove_blank_lines.py <file_path>
+   ```
+
+   For all Java source files in a project:
+   ```bash
+   find <project_path> -name "*.java" -type f -path "*/src/*" ! -path "*/target/*" | xargs python3 /tmp/remove_blank_lines.py
+   ```
+
+4. **Clean up** the temporary script:
+   ```bash
+   rm /tmp/remove_blank_lines.py
+   ```
+
+5. **Report results** to the user with:
+   - Number of files processed
+   - Number of files modified
+   - Use `git diff --stat` to show changes summary
+
+## Example
+
+Before:
+```java
+public static Completer create(final MetaDataLoader loader) {
+    List<Completer> completers = new ArrayList<>();
+
+    // Keywords
+    completers.add(new StringsCompleter(SQL_KEYWORDS));
+
+    // Commands
+    completers.add(new StringsCompleter(ISQL_COMMANDS));
+
+    return new AggregateCompleter(completers);
+}
+```
+
+After:
+```java
+public static Completer create(final MetaDataLoader loader) {
+    List<Completer> completers = new ArrayList<>();
+    // Keywords
+    completers.add(new StringsCompleter(SQL_KEYWORDS));
+    // Commands
+    completers.add(new StringsCompleter(ISQL_COMMANDS));
+    return new AggregateCompleter(completers);
+}
+```
+
+## Notes
+
+- This command modifies files in-place
+- Always review changes with `git diff` before committing
+- The script preserves blank lines between class members and methods
+"""

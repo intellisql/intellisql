@@ -77,7 +77,6 @@ public class AggregateOperator extends AbstractOperator<Row> {
     protected void doOpen() throws Exception {
         log.debug("Opening aggregate operator");
         child.open();
-
         // Perform aggregation
         aggregatedResults = performAggregation();
         currentResultIndex = 0;
@@ -115,37 +114,29 @@ public class AggregateOperator extends AbstractOperator<Row> {
      */
     private List<Row> performAggregation() throws Exception {
         final Map<GroupKey, AggregateAccumulator[]> groups = new HashMap<>();
-
         // Read all rows and accumulate
         while (child.hasNext()) {
             final Row row = child.next();
             final GroupKey key = extractGroupKey(row);
-
             final AggregateAccumulator[] accumulators = groups.computeIfAbsent(key,
                     k -> createAccumulators());
-
             for (int i = 0; i < aggregateFunctions.size(); i++) {
                 final Object value = aggregateFunctions.get(i).valueExtractor.apply(row);
                 accumulators[i].accumulate(value);
             }
         }
-
         // Convert groups to result rows
         final List<Row> results = new ArrayList<>(groups.size());
         for (final Map.Entry<GroupKey, AggregateAccumulator[]> entry : groups.entrySet()) {
             final List<Object> values = new ArrayList<>();
-
             // Add group key values
             values.addAll(entry.getKey().values);
-
             // Add aggregate results
             for (final AggregateAccumulator accumulator : entry.getValue()) {
                 values.add(accumulator.getResult());
             }
-
             results.add(new Row(values, outputColumnNames));
         }
-
         return results;
     }
 

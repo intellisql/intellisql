@@ -108,11 +108,9 @@ public class SubqueryRewriteRule extends RelOptRule {
     public void onMatch(final RelOptRuleCall call) {
         final Filter filter = call.rel(0);
         log.debug("Rewriting subquery in filter: {}", filter.getCondition());
-
         // The actual subquery rewriting is handled by Calcite's built-in rules
         // (FilterJoinRule, SubQueryRemoveRule, etc.)
         // This rule serves as a marker for custom subquery transformations
-
         // For now, we rely on Calcite's SubQueryRemoveRule
         // Custom transformations can be added here if needed
         log.debug("Subquery rewrite completed - delegating to Calcite built-in rules");

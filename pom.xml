@@ -479,5 +479,29 @@
                 </plugins>
             </build>
         </profile>
+        <!-- JDK 9+ profile for Mockito inline mock maker compatibility -->
+        <profile>
+            <id>jdk9-plus</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-surefire-plugin</artifactId>
+                            <version>${maven.surefire.plugin.version}</version>
+                            <configuration>
+                                <argLine>--add-opens java.base/java.lang=ALL-UNNAMED
+                                    --add-opens java.base/java.io=ALL-UNNAMED
+                                    --add-opens java.base/java.util=ALL-UNNAMED
+                                    --add-opens java.base/java.lang.reflect=ALL-UNNAMED</argLine>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
     </profiles>
 </project>
