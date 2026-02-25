@@ -1,0 +1,58 @@
+name: isql Native Image Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  native-test:
+    name: Native Image Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          native-image: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: 'maven'
+
+      - name: Build Native Image
+        shell: bash
+        run: ./mvnw clean package -Pnative -DskipTests -pl intellisql-distribution/intellisql-distribution-client -am
+
+      - name: Show Binary Info
+        shell: bash
+        run: |
+          BINARY_PATH="intellisql-distribution/intellisql-distribution-client/target/isql"
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            BINARY_PATH="${BINARY_PATH}.exe"
+          fi
+          ls -lh "$BINARY_PATH"
+          if [ "${{ matrix.os }}" != "windows-latest" ]; then
+            file "$BINARY_PATH"
+          fi
+
+      - name: Test isql Help via script
+        shell: bash
+        run: ./intellisql-distribution/intellisql-distribution-client/bin/isql --help
+
+      - name: Test isql Version via script
+        shell: bash
+        run: ./intellisql-distribution/intellisql-distribution-client/bin/isql --version
+
+      - name: Test isql Execute Command Smoke Test via script
+        shell: bash
+        run: ./intellisql-distribution/intellisql-distribution-client/bin/isql -e "SELECT 1"
