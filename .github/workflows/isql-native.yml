@@ -31,7 +31,17 @@ jobs:
 
       - name: Build Native Image
         shell: bash
-        run: ./mvnw clean package -Pnative -DskipTests -pl intellisql-distribution/intellisql-distribution-client -am
+        run: ./mvnw clean package -Pnative -DskipTests -pl intellisql-distribution/intellisql-distribution-client -am -X 2>&1 | tee build.log
+        env:
+          GRAALVM_HOME: ${{ env.JAVA_HOME }}
+
+      - name: Upload Build Log on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-${{ matrix.os }}
+          path: build.log
+          retention-days: 5
 
       - name: Show Binary Info
         shell: bash

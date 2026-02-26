@@ -4,7 +4,14 @@
       {"pattern": "sql.nanorc"},
       {"pattern": ".*.properties"},
       {"pattern": "org/jline/utils/.*"},
-      {"pattern": "org/jline/terminal/.*"}
+      {"pattern": "org/jline/terminal/.*"},
+      {"pattern": "org/apache/calcite/.*"},
+      {"pattern": "com/intellisql/.*"},
+      {"pattern": "META-INF/.*"},
+      {"pattern": "logback.xml"},
+      {"pattern": "log4j2.xml"},
+      {"pattern": ".*.yml"},
+      {"pattern": ".*.yaml"}
     ]
   }
 }
