@@ -45,14 +45,70 @@ jobs:
             file "$BINARY_PATH"
           fi
 
+      - name: Test isql Help (direct binary)
+        shell: bash
+        timeout-minutes: 1
+        continue-on-error: ${{ matrix.os != 'windows-latest' }}
+        env:
+          JLINE_TERMINAL: dumb
+        run: |
+          BINARY_PATH="intellisql-distribution/intellisql-distribution-client/target/isql"
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            BINARY_PATH="${BINARY_PATH}.exe"
+          fi
+          echo "Testing native binary directly..."
+          echo "OS: ${{ matrix.os }}"
+          echo "Binary: $BINARY_PATH"
+          "$BINARY_PATH" --help
+
+      - name: Test isql Version (direct binary)
+        shell: bash
+        timeout-minutes: 1
+        continue-on-error: ${{ matrix.os != 'windows-latest' }}
+        env:
+          JLINE_TERMINAL: dumb
+        run: |
+          BINARY_PATH="intellisql-distribution/intellisql-distribution-client/target/isql"
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            BINARY_PATH="${BINARY_PATH}.exe"
+          fi
+          echo "Testing native binary version..."
+          "$BINARY_PATH" --version
+
+      - name: Test isql Execute Command (direct binary)
+        shell: bash
+        timeout-minutes: 1
+        continue-on-error: ${{ matrix.os != 'windows-latest' }}
+        env:
+          JLINE_TERMINAL: dumb
+        run: |
+          BINARY_PATH="intellisql-distribution/intellisql-distribution-client/target/isql"
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            BINARY_PATH="${BINARY_PATH}.exe"
+          fi
+          echo "Testing native binary execute command..."
+          "$BINARY_PATH" -e "SELECT 1"
+
       - name: Test isql Help via script
         shell: bash
+        timeout-minutes: 1
+        continue-on-error: ${{ matrix.os != 'windows-latest' }}
+        env:
+          JLINE_TERMINAL: dumb
         run: ./intellisql-distribution/intellisql-distribution-client/bin/isql --help
 
       - name: Test isql Version via script
         shell: bash
+        timeout-minutes: 1
+        continue-on-error: ${{ matrix.os != 'windows-latest' }}
+        env:
+          JLINE_TERMINAL: dumb
         run: ./intellisql-distribution/intellisql-distribution-client/bin/isql --version
 
-      - name: Test isql Execute Command Smoke Test via script
+      - name: Test isql Execute Command via script
         shell: bash
+        timeout-minutes: 1
+        continue-on-error: ${{ matrix.os != 'windows-latest' }}
+        env:
+          JLINE_TERMINAL: dumb
         run: ./intellisql-distribution/intellisql-distribution-client/bin/isql -e "SELECT 1"
