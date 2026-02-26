@@ -37,5 +37,61 @@
     "allPublicMethods": true,
     "allDeclaredFields": true,
     "allPublicFields": true
+  },
+  {
+    "name": "org.jline.terminal.impl.PosixSysTerminal",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.ExecPty",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.PosixPtyTerminal",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.DumbTerminal",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.DumbTerminal$DumbTerminalProvider",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.utils.NonBlockingReaderImpl",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.utils.NonBlocking",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.Terminal$TerminalProvider",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.AbstractPosixTerminal",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.AbstractTerminal",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.AbstractWindowsTerminal",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.ffm.FfmTerminalProvider",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.jansi.JansiTerminalProvider",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.jna.JnaTerminalProvider",
+    "allDeclaredConstructors": true
   }
 ]

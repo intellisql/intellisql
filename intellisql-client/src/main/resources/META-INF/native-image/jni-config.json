@@ -1,0 +1,17 @@
+[
+  {
+    "name": "org.jline.terminal.impl.jna.JnaNativePty",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.jansi.JansiWin32InputStream",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.jansi.JansiWinSysTerminal",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  }
+]

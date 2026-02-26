@@ -2,7 +2,9 @@
   "resources": {
     "includes": [
       {"pattern": "sql.nanorc"},
-      {"pattern": ".*.properties"}
+      {"pattern": ".*.properties"},
+      {"pattern": "org/jline/utils/.*"},
+      {"pattern": "org/jline/terminal/.*"}
     ]
   }
 }

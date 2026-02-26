@@ -85,6 +85,11 @@
                             <imageName>isql</imageName>
                             <buildArgs>
                                 <buildArg>--no-fallback</buildArg>
+                                <buildArg>-H:+ReportExceptionStackTraces</buildArg>
+                                <buildArg>--allow-incomplete-classpath</buildArg>
+                                <buildArg>--enable-url-protocols=http,https</buildArg>
+                                <buildArg>--initialize-at-build-time=org.jline,com.intellisql</buildArg>
+                                <buildArg>-H:-UseServiceLoaderFeature</buildArg>
                             </buildArgs>
                         </configuration>
                         <executions>
