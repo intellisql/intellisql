@@ -88,8 +88,11 @@
                                 <buildArg>-H:+ReportExceptionStackTraces</buildArg>
                                 <buildArg>--allow-incomplete-classpath</buildArg>
                                 <buildArg>--enable-url-protocols=http,https</buildArg>
-                                <buildArg>--initialize-at-build-time=org.jline,com.intellisql</buildArg>
+                                <buildArg>--initialize-at-run-time=com.intellisql,org.apache.calcite,org.apache.calcite.avatica,ch.qos.logback,org.slf4j,com.google.common,org.codehaus.janino,org.jline</buildArg>
                                 <buildArg>-H:-UseServiceLoaderFeature</buildArg>
+                                <buildArg>--report-unsupported-elements-at-runtime</buildArg>
+                                <buildArg>-H:+AddAllCharsets</buildArg>
+                                <buildArg>--enable-all-security-services</buildArg>
                             </buildArgs>
                         </configuration>
                         <executions>
