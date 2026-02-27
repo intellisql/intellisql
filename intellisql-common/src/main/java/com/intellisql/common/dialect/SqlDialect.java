@@ -28,10 +28,15 @@ import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 public enum SqlDialect {
 
     MYSQL(MysqlSqlDialect.DEFAULT),
+
     POSTGRESQL(PostgresqlSqlDialect.DEFAULT),
+
     ORACLE(OracleSqlDialect.DEFAULT),
+
     SQLSERVER(MssqlSqlDialect.DEFAULT),
+
     HIVE(HiveSqlDialect.DEFAULT),
+
     STANDARD(AnsiSqlDialect.DEFAULT);
 
     private final org.apache.calcite.sql.SqlDialect calciteDialect;

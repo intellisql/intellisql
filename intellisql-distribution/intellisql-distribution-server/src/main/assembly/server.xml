@@ -52,7 +52,6 @@
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.sh</include>
-                <include>isql</include>
             </includes>
             <fileMode>0755</fileMode>
             <lineEnding>unix</lineEnding>

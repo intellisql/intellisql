@@ -41,6 +41,9 @@ out/
 .project
 .metadata/
 bin/
+# Exception: distribution bin directories contain executable scripts
+!intellisql-distribution/**/bin/
+!intellisql-distribution/**/bin/*
 tmp/
 # IDE - VS Code
 .vscode/

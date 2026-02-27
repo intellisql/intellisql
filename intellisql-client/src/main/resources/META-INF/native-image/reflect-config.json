@@ -30,6 +30,211 @@
     "allPublicMethods": true
   },
   {
+    "name": "com.intellisql.client.command.HelpCommand",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.client.console.ConsoleReader",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "com.intellisql.client.console.TerminalPrinter",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.client.console.CompleterFactory",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.client.console.MetaDataLoader",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.client.console.SyntaxHighlighter",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.client.renderer.PagingRenderer",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.client.renderer.ResultSetFormatter",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.client.renderer.WidthCalculator",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.common.dialect.SqlDialect",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "com.intellisql.translator.TranslationMode",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "com.intellisql.translator.Translation",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "com.intellisql.translator.Translation$TranslationBuilder",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "com.intellisql.translator.TranslationError",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "com.intellisql.translator.TranslationError$TranslationErrorBuilder",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "com.intellisql.translator.SqlTranslator",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.translator.OnlineTranslationService",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.translator.OfflineTranslationService",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.parser.SqlParserFactory",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.parser.BabelParserConfiguration",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.parser.impl.IntelliSqlParserImpl",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.translator.dialect.DialectConverterFactory",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.translator.dialect.DialectConverterFactory$StandardDialectConverter",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "com.intellisql.translator.dialect.MySQLDialectConverter",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.translator.dialect.PostgreSQLDialectConverter",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.translator.dialect.OracleDialectConverter",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.translator.dialect.SQLServerDialectConverter",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.intellisql.translator.dialect.HiveDialectConverter",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
     "name": "picocli.CommandLine$AutoHelpMixin",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
@@ -37,5 +242,114 @@
     "allPublicMethods": true,
     "allDeclaredFields": true,
     "allPublicFields": true
+  },
+  {
+    "name": "org.jline.terminal.impl.PosixSysTerminal",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.ExecPty",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.PosixPtyTerminal",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.DumbTerminal",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.DumbTerminal$DumbTerminalProvider",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.utils.NonBlockingReaderImpl",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.utils.NonBlocking",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.Terminal$TerminalProvider",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.AbstractPosixTerminal",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.AbstractTerminal",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.AbstractWindowsTerminal",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.ffm.FfmTerminalProvider",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.jansi.JansiTerminalProvider",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.jline.terminal.impl.jna.JnaTerminalProvider",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.apache.calcite.sql.SqlDialect",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.calcite.sql.dialect.MysqlSqlDialect",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.calcite.sql.dialect.PostgresqlSqlDialect",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.calcite.sql.dialect.OracleSqlDialect",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.calcite.sql.dialect.MssqlSqlDialect",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.calcite.sql.dialect.HiveSqlDialect",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.calcite.sql.dialect.AnsiSqlDialect",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.calcite.sql.SqlNode",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.calcite.sql.parser.SqlParser",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.calcite.sql.parser.SqlParser$Config",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
   }
 ]
