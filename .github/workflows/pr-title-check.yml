@@ -1,0 +1,39 @@
+name: "PR Title Check"
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+
+jobs:
+  main:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # 定义允许的前缀
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          # 是否要求必须有主体描述
+          requireScope: false
+          # 验证失败时的提示信息
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: |
+            The subject contains a capital letter. Please use lowercase for the first word.
+          # 允许 PR 标题中包含 Breaking Change 标记 (!)
+          allowCustomType: false
