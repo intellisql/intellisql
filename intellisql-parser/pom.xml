@@ -107,6 +107,33 @@
                     </execution>
                 </executions>
             </plugin>
+                    <plugin>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <minimizeJar>false</minimizeJar>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <filters>
+                                <filter>
+                                    <artifact>org.apache.calcite:calcite-core</artifact>
+                                    <excludes>
+                                        <exclude>org/apache/calcite/sql/SqlDelete.class</exclude>
+                                        <exclude>org/apache/calcite/sql/SqlInsert.class</exclude>
+                                        <exclude>org/apache/calcite/sql/SqlUpdate.class</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>
