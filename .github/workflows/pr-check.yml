@@ -31,16 +31,72 @@ jobs:
             revert
           requireScope: false
 
+      - name: Check lowercase after colon in PR title
+        run: |
+          title="${{ github.event.pull_request.title }}"
+          echo "PR Title: $title"
+          
+          # 检查格式: type: Description -> 应该是 type: description
+          if [[ "$title" =~ ^[^:]+:\ [A-Z] ]]; then
+            echo "❌ Error: First letter after colon must be lowercase"
+            echo ""
+            echo "Expected format: feat: add feature"
+            echo "Your title: $title"
+            echo ""
+            echo "Please use: ${title%%:*}: $(echo "${title#*: }" | sed 's/^[A-Z]/\L&/')"
+            exit 1
+          fi
+          
+          echo "✅ PR title format is correct"
+
   check-commit-messages:
     name: Check Commit Messages
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Check Commit Message Format
         uses: gsactions/commit-message-checker@v2
         with:
-          pattern: '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .{1,100}'
-          error: 'Commit message does not match Conventional Commits format (e.g., "feat: add user login").'
+          pattern: '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: [a-z].{0,99}'
+          error: 'Commit message does not match Conventional Commits format or first letter after colon is not lowercase.'
           excludeDescription: 'true'
           excludeTitle: 'true'
           checkAllCommitMessages: 'true'
           accessToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check All Commits for Lowercase After Colon
+        run: |
+          # Get all commits in the PR
+          commits=$(git log --format=%s origin/main..HEAD)
+          
+          echo "Checking all commit messages..."
+          echo ""
+          
+          has_error=false
+          while IFS= read -r commit; do
+            echo "Checking: $commit"
+            
+            # Check if format is type: Description (uppercase after colon)
+            if [[ "$commit" =~ ^[^:]+:\ [A-Z] ]]; then
+              echo "  ❌ Error: First letter after colon must be lowercase"
+              echo "     Expected: ${commit%%:*}: $(echo "${commit#*: }" | sed 's/^[A-Z]/\L&/')"
+              echo ""
+              has_error=true
+            else
+              echo "  ✅ Format correct"
+            fi
+          done <<< "$commits"
+          
+          if [ "$has_error" = true ]; then
+            echo ""
+            echo "❌ Some commit messages have incorrect format"
+            echo "Please amend your commits to use lowercase after colon"
+            exit 1
+          fi
+          
+          echo ""
+          echo "✅ All commit messages follow the correct format"
