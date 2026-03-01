@@ -42,7 +42,7 @@ cd intellisql
 ./mvnw clean install -DskipTests
 
 # Build Native Client (requires GraalVM)
-./mvnw package -Pnative -pl intellisql-distribution/intellisql-distribution-client
+./mvnw package -pl intellisql-distribution/intellisql-distribution-client -am
 
 # Build with tests
 ./mvnw clean install
