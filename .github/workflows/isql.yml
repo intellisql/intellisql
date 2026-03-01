@@ -1,4 +1,4 @@
-name: isql Test
+name: Clinet ISQL Test
 
 on:
   push:
