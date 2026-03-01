@@ -21,8 +21,9 @@ import org.apache.calcite.config.Lex;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParser.Config;
+import org.apache.calcite.sql.validate.SqlConformance;
+import org.apache.calcite.sql.validate.SqlConformanceEnum;
 import com.intellisql.common.dialect.SqlDialect;
-import com.intellisql.parser.impl.IntelliSqlParserImpl;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -57,8 +58,10 @@ public final class SqlParserFactory {
     public static Config createParserConfig(final SqlDialect dialect) {
         SqlParser.ConfigBuilder configBuilder = SqlParser.configBuilder();
         Lex lex = getLex(dialect);
+        SqlConformance conformance = getConformance(dialect);
         configBuilder.setLex(lex);
-        // Use default Calcite parser for standard dialects
+        configBuilder.setConformance(conformance);
+
         return configBuilder.build();
     }
 
@@ -75,6 +78,30 @@ public final class SqlParserFactory {
             case STANDARD:
             default:
                 return Lex.JAVA;
+        }
+    }
+
+    /**
+     * Gets the SQL conformance level for the specified dialect.
+     *
+     * @param dialect the SQL dialect
+     * @return SqlConformance for the dialect
+     */
+    private static SqlConformance getConformance(final SqlDialect dialect) {
+        switch (dialect) {
+            case MYSQL:
+                // MySQL conformance allows LIMIT start, count and other MySQL-specific syntax
+                return SqlConformanceEnum.MYSQL_5;
+            case POSTGRESQL:
+                return SqlConformanceEnum.PRAGMATIC_99;
+            case ORACLE:
+                return SqlConformanceEnum.ORACLE_10;
+            case SQLSERVER:
+                return SqlConformanceEnum.SQL_SERVER_2008;
+            case HIVE:
+            case STANDARD:
+            default:
+                return SqlConformanceEnum.DEFAULT;
         }
     }
 
@@ -115,8 +142,7 @@ public final class SqlParserFactory {
     public static SqlParser createBabelParser(final String sql) {
         Config config = BabelParserConfiguration.createConfig();
         SqlParser.ConfigBuilder configBuilder = SqlParser.configBuilder(config);
-        configBuilder.setParserFactory(IntelliSqlParserImpl.FACTORY);
-        return SqlParser.create(sql, configBuilder.build());
+        return SqlParser.create(sql, config);
     }
 
     /**
