@@ -24,6 +24,7 @@ import org.apache.calcite.sql.parser.SqlParser.Config;
 import org.apache.calcite.sql.validate.SqlConformance;
 import org.apache.calcite.sql.validate.SqlConformanceEnum;
 import com.intellisql.common.dialect.SqlDialect;
+import com.intellisql.parser.impl.IntelliSqlParserImpl;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -142,7 +143,8 @@ public final class SqlParserFactory {
     public static SqlParser createBabelParser(final String sql) {
         Config config = BabelParserConfiguration.createConfig();
         SqlParser.ConfigBuilder configBuilder = SqlParser.configBuilder(config);
-        return SqlParser.create(sql, config);
+        configBuilder.setParserFactory(IntelliSqlParserImpl.FACTORY);
+        return SqlParser.create(sql, configBuilder.build());
     }
 
     /**
