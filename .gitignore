@@ -75,3 +75,22 @@ lib/
 
 # Checkstyle suppressions (local)
 src/resources/checkstyle/suppressions.xml
+
+# Codex
+/.codex/log/
+/.codex/memories/
+/.codex/shell_snapshots/
+/.codex/tmp/
+/.codex/.personality_migration
+/.codex/auth.json
+/.codex/config.toml
+/.codex/logs_1.sqlite
+/.codex/logs_1.sqlite-shm
+/.codex/logs_1.sqlite-wal
+/.codex/models_cache.json
+/.codex/state_5.sqlite
+/.codex/state_5.sqlite-shm
+/.codex/state_5.sqlite-wal
+/.codex/version.json
+/.codex/history.jsonl
+/.codex/sessions/
