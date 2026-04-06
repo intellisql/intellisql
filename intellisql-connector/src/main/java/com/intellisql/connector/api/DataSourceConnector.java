@@ -18,21 +18,14 @@
 package com.intellisql.connector.api;
 
 import com.intellisql.connector.config.DataSourceConfig;
-import com.intellisql.connector.enums.DataSourceType;
 import com.intellisql.connector.model.Schema;
+import com.intellisql.spi.datasource.DataSourceProvider;
 
 /**
  * Main interface for data source connectors. Each supported database type should provide an
  * implementation of this interface.
  */
-public interface DataSourceConnector {
-
-    /**
-     * Gets the data source type this connector handles.
-     *
-     * @return the data source type
-     */
-    DataSourceType getDataSourceType();
+public interface DataSourceConnector extends DataSourceProvider {
 
     /**
      * Establishes a connection to the data source.

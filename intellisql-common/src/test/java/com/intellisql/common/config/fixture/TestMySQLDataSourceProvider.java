@@ -15,11 +15,22 @@
  * limitations under the License.
  */
 
-package com.intellisql.common.metadata.enums;
+package com.intellisql.common.config.fixture;
 
-/** Enumeration of supported data source types. */
-public enum DataSourceType {
-    MYSQL,
-    POSTGRESQL,
-    ELASTICSEARCH
+import java.util.Collection;
+import java.util.Collections;
+
+import com.intellisql.spi.datasource.DataSourceProvider;
+
+public final class TestMySQLDataSourceProvider implements DataSourceProvider {
+
+    @Override
+    public String getType() {
+        return "MYSQL";
+    }
+
+    @Override
+    public Collection<String> getAliases() {
+        return Collections.singletonList("mysql");
+    }
 }

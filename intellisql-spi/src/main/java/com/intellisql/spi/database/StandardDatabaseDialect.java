@@ -31,9 +31,11 @@ import java.util.Collection;
  */
 public final class StandardDatabaseDialect implements DatabaseDialect {
 
+    public static final String TYPE = "STANDARD";
+
     @Override
     public String getType() {
-        return "STANDARD";
+        return TYPE;
     }
 
     @Override

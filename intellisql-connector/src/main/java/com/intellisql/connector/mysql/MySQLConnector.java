@@ -23,8 +23,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.intellisql.connector.api.Connection;
 import com.intellisql.connector.api.DataSourceConnector;
 import com.intellisql.connector.config.DataSourceConfig;
-import com.intellisql.connector.enums.DataSourceType;
 import com.intellisql.connector.model.Schema;
+
+import java.util.Collection;
+import java.util.Collections;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,8 +42,13 @@ public class MySQLConnector implements DataSourceConnector {
     private final MySQLSchemaDiscoverer schemaDiscoverer = new MySQLSchemaDiscoverer();
 
     @Override
-    public DataSourceType getDataSourceType() {
-        return DataSourceType.MYSQL;
+    public String getType() {
+        return "MYSQL";
+    }
+
+    @Override
+    public Collection<String> getAliases() {
+        return Collections.singletonList("mysql");
     }
 
     @Override

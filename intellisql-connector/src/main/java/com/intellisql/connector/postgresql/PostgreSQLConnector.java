@@ -17,14 +17,15 @@
 
 package com.intellisql.connector.postgresql;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.intellisql.connector.api.Connection;
 import com.intellisql.connector.api.DataSourceConnector;
 import com.intellisql.connector.config.DataSourceConfig;
-import com.intellisql.connector.enums.DataSourceType;
 import com.intellisql.connector.model.Schema;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,8 +42,47 @@ public class PostgreSQLConnector implements DataSourceConnector {
     private final PostgreSQLSchemaDiscoverer schemaDiscoverer = new PostgreSQLSchemaDiscoverer();
 
     @Override
-    public DataSourceType getDataSourceType() {
-        return DataSourceType.POSTGRESQL;
+    public String getType() {
+        return "POSTGRESQL";
+    }
+
+    @Override
+    public Collection<String> getAliases() {
+        return Arrays.asList("postgresql", "postgres");
+    }
+
+    @Override
+    public String buildJdbcUrl(
+                               final String host,
+                               final Integer port,
+                               final String database,
+                               final String schema,
+                               final Map<String, String> properties) {
+        StringBuilder result = new StringBuilder("jdbc:postgresql://")
+                .append(null == host || host.isEmpty() ? "localhost" : host);
+        if (null != port) {
+            result.append(":").append(port);
+        }
+        if (null != database && !database.isEmpty()) {
+            result.append("/").append(database);
+        }
+        result.append("?sslmode=require");
+        if (null != schema && !schema.isEmpty()) {
+            result.append("&currentSchema=").append(schema);
+        }
+        return result.toString();
+    }
+
+    @Override
+    public String normalizeJdbcUrl(final String jdbcUrl, final String schema, final Map<String, String> properties) {
+        String result = jdbcUrl;
+        if (!result.contains("sslmode=")) {
+            result = result + (result.contains("?") ? "&" : "?") + "sslmode=require";
+        }
+        if (null != schema && !schema.isEmpty() && !result.contains("currentSchema=")) {
+            result = result + (result.contains("?") ? "&" : "?") + "currentSchema=" + schema;
+        }
+        return result;
     }
 
     @Override

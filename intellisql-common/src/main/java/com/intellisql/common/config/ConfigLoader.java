@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.intellisql.common.metadata.enums.DataSourceType;
+import com.intellisql.spi.datasource.DataSourceProviderRegistry;
 
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -110,19 +110,28 @@ public final class ConfigLoader {
         final Map<String, Object> healthRaw = (Map<String, Object>) config.get("healthCheck");
         // Build URL from host/port/database if url not provided
         String url = getString(config, "url", null);
-        if (url == null) {
-            url = buildJdbcUrl(config);
-        }
         final String typeStr = getString(config, "type", "mysql");
+        final String canonicalType = DataSourceProviderRegistry.canonicalize(typeStr);
+        final String host = getString(config, "host", null);
+        final Integer port = getPort(config);
+        final String database = getString(config, "database", null);
+        final String schema = getString(config, "schema", null);
+        final Map<String, String> properties = getStringMap(config, "properties");
+        if (url == null) {
+            url = buildJdbcUrl(config, canonicalType);
+        }
         final String username = getString(config, "username", null);
         final String password = getString(config, "password", null);
         return DataSourceConfig.builder()
-                .type(
-                        DataSourceType.valueOf(
-                                typeStr.toUpperCase()))
+                .type(canonicalType)
+                .host(host)
+                .port(port)
+                .database(database)
+                .schema(schema)
                 .url(url)
                 .username(username)
                 .password(password)
+                .properties(properties)
                 .connectionPool(
                         poolRaw != null
                                 ? parseConnectionPoolConfig(poolRaw)
@@ -138,45 +147,17 @@ public final class ConfigLoader {
      * Builds JDBC URL from host, port, and database configuration.
      *
      * @param config the configuration map containing connection details
+     * @param canonicalType canonical SPI type
      * @return the built JDBC URL string
      */
-    private static String buildJdbcUrl(final Map<String, Object> config) {
-        final Object typeObj = config.get("type");
-        final String type = typeObj != null ? typeObj.toString().toLowerCase() : "unknown";
+    private static String buildJdbcUrl(final Map<String, Object> config, final String canonicalType) {
         final String host = getString(config, "host", "localhost");
         final Integer port = getPort(config);
         final String database = getString(config, "database", null);
-        final StringBuilder url = new StringBuilder("jdbc:");
-        switch (type) {
-            case "mysql":
-                url.append("mysql://").append(host);
-                if (port != null) {
-                    url.append(":").append(port);
-                }
-                if (database != null) {
-                    url.append("/").append(database);
-                }
-                break;
-            case "postgresql":
-            case "postgres":
-                url.append("postgresql://").append(host);
-                if (port != null) {
-                    url.append(":").append(port);
-                }
-                if (database != null) {
-                    url.append("/").append(database);
-                }
-                break;
-            default:
-                url.append(type).append("://").append(host);
-                if (port != null) {
-                    url.append(":").append(port);
-                }
-                if (database != null) {
-                    url.append("/").append(database);
-                }
-        }
-        return url.toString();
+        final String schema = getString(config, "schema", null);
+        final Map<String, String> properties = getStringMap(config, "properties");
+        return DataSourceProviderRegistry.getProvider(canonicalType)
+                .buildJdbcUrl(host, port, database, schema, properties);
     }
 
     private static Integer getPort(final Map<String, Object> config) {
@@ -193,6 +174,18 @@ public final class ConfigLoader {
             return defaultValue;
         }
         return value.toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, String> getStringMap(final Map<String, Object> config, final String key) {
+        final Object value = config.get(key);
+        if (!(value instanceof Map)) {
+            return null;
+        }
+        final Map<String, String> result = new HashMap<>();
+        ((Map<String, Object>) value)
+                .forEach((mapKey, mapValue) -> result.put(mapKey, mapValue == null ? null : mapValue.toString()));
+        return result;
     }
 
     private static ConnectionPoolConfig parseConnectionPoolConfig(final Map<String, Object> config) {

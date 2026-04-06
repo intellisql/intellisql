@@ -26,13 +26,14 @@ import com.intellisql.common.logger.QueryContext;
 import com.intellisql.common.logger.QueryContextManager;
 import com.intellisql.common.logger.StructuredLogger;
 import com.intellisql.federation.metadata.MetadataManager;
-import com.intellisql.common.metadata.enums.DataSourceType;
 import com.intellisql.common.retry.ExponentialBackoffRetry;
 import com.intellisql.common.retry.RetryableOperation;
 import com.intellisql.optimizer.HybridOptimizer;
 import com.intellisql.optimizer.plan.ExecutionPlan;
 import com.intellisql.parser.SqlParserFactory;
 import com.intellisql.parser.SqlNodeToStringConverter;
+import com.intellisql.spi.database.StandardDatabaseDialect;
+import com.intellisql.spi.datasource.DataSourceProviderRegistry;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -247,11 +248,9 @@ public class QueryProcessor {
             return previousResult;
         }
         try {
-            final DataSourceType dataSourceType = determineDataSourceType(dataSourceId);
-            final com.intellisql.connector.enums.DataSourceType connectorType =
-                    com.intellisql.connector.enums.DataSourceType.valueOf(dataSourceType.name());
+            final String dataSourceType = determineDataSourceType(dataSourceId);
             final DataSourceConnector connector =
-                    ConnectorRegistry.getInstance().getConnector(connectorType);
+                    ConnectorRegistry.getInstance().getConnector(dataSourceType);
             final com.intellisql.connector.api.Connection connection =
                     getConnection(connector, dataSourceId);
             final String targetSql = generateTargetSQL(stage, dataSourceType);
@@ -271,12 +270,12 @@ public class QueryProcessor {
      * @param dataSourceId the data source identifier
      * @return the data source type
      */
-    private DataSourceType determineDataSourceType(final String dataSourceId) {
+    private String determineDataSourceType(final String dataSourceId) {
         final String normalizedName = dataSourceId.replaceAll("[\\[\\]]", "").split(",")[0];
         if (dataSourceManager.hasDataSource(normalizedName)) {
             return dataSourceManager.getDataSourceConfig(normalizedName).getType();
         }
-        return DataSourceType.MYSQL;
+        return StandardDatabaseDialect.TYPE;
     }
 
     /**
@@ -306,18 +305,7 @@ public class QueryProcessor {
     private com.intellisql.connector.config.DataSourceConfig convertConfig(
                                                                            final String dataSourceName,
                                                                            final com.intellisql.common.config.DataSourceConfig kernelConfig) {
-        return com.intellisql.connector.config.DataSourceConfig.builder()
-                .name(dataSourceName)
-                .type(com.intellisql.connector.enums.DataSourceType.valueOf(kernelConfig.getType().name()))
-                .jdbcUrl(kernelConfig.getUrl())
-                .username(kernelConfig.getUsername())
-                .password(kernelConfig.getPassword())
-                .maxPoolSize(kernelConfig.getConnectionPool().getMaximumPoolSize())
-                .minIdle(kernelConfig.getConnectionPool().getMinimumIdle())
-                .connectionTimeout(kernelConfig.getConnectionPool().getConnectionTimeout())
-                .idleTimeout(kernelConfig.getConnectionPool().getIdleTimeout())
-                .maxLifetime(kernelConfig.getConnectionPool().getMaxLifetime())
-                .build();
+        return ConnectorDataSourceConfigMapper.toConnectorConfig(dataSourceName, kernelConfig);
     }
 
     /**
@@ -329,7 +317,7 @@ public class QueryProcessor {
      */
     private String generateTargetSQL(
                                      final com.intellisql.optimizer.plan.ExecutionStage stage,
-                                     final DataSourceType dataSourceType) {
+                                     final String dataSourceType) {
         final String targetDialect = toSqlDialect(dataSourceType);
         final RelNode operation = stage.getOperation();
         if (operation == null) {
@@ -341,21 +329,15 @@ public class QueryProcessor {
     }
 
     /**
-     * Converts DataSourceType to SqlDialect.
+     * Converts a data source type to a SQL dialect.
      *
      * @param dataSourceType the data source type
      * @return the SQL dialect
      */
-    private String toSqlDialect(final DataSourceType dataSourceType) {
-        switch (dataSourceType) {
-            case MYSQL:
-                return "MYSQL";
-            case POSTGRESQL:
-                return "POSTGRESQL";
-            case ELASTICSEARCH:
-                return "STANDARD";
-            default:
-                return "STANDARD";
+    private String toSqlDialect(final String dataSourceType) {
+        if (!DataSourceProviderRegistry.hasProvider(dataSourceType)) {
+            return StandardDatabaseDialect.TYPE;
         }
+        return DataSourceProviderRegistry.getProvider(dataSourceType).getTargetDialectType();
     }
 }

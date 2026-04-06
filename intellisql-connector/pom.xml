@@ -27,6 +27,11 @@
     <description>Connector SPI and implementations for various data sources</description>
     <dependencies>
         <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-spi</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
         </dependency>
