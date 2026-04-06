@@ -1,3 +1,18 @@
+# Licensed to the IntelliSql Project under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The IntelliSql Project licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 name: PR Check
 
 on:
@@ -35,7 +50,7 @@ jobs:
         run: |
           title="${{ github.event.pull_request.title }}"
           echo "PR Title: $title"
-          
+
           # 检查格式: type: Description -> 应该是 type: description
           if [[ "$title" =~ ^[^:]+:\ [A-Z] ]]; then
             echo "❌ Error: First letter after colon must be lowercase"
@@ -46,7 +61,7 @@ jobs:
             echo "Please use: ${title%%:*}: $(echo "${title#*: }" | sed 's/^[A-Z]/\L&/')"
             exit 1
           fi
-          
+
           echo "✅ PR title format is correct"
 
   check-commit-messages:
@@ -72,14 +87,14 @@ jobs:
         run: |
           # Get all commits in the PR
           commits=$(git log --format=%s origin/main..HEAD)
-          
+
           echo "Checking all commit messages..."
           echo ""
-          
+
           has_error=false
           while IFS= read -r commit; do
             echo "Checking: $commit"
-            
+
             # Check if format is type: Description (uppercase after colon)
             if [[ "$commit" =~ ^[^:]+:\ [A-Z] ]]; then
               echo "  ❌ Error: First letter after colon must be lowercase"
@@ -90,13 +105,13 @@ jobs:
               echo "  ✅ Format correct"
             fi
           done <<< "$commits"
-          
+
           if [ "$has_error" = true ]; then
             echo ""
             echo "❌ Some commit messages have incorrect format"
             echo "Please amend your commits to use lowercase after colon"
             exit 1
           fi
-          
+
           echo ""
           echo "✅ All commit messages follow the correct format"
