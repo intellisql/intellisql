@@ -19,7 +19,6 @@ package com.intellisql.translator.integration;
 
 import com.intellisql.translator.SqlTranslator;
 import com.intellisql.translator.Translation;
-import com.intellisql.common.dialect.SqlDialect;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -43,7 +42,7 @@ class CrossDialectTranslationTest {
     @Test
     void assertMySqlToPostgreSqlSimpleSelect() {
         String sql = "SELECT * FROM users";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.POSTGRESQL);
+        Translation result = translator.translateOffline(sql, "MYSQL", "POSTGRESQL");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
         assertTrue(result.getTargetSql().toUpperCase().contains("SELECT"));
@@ -52,7 +51,7 @@ class CrossDialectTranslationTest {
     @Test
     void assertMySqlToPostgreSqlLimitOffset() {
         String sql = "SELECT * FROM users LIMIT 10 OFFSET 5";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.POSTGRESQL);
+        Translation result = translator.translateOffline(sql, "MYSQL", "POSTGRESQL");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
     }
@@ -60,7 +59,7 @@ class CrossDialectTranslationTest {
     @Test
     void assertMySqlToPostgreSqlWithWhere() {
         String sql = "SELECT id, name FROM users WHERE status = 'active'";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.POSTGRESQL);
+        Translation result = translator.translateOffline(sql, "MYSQL", "POSTGRESQL");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
     }
@@ -70,7 +69,7 @@ class CrossDialectTranslationTest {
     @Test
     void assertPostgreSqlToMySqlSimpleSelect() {
         String sql = "SELECT * FROM users";
-        Translation result = translator.translateOffline(sql, SqlDialect.POSTGRESQL, SqlDialect.MYSQL);
+        Translation result = translator.translateOffline(sql, "POSTGRESQL", "MYSQL");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
     }
@@ -78,7 +77,7 @@ class CrossDialectTranslationTest {
     @Test
     void assertPostgreSqlToMySqlFetchFirst() {
         String sql = "SELECT * FROM users FETCH FIRST 10 ROWS ONLY";
-        Translation result = translator.translateOffline(sql, SqlDialect.POSTGRESQL, SqlDialect.MYSQL);
+        Translation result = translator.translateOffline(sql, "POSTGRESQL", "MYSQL");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
     }
@@ -88,7 +87,7 @@ class CrossDialectTranslationTest {
     @Test
     void assertMySqlToOracleSimpleSelect() {
         String sql = "SELECT * FROM users";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.ORACLE);
+        Translation result = translator.translateOffline(sql, "MYSQL", "ORACLE");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
     }
@@ -96,7 +95,7 @@ class CrossDialectTranslationTest {
     @Test
     void assertMySqlToOracleLimit() {
         String sql = "SELECT * FROM users LIMIT 10";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.ORACLE);
+        Translation result = translator.translateOffline(sql, "MYSQL", "ORACLE");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
     }
@@ -106,7 +105,7 @@ class CrossDialectTranslationTest {
     @Test
     void assertMySqlToSqlServerSimpleSelect() {
         String sql = "SELECT * FROM users";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.SQLSERVER);
+        Translation result = translator.translateOffline(sql, "MYSQL", "SQLSERVER");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
     }
@@ -114,7 +113,7 @@ class CrossDialectTranslationTest {
     @Test
     void assertMySqlToSqlServerTop() {
         String sql = "SELECT * FROM users LIMIT 10";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.SQLSERVER);
+        Translation result = translator.translateOffline(sql, "MYSQL", "SQLSERVER");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
     }
@@ -124,7 +123,7 @@ class CrossDialectTranslationTest {
     @Test
     void assertMySqlToHiveSimpleSelect() {
         String sql = "SELECT * FROM users";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.HIVE);
+        Translation result = translator.translateOffline(sql, "MYSQL", "HIVE");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
     }
@@ -134,7 +133,7 @@ class CrossDialectTranslationTest {
     @Test
     void assertComplexQueryJoin() {
         String sql = "SELECT u.id, u.name, o.order_id FROM users u JOIN orders o ON u.id = o.user_id";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.POSTGRESQL);
+        Translation result = translator.translateOffline(sql, "MYSQL", "POSTGRESQL");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
         assertTrue(result.getTargetSql().toUpperCase().contains("JOIN"));
@@ -143,7 +142,7 @@ class CrossDialectTranslationTest {
     @Test
     void assertComplexQuerySubquery() {
         String sql = "SELECT * FROM (SELECT id FROM users WHERE status = 'active') AS sub";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.POSTGRESQL);
+        Translation result = translator.translateOffline(sql, "MYSQL", "POSTGRESQL");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
     }
@@ -152,7 +151,7 @@ class CrossDialectTranslationTest {
     void assertComplexQueryAggregation() {
         String sql = "SELECT department, COUNT(*) as cnt, AVG(salary) as avg_sal "
                 + "FROM employees GROUP BY department HAVING COUNT(*) > 5";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.POSTGRESQL);
+        Translation result = translator.translateOffline(sql, "MYSQL", "POSTGRESQL");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
         assertTrue(result.getTargetSql().toUpperCase().contains("GROUP BY"));
@@ -161,7 +160,7 @@ class CrossDialectTranslationTest {
     @Test
     void assertComplexQueryOrderBy() {
         String sql = "SELECT * FROM users ORDER BY created_at DESC LIMIT 10";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.POSTGRESQL);
+        Translation result = translator.translateOffline(sql, "MYSQL", "POSTGRESQL");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
         assertTrue(result.getTargetSql().toUpperCase().contains("ORDER BY"));
@@ -173,7 +172,7 @@ class CrossDialectTranslationTest {
                 + "FROM users u "
                 + "JOIN orders o ON u.id = o.user_id "
                 + "JOIN products p ON o.product_id = p.id";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.POSTGRESQL);
+        Translation result = translator.translateOffline(sql, "MYSQL", "POSTGRESQL");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
     }
@@ -181,7 +180,7 @@ class CrossDialectTranslationTest {
     @Test
     void assertComplexQueryLeftJoin() {
         String sql = "SELECT u.name, o.order_id FROM users u LEFT JOIN orders o ON u.id = o.user_id";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.POSTGRESQL);
+        Translation result = translator.translateOffline(sql, "MYSQL", "POSTGRESQL");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
     }
@@ -189,7 +188,7 @@ class CrossDialectTranslationTest {
     @Test
     void assertComplexQueryUnion() {
         String sql = "SELECT id, name FROM users UNION SELECT id, name FROM customers";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.POSTGRESQL);
+        Translation result = translator.translateOffline(sql, "MYSQL", "POSTGRESQL");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
         assertTrue(result.getTargetSql().toUpperCase().contains("UNION"));
@@ -198,7 +197,7 @@ class CrossDialectTranslationTest {
     @Test
     void assertComplexQueryCaseWhen() {
         String sql = "SELECT id, CASE WHEN status = 'active' THEN 1 ELSE 0 END as is_active FROM users";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.POSTGRESQL);
+        Translation result = translator.translateOffline(sql, "MYSQL", "POSTGRESQL");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
         assertTrue(result.getTargetSql().toUpperCase().contains("CASE"));
@@ -209,7 +208,7 @@ class CrossDialectTranslationTest {
     @Test
     void assertInvalidSqlReturnsTranslationWithError() {
         String sql = "SELECT INVALID SYNTAX HERE";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.POSTGRESQL);
+        Translation result = translator.translateOffline(sql, "MYSQL", "POSTGRESQL");
         assertNotNull(result);
         assertTrue(!result.isSuccessful() || result.getError() != null || result.getTargetSql() != null);
     }

@@ -51,6 +51,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.calcite.rel.rules.CoreRules;
+
 /**
  * Relational expression converter.
  * Converts SQL AST (SqlNode) to relational algebra (RelNode).
@@ -150,21 +152,21 @@ public final class RelConverter {
      */
     private void registerCboRules(final VolcanoPlanner planner) {
         // Join optimization rules
-        planner.addRule(org.apache.calcite.rel.rules.CoreRules.JOIN_TO_MULTI_JOIN);
-        planner.addRule(org.apache.calcite.rel.rules.CoreRules.MULTI_JOIN_OPTIMIZE_BUSHY);
-        planner.addRule(org.apache.calcite.rel.rules.CoreRules.FILTER_INTO_JOIN);
-        planner.addRule(org.apache.calcite.rel.rules.CoreRules.JOIN_PUSH_EXPRESSIONS);
+        planner.addRule(CoreRules.JOIN_TO_MULTI_JOIN);
+        planner.addRule(CoreRules.MULTI_JOIN_OPTIMIZE_BUSHY);
+        planner.addRule(CoreRules.FILTER_INTO_JOIN);
+        planner.addRule(CoreRules.JOIN_PUSH_EXPRESSIONS);
         // Project and filter rules
-        planner.addRule(org.apache.calcite.rel.rules.CoreRules.PROJECT_MERGE);
-        planner.addRule(org.apache.calcite.rel.rules.CoreRules.PROJECT_REMOVE);
-        planner.addRule(org.apache.calcite.rel.rules.CoreRules.FILTER_MERGE);
+        planner.addRule(CoreRules.PROJECT_MERGE);
+        planner.addRule(CoreRules.PROJECT_REMOVE);
+        planner.addRule(CoreRules.FILTER_MERGE);
         // Aggregate rules
-        planner.addRule(org.apache.calcite.rel.rules.CoreRules.AGGREGATE_REDUCE_FUNCTIONS);
-        planner.addRule(org.apache.calcite.rel.rules.CoreRules.AGGREGATE_PROJECT_MERGE);
-        planner.addRule(org.apache.calcite.rel.rules.CoreRules.AGGREGATE_JOIN_TRANSPOSE);
+        planner.addRule(CoreRules.AGGREGATE_REDUCE_FUNCTIONS);
+        planner.addRule(CoreRules.AGGREGATE_PROJECT_MERGE);
+        planner.addRule(CoreRules.AGGREGATE_JOIN_TRANSPOSE);
         // Sort rules
-        planner.addRule(org.apache.calcite.rel.rules.CoreRules.SORT_REMOVE);
-        planner.addRule(org.apache.calcite.rel.rules.CoreRules.SORT_JOIN_TRANSPOSE);
+        planner.addRule(CoreRules.SORT_REMOVE);
+        planner.addRule(CoreRules.SORT_JOIN_TRANSPOSE);
         log.debug("Registered {} CBO rules", 12);
     }
 

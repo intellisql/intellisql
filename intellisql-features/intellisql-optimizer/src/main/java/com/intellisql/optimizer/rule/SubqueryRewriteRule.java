@@ -26,6 +26,9 @@ import org.apache.calcite.tools.RelBuilderFactory;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexVisitorImpl;
+
 /**
  * Rule that rewrites subqueries to improve query performance.
  * Transforms correlated subqueries into joins where possible.
@@ -89,7 +92,7 @@ public class SubqueryRewriteRule extends RelOptRule {
      * @param node the RexNode to check
      * @return true if it contains a subquery
      */
-    private boolean containsSubquery(final org.apache.calcite.rex.RexNode node) {
+    private boolean containsSubquery(final RexNode node) {
         if (node == null) {
             return false;
         }
@@ -119,7 +122,7 @@ public class SubqueryRewriteRule extends RelOptRule {
     /**
      * Visitor to find subqueries in a RexNode.
      */
-    private static class SubqueryFinder extends org.apache.calcite.rex.RexVisitorImpl<Void> {
+    private static class SubqueryFinder extends RexVisitorImpl<Void> {
 
         private boolean found;
 

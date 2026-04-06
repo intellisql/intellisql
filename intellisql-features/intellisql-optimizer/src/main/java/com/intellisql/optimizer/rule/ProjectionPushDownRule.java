@@ -37,6 +37,9 @@ import org.apache.calcite.tools.RelBuilderFactory;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.calcite.rel.logical.LogicalProject;
+import org.apache.calcite.rel.type.RelDataType;
+
 /**
  * Optimization rule that pushes SELECT projections down to data sources. This reduces the amount of
  * data transferred by only fetching required columns.
@@ -191,7 +194,7 @@ public class ProjectionPushDownRule extends RelOptRule {
                 columns.size());
         final List<RexNode> projects = new ArrayList<>();
         final List<String> fieldNames = new ArrayList<>();
-        final List<org.apache.calcite.rel.type.RelDataType> fieldTypes = new ArrayList<>();
+        final List<RelDataType> fieldTypes = new ArrayList<>();
         final List<RelDataTypeField> originalFields = tableScan.getRowType().getFieldList();
         for (final Integer colIdx : columns) {
             projects.add(RexInputRef.of(colIdx, tableScan.getRowType()));
@@ -199,9 +202,9 @@ public class ProjectionPushDownRule extends RelOptRule {
             fieldNames.add(field.getName());
             fieldTypes.add(field.getType());
         }
-        final org.apache.calcite.rel.type.RelDataType newRowType =
+        final RelDataType newRowType =
                 tableScan.getCluster().getTypeFactory().createStructType(fieldTypes, fieldNames);
-        return new org.apache.calcite.rel.logical.LogicalProject(
+        return new LogicalProject(
                 tableScan.getCluster(), tableScan.getTraitSet(), tableScan, projects, newRowType);
     }
 
@@ -212,15 +215,15 @@ public class ProjectionPushDownRule extends RelOptRule {
      * @param columns the set of column indices
      * @return the projected row type
      */
-    private org.apache.calcite.rel.type.RelDataType createProjectedRowType(
-                                                                           final RelNode relNode, final Set<Integer> columns) {
+    private RelDataType createProjectedRowType(
+                                               final RelNode relNode, final Set<Integer> columns) {
         final List<RelDataTypeField> fields = new ArrayList<>();
         final List<RelDataTypeField> originalFields = relNode.getRowType().getFieldList();
         for (final Integer colIdx : columns) {
             fields.add(originalFields.get(colIdx));
         }
         final List<String> names = new ArrayList<>();
-        final List<org.apache.calcite.rel.type.RelDataType> types = new ArrayList<>();
+        final List<RelDataType> types = new ArrayList<>();
         for (final RelDataTypeField field : fields) {
             names.add(field.getName());
             types.add(field.getType());

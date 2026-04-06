@@ -32,10 +32,12 @@
         </license>
     </licenses>
     <modules>
+        <module>intellisql-spi</module>
         <module>intellisql-common</module>
         <module>intellisql-parser</module>
         <module>intellisql-features</module>
         <module>intellisql-connector</module>
+        <module>intellisql-plugins</module>
         <module>intellisql-jdbc</module>
         <module>intellisql-server</module>
         <module>intellisql-client</module>
@@ -83,6 +85,11 @@
             <!-- Internal Modules -->
             <dependency>
                 <groupId>com.intellisql</groupId>
+                <artifactId>intellisql-spi</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.intellisql</groupId>
                 <artifactId>intellisql-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -114,6 +121,31 @@
             <dependency>
                 <groupId>com.intellisql</groupId>
                 <artifactId>intellisql-connector</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.intellisql</groupId>
+                <artifactId>intellisql-plugin-mysql</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.intellisql</groupId>
+                <artifactId>intellisql-plugin-postgresql</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.intellisql</groupId>
+                <artifactId>intellisql-plugin-oracle</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.intellisql</groupId>
+                <artifactId>intellisql-plugin-sqlserver</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.intellisql</groupId>
+                <artifactId>intellisql-plugin-hive</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

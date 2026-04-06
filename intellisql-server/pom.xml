@@ -32,6 +32,31 @@
             <artifactId>intellisql-federation</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-plugin-mysql</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-plugin-postgresql</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-plugin-oracle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-plugin-sqlserver</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-plugin-hive</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         
         <!-- Apache Avatica for JDBC server -->
         <dependency>

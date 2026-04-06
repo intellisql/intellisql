@@ -24,7 +24,6 @@ import java.util.UUID;
 
 import com.intellisql.federation.executor.enums.QueryStatus;
 import com.intellisql.optimizer.plan.ExecutionPlan;
-import com.intellisql.common.dialect.SqlDialect;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -48,7 +47,7 @@ public class Query {
     private String sql;
 
     /** The source SQL dialect. */
-    private SqlDialect sourceDialect;
+    private String sourceDialect;
 
     /** Set of target data source IDs. */
     @Builder.Default
@@ -83,7 +82,7 @@ public class Query {
         return Query.builder()
                 .id(UUID.randomUUID().toString())
                 .sql(sql)
-                .sourceDialect(SqlDialect.STANDARD)
+                .sourceDialect("STANDARD")
                 .status(QueryStatus.PENDING)
                 .build();
     }
@@ -95,7 +94,7 @@ public class Query {
      * @param dialect the source SQL dialect
      * @return a new Query instance
      */
-    public static Query of(final String sql, final SqlDialect dialect) {
+    public static Query of(final String sql, final String dialect) {
         return Query.builder()
                 .id(UUID.randomUUID().toString())
                 .sql(sql)

@@ -28,6 +28,13 @@ import org.apache.calcite.tools.RelBuilderFactory;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.calcite.rel.RelCollations;
+import org.apache.calcite.rel.core.Filter;
+import org.apache.calcite.rel.core.Project;
+import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.sql.type.SqlTypeName;
+
 /**
  * Rule that pushes LIMIT down to data sources.
  * Reduces data transfer by limiting rows at the source.
@@ -211,15 +218,15 @@ public class LimitPushDownRule extends RelOptRule {
      */
     private boolean canPushDown(final RelNode input, final int limit, final int offset) {
         // Can push down through project
-        if (input instanceof org.apache.calcite.rel.core.Project) {
+        if (input instanceof Project) {
             return true;
         }
         // Can push down through filter
-        if (input instanceof org.apache.calcite.rel.core.Filter) {
+        if (input instanceof Filter) {
             return true;
         }
         // Can push down to table scan
-        if (input instanceof org.apache.calcite.rel.core.TableScan) {
+        if (input instanceof TableScan) {
             return true;
         }
         // Cannot push down through join (without additional logic)
@@ -235,17 +242,17 @@ public class LimitPushDownRule extends RelOptRule {
      * @return the new input with limit pushed down
      */
     private RelNode pushDownLimit(final RelNode input, final int limit, final int offset) {
-        if (input instanceof org.apache.calcite.rel.core.Project) {
+        if (input instanceof Project) {
             return pushDownThroughProject(
-                    (org.apache.calcite.rel.core.Project) input, limit, offset);
+                    (Project) input, limit, offset);
         }
-        if (input instanceof org.apache.calcite.rel.core.Filter) {
+        if (input instanceof Filter) {
             return pushDownThroughFilter(
-                    (org.apache.calcite.rel.core.Filter) input, limit, offset);
+                    (Filter) input, limit, offset);
         }
-        if (input instanceof org.apache.calcite.rel.core.TableScan) {
+        if (input instanceof TableScan) {
             return createLimitOnScan(
-                    (org.apache.calcite.rel.core.TableScan) input, limit, offset);
+                    (TableScan) input, limit, offset);
         }
         return input;
     }
@@ -259,7 +266,7 @@ public class LimitPushDownRule extends RelOptRule {
      * @return the new relational node with limit pushed down
      */
     private RelNode pushDownThroughProject(
-                                           final org.apache.calcite.rel.core.Project project,
+                                           final Project project,
                                            final int limit,
                                            final int offset) {
         final RelNode newInput = pushDownLimit(project.getInput(), limit, offset);
@@ -279,7 +286,7 @@ public class LimitPushDownRule extends RelOptRule {
      * @return the new relational node with limit pushed down
      */
     private RelNode pushDownThroughFilter(
-                                          final org.apache.calcite.rel.core.Filter filter,
+                                          final Filter filter,
                                           final int limit,
                                           final int offset) {
         final RelNode newInput = pushDownLimit(filter.getInput(), limit, offset);
@@ -298,22 +305,22 @@ public class LimitPushDownRule extends RelOptRule {
      * @return the new relational node with limit applied
      */
     private RelNode createLimitOnScan(
-                                      final org.apache.calcite.rel.core.TableScan scan,
+                                      final TableScan scan,
                                       final int limit,
                                       final int offset) {
         // Create a sort with limit on the scan
-        final org.apache.calcite.rex.RexBuilder rexBuilder = scan.getCluster().getRexBuilder();
+        final RexBuilder rexBuilder = scan.getCluster().getRexBuilder();
         final RexNode offsetNode = offset > 0
                 ? rexBuilder.makeLiteral(offset, scan.getCluster().getTypeFactory().createSqlType(
-                        org.apache.calcite.sql.type.SqlTypeName.INTEGER), false)
+                        SqlTypeName.INTEGER), false)
                 : null;
         final RexNode fetchNode = rexBuilder.makeLiteral(limit,
                 scan.getCluster().getTypeFactory().createSqlType(
-                        org.apache.calcite.sql.type.SqlTypeName.INTEGER),
+                        SqlTypeName.INTEGER),
                 false);
         return LogicalSort.create(
                 scan,
-                org.apache.calcite.rel.RelCollations.EMPTY,
+                RelCollations.EMPTY,
                 offsetNode,
                 fetchNode);
     }

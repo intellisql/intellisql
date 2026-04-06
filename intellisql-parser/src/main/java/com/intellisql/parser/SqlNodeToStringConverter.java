@@ -17,10 +17,12 @@
 
 package com.intellisql.parser;
 
-import org.apache.calcite.sql.SqlNode;
-import com.intellisql.common.dialect.SqlDialect;
+import com.intellisql.spi.database.DatabaseDialectRegistry;
 
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.calcite.sql.SqlDialect;
+import org.apache.calcite.sql.SqlNode;
 
 /**
  * Converts SqlNode to SQL string for different database dialects. Uses Calcite's built-in SQL
@@ -29,14 +31,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public final class SqlNodeToStringConverter {
 
-    private final org.apache.calcite.sql.SqlDialect targetDialect;
+    private final SqlDialect targetDialect;
 
     /**
      * Creates a converter for the specified target dialect.
      *
      * @param targetDialect the target SQL dialect
      */
-    public SqlNodeToStringConverter(final SqlDialect targetDialect) {
+    public SqlNodeToStringConverter(final String targetDialect) {
         this.targetDialect = toCalciteDialect(targetDialect);
     }
 
@@ -75,19 +77,19 @@ public final class SqlNodeToStringConverter {
      * @param dialect the target SQL dialect
      * @return SQL string
      */
-    public static String toSql(final SqlNode sqlNode, final SqlDialect dialect) {
+    public static String toSql(final SqlNode sqlNode, final String dialect) {
         SqlNodeToStringConverter converter = new SqlNodeToStringConverter(dialect);
         return converter.convert(sqlNode);
     }
 
     /**
-     * Converts IntelliSql dialect enum to Calcite SqlDialect.
+     * Converts a registered IntelliSql dialect to Calcite SqlDialect.
      *
-     * @param dialect IntelliSql dialect enum
+     * @param dialect IntelliSql dialect type
      * @return Calcite SqlDialect instance
      */
-    private static org.apache.calcite.sql.SqlDialect toCalciteDialect(final SqlDialect dialect) {
-        return dialect.toCalciteDialect();
+    private static SqlDialect toCalciteDialect(final String dialect) {
+        return DatabaseDialectRegistry.getDialect(dialect).getCalciteDialect();
     }
 
     /**
@@ -96,7 +98,7 @@ public final class SqlNodeToStringConverter {
      * @param dialect the IntelliSql dialect
      * @return Calcite SqlDialect instance
      */
-    public static org.apache.calcite.sql.SqlDialect getCalciteDialect(final SqlDialect dialect) {
+    public static SqlDialect getCalciteDialect(final String dialect) {
         return toCalciteDialect(dialect);
     }
 }
