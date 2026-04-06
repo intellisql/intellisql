@@ -13,6 +13,11 @@
     <dependencies>
         <dependency>
             <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-spi</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
             <artifactId>intellisql-common</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -36,6 +41,31 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-plugin-mysql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-plugin-postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-plugin-oracle</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-plugin-sqlserver</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-plugin-hive</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>

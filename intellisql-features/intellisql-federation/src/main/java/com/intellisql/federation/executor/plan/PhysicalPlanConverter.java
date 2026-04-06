@@ -49,6 +49,9 @@ import com.intellisql.connector.api.QueryExecutor;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.calcite.rel.RelFieldCollation;
+import org.apache.calcite.rel.core.AggregateCall;
+
 /**
  * Converts a Calcite RelNode physical plan into a tree of QueryIterator operators.
  * Implements the Volcano iterator model for query execution.
@@ -224,7 +227,7 @@ public class PhysicalPlanConverter {
         }
         // Create aggregate functions (simplified - just COUNT for now)
         final List<AggregateOperator.AggregateFunction> aggFunctions = new ArrayList<>();
-        for (org.apache.calcite.rel.core.AggregateCall aggCall : aggregate.getAggCallList()) {
+        for (AggregateCall aggCall : aggregate.getAggCallList()) {
             if (aggCall.getAggregation().getKind() == SqlKind.COUNT) {
                 // COUNT(*) always returns 1 per row
                 aggFunctions.add(new AggregateOperator.AggregateFunction(
@@ -274,11 +277,11 @@ public class PhysicalPlanConverter {
         log.debug("Converting Sort with {} collations", sort.getCollation().getFieldCollations().size());
         final QueryIterator<Row> child = convertNode(sort.getInput(), columnNames);
         // Build comparator from sort specification
-        final List<org.apache.calcite.rel.RelFieldCollation> collations = sort.getCollation().getFieldCollations();
+        final List<RelFieldCollation> collations = sort.getCollation().getFieldCollations();
         final int[] columnIndices = new int[collations.size()];
         final boolean[] ascendings = new boolean[collations.size()];
         for (int i = 0; i < collations.size(); i++) {
-            final org.apache.calcite.rel.RelFieldCollation fc = collations.get(i);
+            final RelFieldCollation fc = collations.get(i);
             columnIndices[i] = fc.getFieldIndex();
             ascendings[i] = !fc.direction.isDescending();
         }

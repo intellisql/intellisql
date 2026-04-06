@@ -26,6 +26,8 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.calcite.sql.validate.SqlConformanceEnum;
+
 /**
  * Babel parser configuration for lenient multi-dialect SQL parsing. Supports parsing SQL from
  * multiple dialects with relaxed syntax rules.
@@ -51,7 +53,7 @@ public final class BabelParserConfiguration {
                 .setLex(Lex.JAVA)
                 .setCaseSensitive(DEFAULT_CASE_SENSITIVE)
                 .setIdentifierMaxLength(DEFAULT_IDENTIFIER_MAX_LENGTH)
-                .setConformance(org.apache.calcite.sql.validate.SqlConformanceEnum.LENIENT)
+                .setConformance(SqlConformanceEnum.LENIENT)
                 .build();
     }
 
@@ -66,7 +68,7 @@ public final class BabelParserConfiguration {
                 .setLex(Lex.JAVA)
                 .setCaseSensitive(DEFAULT_CASE_SENSITIVE)
                 .setIdentifierMaxLength(DEFAULT_IDENTIFIER_MAX_LENGTH)
-                .setConformance(org.apache.calcite.sql.validate.SqlConformanceEnum.LENIENT)
+                .setConformance(SqlConformanceEnum.LENIENT)
                 .setParserFactory(factory)
                 .build();
     }
@@ -82,7 +84,7 @@ public final class BabelParserConfiguration {
                 .setLex(lex)
                 .setCaseSensitive(false)
                 .setIdentifierMaxLength(DEFAULT_IDENTIFIER_MAX_LENGTH)
-                .setConformance(org.apache.calcite.sql.validate.SqlConformanceEnum.LENIENT)
+                .setConformance(SqlConformanceEnum.LENIENT)
                 .build();
     }
 }

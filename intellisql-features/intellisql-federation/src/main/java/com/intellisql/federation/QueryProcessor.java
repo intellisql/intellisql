@@ -17,8 +17,6 @@
 
 package com.intellisql.federation;
 
-import org.apache.calcite.rel.RelRoot;
-import org.apache.calcite.sql.SqlNode;
 import com.intellisql.connector.ConnectorRegistry;
 import com.intellisql.connector.api.DataSourceConnector;
 import com.intellisql.connector.model.QueryResult;
@@ -34,9 +32,15 @@ import com.intellisql.common.retry.RetryableOperation;
 import com.intellisql.optimizer.HybridOptimizer;
 import com.intellisql.optimizer.plan.ExecutionPlan;
 import com.intellisql.parser.SqlParserFactory;
-import com.intellisql.common.dialect.SqlDialect;
+import com.intellisql.parser.SqlNodeToStringConverter;
 
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.RelRoot;
+import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
+import org.apache.calcite.sql.SqlDialect;
+import org.apache.calcite.sql.SqlNode;
 
 /**
  * Query processor that orchestrates SQL parsing, optimization, and execution. Coordinates the
@@ -115,8 +119,8 @@ public class QueryProcessor {
         try {
             structuredLogger.info(context, "Processing query: {}", sql);
             final SqlNode parsedSql = parseSQL(sql, context);
-            final org.apache.calcite.rel.RelNode logicalPlan = convertToRelational(parsedSql, context);
-            final org.apache.calcite.rel.RelNode optimizedPlan = optimizer.optimize(logicalPlan);
+            final RelNode logicalPlan = convertToRelational(parsedSql, context);
+            final RelNode optimizedPlan = optimizer.optimize(logicalPlan);
             final ExecutionPlan executionPlan =
                     optimizer.generateExecutionPlan(optimizedPlan, context.getQueryId());
             final QueryResult result = executeWithRetry(executionPlan, context);
@@ -166,8 +170,8 @@ public class QueryProcessor {
      * @return the relational plan
      * @throws RuntimeException if conversion fails
      */
-    private org.apache.calcite.rel.RelNode convertToRelational(
-                                                               final SqlNode sqlNode, final QueryContext context) {
+    private RelNode convertToRelational(
+                                        final SqlNode sqlNode, final QueryContext context) {
         structuredLogger.debug(context, "Converting SQL to relational plan using RelConverter");
         try {
             // Convert SQL to RelNode using the direct approach (no Frameworks)
@@ -326,14 +330,13 @@ public class QueryProcessor {
     private String generateTargetSQL(
                                      final com.intellisql.optimizer.plan.ExecutionStage stage,
                                      final DataSourceType dataSourceType) {
-        final SqlDialect targetDialect = toSqlDialect(dataSourceType);
-        final org.apache.calcite.rel.RelNode operation = stage.getOperation();
+        final String targetDialect = toSqlDialect(dataSourceType);
+        final RelNode operation = stage.getOperation();
         if (operation == null) {
             return "SELECT 1";
         }
-        final org.apache.calcite.sql.SqlDialect calciteDialect = toCalciteDialect(targetDialect);
-        final org.apache.calcite.rel.rel2sql.RelToSqlConverter converter =
-                new org.apache.calcite.rel.rel2sql.RelToSqlConverter(calciteDialect);
+        final SqlDialect calciteDialect = SqlNodeToStringConverter.getCalciteDialect(targetDialect);
+        final RelToSqlConverter converter = new RelToSqlConverter(calciteDialect);
         return converter.visitRoot(operation).asStatement().toSqlString(calciteDialect).getSql();
     }
 
@@ -343,40 +346,16 @@ public class QueryProcessor {
      * @param dataSourceType the data source type
      * @return the SQL dialect
      */
-    private SqlDialect toSqlDialect(final DataSourceType dataSourceType) {
+    private String toSqlDialect(final DataSourceType dataSourceType) {
         switch (dataSourceType) {
             case MYSQL:
-                return SqlDialect.MYSQL;
+                return "MYSQL";
             case POSTGRESQL:
-                return SqlDialect.POSTGRESQL;
+                return "POSTGRESQL";
             case ELASTICSEARCH:
-                return SqlDialect.STANDARD;
+                return "STANDARD";
             default:
-                return SqlDialect.STANDARD;
-        }
-    }
-
-    /**
-     * Converts SqlDialect to Calcite's SqlDialect.
-     *
-     * @param dialect the SQL dialect
-     * @return the Calcite SQL dialect
-     */
-    private org.apache.calcite.sql.SqlDialect toCalciteDialect(final SqlDialect dialect) {
-        switch (dialect) {
-            case MYSQL:
-                return org.apache.calcite.sql.dialect.MysqlSqlDialect.DEFAULT;
-            case POSTGRESQL:
-                return org.apache.calcite.sql.dialect.PostgresqlSqlDialect.DEFAULT;
-            case ORACLE:
-                return org.apache.calcite.sql.dialect.OracleSqlDialect.DEFAULT;
-            case SQLSERVER:
-                return org.apache.calcite.sql.dialect.MssqlSqlDialect.DEFAULT;
-            case HIVE:
-                return org.apache.calcite.sql.dialect.HiveSqlDialect.DEFAULT;
-            case STANDARD:
-            default:
-                return org.apache.calcite.sql.dialect.AnsiSqlDialect.DEFAULT;
+                return "STANDARD";
         }
     }
 }

@@ -38,6 +38,8 @@ import com.intellisql.optimizer.plan.ExecutionStage;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.calcite.rel.RelNode;
+
 /**
  * Federated query executor for executing cross-source JOIN operations. Merges results in memory
  * from multiple data sources.
@@ -186,7 +188,7 @@ public class FederatedQueryExecutor {
      * @param relNode the relational expression
      * @return the SQL string
      */
-    private String convertRelNodeToSql(final org.apache.calcite.rel.RelNode relNode) {
+    private String convertRelNodeToSql(final RelNode relNode) {
         if (relNode == null) {
             return "";
         }

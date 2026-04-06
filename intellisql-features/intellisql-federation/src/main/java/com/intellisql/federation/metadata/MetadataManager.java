@@ -36,6 +36,8 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.calcite.sql.type.SqlTypeName;
+
 /** Metadata manager for managing DataSource, Schema, and Table registration and queries. */
 @Slf4j
 @Getter
@@ -374,11 +376,11 @@ public final class MetadataManager {
      */
     private org.apache.calcite.schema.Table createCalciteTable(final Table table) {
         final java.util.List<String> columnNames = new java.util.ArrayList<>();
-        final java.util.List<org.apache.calcite.sql.type.SqlTypeName> columnTypes = new java.util.ArrayList<>();
+        final java.util.List<SqlTypeName> columnTypes = new java.util.ArrayList<>();
         if (table.getColumns() != null) {
             for (final Column column : table.getColumns()) {
                 columnNames.add(column.getName());
-                columnTypes.add(org.apache.calcite.sql.type.SqlTypeName.VARCHAR);
+                columnTypes.add(SqlTypeName.VARCHAR);
             }
         }
         return new com.intellisql.federation.metadata.calcite.FederatedTable(
