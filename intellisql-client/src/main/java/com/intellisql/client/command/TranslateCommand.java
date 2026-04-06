@@ -18,7 +18,7 @@
 package com.intellisql.client.command;
 
 import com.intellisql.client.console.ConsoleReader;
-import com.intellisql.common.dialect.SqlDialect;
+import com.intellisql.spi.database.DatabaseDialectRegistry;
 import com.intellisql.translator.SqlTranslator;
 import com.intellisql.translator.Translation;
 import com.intellisql.translator.TranslationMode;
@@ -127,8 +127,8 @@ public class TranslateCommand implements ClientCommand {
      */
     private void doTranslation(final ConsoleReader console, final TranslateOptions options, final String sql) {
         try {
-            SqlDialect sourceDialect = SqlDialect.valueOf(options.getSourceStr());
-            SqlDialect targetDialect = SqlDialect.valueOf(options.getTargetStr());
+            String sourceDialect = options.getSourceStr();
+            String targetDialect = options.getTargetStr();
             TranslationMode mode = TranslationMode.valueOf(options.getModeStr());
             console.getPrinter().println(String.format("Translating from %s to %s (%s)...",
                     sourceDialect, targetDialect, mode));
@@ -140,7 +140,8 @@ public class TranslateCommand implements ClientCommand {
             }
         } catch (final IllegalArgumentException ex) {
             console.getPrinter().println("Error: Invalid dialect or mode. " + ex.getMessage());
-            console.getPrinter().println("Supported dialects: " + Arrays.toString(SqlDialect.values()));
+            console.getPrinter().println(
+                    "Supported dialects: " + Arrays.toString(DatabaseDialectRegistry.getRegisteredTypes().toArray(new String[0])));
             console.getPrinter().println("Supported modes: " + Arrays.toString(TranslationMode.values()));
         }
     }
@@ -154,8 +155,8 @@ public class TranslateCommand implements ClientCommand {
      * @param mode           the translation mode
      * @return the translation result
      */
-    private Translation translate(final String sql, final SqlDialect sourceDialect,
-                                  final SqlDialect targetDialect, final TranslationMode mode) {
+    private Translation translate(final String sql, final String sourceDialect,
+                                  final String targetDialect, final TranslationMode mode) {
         if (mode == TranslationMode.ONLINE) {
             return translator.translateOnline(sql, sourceDialect, targetDialect);
         } else {

@@ -12,6 +12,11 @@
     
     <dependencies>
         <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-spi</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
         </dependency>

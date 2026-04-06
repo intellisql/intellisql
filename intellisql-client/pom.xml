@@ -30,6 +30,11 @@
         <!-- Internal module dependencies -->
         <dependency>
             <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-spi</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
             <artifactId>intellisql-jdbc</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -41,6 +46,31 @@
         <dependency>
             <groupId>com.intellisql</groupId>
             <artifactId>intellisql-translator</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-plugin-mysql</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-plugin-postgresql</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-plugin-oracle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-plugin-sqlserver</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-plugin-hive</artifactId>
             <version>${project.version}</version>
         </dependency>
         

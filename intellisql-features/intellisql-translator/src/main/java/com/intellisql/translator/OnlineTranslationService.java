@@ -23,7 +23,6 @@ import java.util.List;
 
 import org.apache.calcite.sql.SqlNode;
 import com.intellisql.translator.dialect.DialectConverterFactory;
-import com.intellisql.common.dialect.SqlDialect;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,8 +46,8 @@ public class OnlineTranslationService {
      */
     public String translate(
                             final String sourceSql,
-                            final SqlDialect sourceDialect,
-                            final SqlDialect targetDialect,
+                            final String sourceDialect,
+                            final String targetDialect,
                             final List<String> unsupportedFeatures) throws TranslationException {
         log.debug("Online translation: {} -> {}", sourceDialect, targetDialect);
         if (sourceSql == null || sourceSql.trim().isEmpty()) {
@@ -78,8 +77,8 @@ public class OnlineTranslationService {
      */
     private void analyzeAndValidate(
                                     final SqlNode node,
-                                    final SqlDialect sourceDialect,
-                                    final SqlDialect targetDialect,
+                                    final String sourceDialect,
+                                    final String targetDialect,
                                     final List<String> unsupportedFeatures) {
         analyzeFunctionMappings(node, sourceDialect, targetDialect, unsupportedFeatures);
         analyzePaginationSyntax(node, sourceDialect, targetDialect, unsupportedFeatures);
@@ -95,8 +94,8 @@ public class OnlineTranslationService {
      */
     private void analyzeFunctionMappings(
                                          final SqlNode node,
-                                         final SqlDialect sourceDialect,
-                                         final SqlDialect targetDialect,
+                                         final String sourceDialect,
+                                         final String targetDialect,
                                          final List<String> unsupportedFeatures) {
         // Function mapping analysis would go here
         // For now, we rely on Calcite's built-in function normalization
@@ -113,8 +112,8 @@ public class OnlineTranslationService {
      */
     private void analyzePaginationSyntax(
                                          final SqlNode node,
-                                         final SqlDialect sourceDialect,
-                                         final SqlDialect targetDialect,
+                                         final String sourceDialect,
+                                         final String targetDialect,
                                          final List<String> unsupportedFeatures) {
         // Pagination syntax analysis would go here
         // Calcite handles most pagination transformations automatically

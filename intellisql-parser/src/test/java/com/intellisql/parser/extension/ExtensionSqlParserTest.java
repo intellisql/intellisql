@@ -20,7 +20,6 @@ package com.intellisql.parser.extension;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParseException;
 import com.intellisql.parser.SqlParserFactory;
-import com.intellisql.common.dialect.SqlDialect;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -98,7 +97,7 @@ class ExtensionSqlParserTest {
     void assertParseExtendedStatementsWithStandardSelect() throws SqlParseException {
         // Verify that standard SELECT still works alongside extended statements
         String sql = "SELECT * FROM users WHERE id = 1";
-        SqlNode result = SqlParserFactory.parse(sql, SqlDialect.MYSQL);
+        SqlNode result = SqlParserFactory.parse(sql, "MYSQL");
         assertNotNull(result);
     }
 

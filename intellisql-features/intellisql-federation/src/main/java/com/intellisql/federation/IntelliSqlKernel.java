@@ -26,10 +26,12 @@ import com.intellisql.common.logger.QueryContext;
 import com.intellisql.federation.metadata.MetadataManager;
 import com.intellisql.optimizer.HybridOptimizer;
 import com.intellisql.parser.SqlParserFactory;
-import com.intellisql.common.dialect.SqlDialect;
+import com.intellisql.parser.SqlNodeToStringConverter;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.calcite.sql.SqlNode;
 
 /**
  * Main entry point for the IntelliSql kernel. Initializes all components and provides query
@@ -163,14 +165,12 @@ public final class IntelliSqlKernel implements AutoCloseable {
      * @throws RuntimeException if translation fails
      */
     public String translate(
-                            final String sql, final SqlDialect sourceDialect, final SqlDialect targetDialect) {
+                            final String sql, final String sourceDialect, final String targetDialect) {
         ensureInitialized();
         log.debug("Translating SQL from {} to {}: {}", sourceDialect, targetDialect, sql);
         try {
-            final org.apache.calcite.sql.SqlNode parsed = SqlParserFactory.parse(sql, sourceDialect);
-            final org.apache.calcite.sql.SqlDialect targetCalciteDialect =
-                    toCalciteDialect(targetDialect);
-            final String translated = parsed.toSqlString(targetCalciteDialect).toString();
+            final SqlNode parsed = SqlParserFactory.parse(sql, sourceDialect);
+            final String translated = SqlNodeToStringConverter.toSql(parsed, targetDialect);
             log.debug("Translation completed: {}", translated);
             return translated;
             // CHECKSTYLE:OFF
@@ -237,30 +237,6 @@ public final class IntelliSqlKernel implements AutoCloseable {
         }
         if (closed.get()) {
             throw new IllegalStateException("Kernel has been closed.");
-        }
-    }
-
-    /**
-     * Converts a SqlDialect enum to Calcite's SqlDialect.
-     *
-     * @param dialect the IntelliSql dialect
-     * @return the Calcite SqlDialect
-     */
-    private org.apache.calcite.sql.SqlDialect toCalciteDialect(final SqlDialect dialect) {
-        switch (dialect) {
-            case MYSQL:
-                return org.apache.calcite.sql.dialect.MysqlSqlDialect.DEFAULT;
-            case POSTGRESQL:
-                return org.apache.calcite.sql.dialect.PostgresqlSqlDialect.DEFAULT;
-            case ORACLE:
-                return org.apache.calcite.sql.dialect.OracleSqlDialect.DEFAULT;
-            case SQLSERVER:
-                return org.apache.calcite.sql.dialect.MssqlSqlDialect.DEFAULT;
-            case HIVE:
-                return org.apache.calcite.sql.dialect.HiveSqlDialect.DEFAULT;
-            case STANDARD:
-            default:
-                return org.apache.calcite.sql.dialect.AnsiSqlDialect.DEFAULT;
         }
     }
 

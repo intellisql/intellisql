@@ -32,6 +32,8 @@ import org.apache.calcite.tools.RelBuilderFactory;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.calcite.rel.logical.LogicalFilter;
+
 /**
  * Optimization rule that pushes WHERE predicates down to data sources. This reduces the amount of
  * data transferred and improves query performance.
@@ -151,7 +153,7 @@ public class PredicatePushDownRule extends RelOptRule {
      */
     private RelNode pushDownToTableScan(final TableScan tableScan, final RexNode predicate) {
         log.debug("Pushing predicate to table scan: {}", tableScan.getTable().getQualifiedName());
-        return new org.apache.calcite.rel.logical.LogicalFilter(
+        return new LogicalFilter(
                 tableScan.getCluster(), tableScan.getTraitSet(), tableScan, predicate);
     }
 

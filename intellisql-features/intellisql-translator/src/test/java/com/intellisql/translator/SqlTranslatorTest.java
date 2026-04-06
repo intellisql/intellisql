@@ -17,7 +17,6 @@
 
 package com.intellisql.translator;
 
-import com.intellisql.common.dialect.SqlDialect;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -38,7 +37,7 @@ class SqlTranslatorTest {
     @Test
     void assertTranslateMySqlToPostgreSql() {
         String sql = "SELECT * FROM users LIMIT 10 OFFSET 5";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.POSTGRESQL);
+        Translation result = translator.translateOffline(sql, "MYSQL", "POSTGRESQL");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
         assertTrue(result.getTargetSql().contains("SELECT"));
@@ -47,7 +46,7 @@ class SqlTranslatorTest {
     @Test
     void assertTranslatePostgreSqlToMySql() {
         String sql = "SELECT * FROM users LIMIT 10 OFFSET 5";
-        Translation result = translator.translateOffline(sql, SqlDialect.POSTGRESQL, SqlDialect.MYSQL);
+        Translation result = translator.translateOffline(sql, "POSTGRESQL", "MYSQL");
         assertNotNull(result);
         assertNotNull(result.getTargetSql());
     }
@@ -55,7 +54,7 @@ class SqlTranslatorTest {
     @Test
     void assertTranslateJoinQuery() {
         String sql = "SELECT u.id, o.order_id FROM users u JOIN orders o ON u.id = o.user_id";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.POSTGRESQL);
+        Translation result = translator.translateOffline(sql, "MYSQL", "POSTGRESQL");
         assertNotNull(result);
         assertTrue(result.getTargetSql().contains("JOIN"));
     }
@@ -63,7 +62,7 @@ class SqlTranslatorTest {
     @Test
     void assertTranslateAggregateQuery() {
         String sql = "SELECT COUNT(*), AVG(age) FROM users GROUP BY department";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.POSTGRESQL);
+        Translation result = translator.translateOffline(sql, "MYSQL", "POSTGRESQL");
         assertNotNull(result);
         assertTrue(result.getTargetSql().contains("COUNT"));
         assertTrue(result.getTargetSql().contains("GROUP BY"));
@@ -72,7 +71,7 @@ class SqlTranslatorTest {
     @Test
     void assertTranslateInsertStatement() {
         String sql = "INSERT INTO users (id, name) VALUES (1, 'John')";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.POSTGRESQL);
+        Translation result = translator.translateOffline(sql, "MYSQL", "POSTGRESQL");
         assertNotNull(result);
         assertTrue(result.getTargetSql().contains("INSERT INTO"));
     }
@@ -80,7 +79,7 @@ class SqlTranslatorTest {
     @Test
     void assertTranslateUpdateStatement() {
         String sql = "UPDATE users SET name = 'Jane' WHERE id = 1";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.POSTGRESQL);
+        Translation result = translator.translateOffline(sql, "MYSQL", "POSTGRESQL");
         assertNotNull(result);
         assertTrue(result.getTargetSql().contains("UPDATE"));
         assertTrue(result.getTargetSql().contains("WHERE"));
@@ -89,7 +88,7 @@ class SqlTranslatorTest {
     @Test
     void assertTranslateDeleteStatement() {
         String sql = "DELETE FROM users WHERE id = 1";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.POSTGRESQL);
+        Translation result = translator.translateOffline(sql, "MYSQL", "POSTGRESQL");
         assertNotNull(result);
         assertTrue(result.getTargetSql().contains("DELETE FROM"));
     }
@@ -97,28 +96,28 @@ class SqlTranslatorTest {
     @Test
     void assertValidateSyntax() {
         String sql = "SELECT * FROM users";
-        boolean result = translator.validateSyntax(sql, SqlDialect.MYSQL);
+        boolean result = translator.validateSyntax(sql, "MYSQL");
         assertTrue(result);
     }
 
     @Test
     void assertTranslateMySqlToOracle() {
         String sql = "SELECT * FROM users LIMIT 10";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.ORACLE);
+        Translation result = translator.translateOffline(sql, "MYSQL", "ORACLE");
         assertNotNull(result);
     }
 
     @Test
     void assertTranslateMySqlToSqlServer() {
         String sql = "SELECT * FROM users LIMIT 10";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.SQLSERVER);
+        Translation result = translator.translateOffline(sql, "MYSQL", "SQLSERVER");
         assertNotNull(result);
     }
 
     @Test
     void assertTranslateMySqlToHive() {
         String sql = "SELECT * FROM users LIMIT 10";
-        Translation result = translator.translateOffline(sql, SqlDialect.MYSQL, SqlDialect.HIVE);
+        Translation result = translator.translateOffline(sql, "MYSQL", "HIVE");
         assertNotNull(result);
     }
 }

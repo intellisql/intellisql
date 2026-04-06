@@ -23,7 +23,6 @@ import java.util.List;
 
 import org.apache.calcite.sql.SqlNode;
 import com.intellisql.translator.dialect.DialectConverterFactory;
-import com.intellisql.common.dialect.SqlDialect;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,8 +46,8 @@ public class OfflineTranslationService {
      */
     public String translate(
                             final String sourceSql,
-                            final SqlDialect sourceDialect,
-                            final SqlDialect targetDialect,
+                            final String sourceDialect,
+                            final String targetDialect,
                             final List<String> unsupportedFeatures) throws TranslationException {
         log.debug("Offline translation: {} -> {}", sourceDialect, targetDialect);
         if (sourceSql == null || sourceSql.trim().isEmpty()) {

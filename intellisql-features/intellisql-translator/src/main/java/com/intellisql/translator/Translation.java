@@ -22,8 +22,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import com.intellisql.common.dialect.SqlDialect;
-
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -38,9 +36,9 @@ public class Translation {
 
     private final String sourceSql;
 
-    private final SqlDialect sourceDialect;
+    private final String sourceDialect;
 
-    private final SqlDialect targetDialect;
+    private final String targetDialect;
 
     private final TranslationMode mode;
 
@@ -61,8 +59,8 @@ public class Translation {
      */
     public static Translation create(
                                      final String sourceSql,
-                                     final SqlDialect sourceDialect,
-                                     final SqlDialect targetDialect,
+                                     final String sourceDialect,
+                                     final String targetDialect,
                                      final TranslationMode mode) {
         return Translation.builder()
                 .id(UUID.randomUUID().toString())
@@ -175,7 +173,7 @@ public class Translation {
          * @param sourceDialect the source dialect
          * @return the builder
          */
-        public TranslationBuilder sourceDialect(final SqlDialect sourceDialect) {
+        public TranslationBuilder sourceDialect(final String sourceDialect) {
             this.sourceDialect = sourceDialect;
             return this;
         }
@@ -186,7 +184,7 @@ public class Translation {
          * @param targetDialect the target dialect
          * @return the builder
          */
-        public TranslationBuilder targetDialect(final SqlDialect targetDialect) {
+        public TranslationBuilder targetDialect(final String targetDialect) {
             this.targetDialect = targetDialect;
             return this;
         }

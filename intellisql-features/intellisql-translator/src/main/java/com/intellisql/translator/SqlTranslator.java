@@ -24,7 +24,6 @@ import java.util.List;
 
 import org.apache.calcite.sql.SqlNode;
 import com.intellisql.translator.dialect.DialectConverterFactory;
-import com.intellisql.common.dialect.SqlDialect;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -102,8 +101,8 @@ public class SqlTranslator {
      */
     public Translation translateOffline(
                                         final String sourceSql,
-                                        final SqlDialect sourceDialect,
-                                        final SqlDialect targetDialect) {
+                                        final String sourceDialect,
+                                        final String targetDialect) {
         Translation request =
                 Translation.create(sourceSql, sourceDialect, targetDialect, TranslationMode.OFFLINE);
         return translate(request);
@@ -119,8 +118,8 @@ public class SqlTranslator {
      */
     public Translation translateOnline(
                                        final String sourceSql,
-                                       final SqlDialect sourceDialect,
-                                       final SqlDialect targetDialect) {
+                                       final String sourceDialect,
+                                       final String targetDialect) {
         Translation request =
                 Translation.create(sourceSql, sourceDialect, targetDialect, TranslationMode.ONLINE);
         return translate(request);
@@ -133,7 +132,7 @@ public class SqlTranslator {
      * @param dialect the dialect of the SQL
      * @return true if the SQL is syntactically correct
      */
-    public boolean validateSyntax(final String sql, final SqlDialect dialect) {
+    public boolean validateSyntax(final String sql, final String dialect) {
         try {
             parse(sql, dialect);
             return true;
@@ -151,7 +150,7 @@ public class SqlTranslator {
      * @return the SQL node
      * @throws TranslationException if parsing fails
      */
-    public SqlNode parse(final String sql, final SqlDialect dialect) throws TranslationException {
+    public SqlNode parse(final String sql, final String dialect) throws TranslationException {
         try {
             return SqlParserFactory.parse(sql, dialect);
             // CHECKSTYLE:OFF: IllegalCatch
@@ -168,7 +167,7 @@ public class SqlTranslator {
      * @param targetDialect the target dialect
      * @return the formatted SQL string
      */
-    public String format(final SqlNode node, final SqlDialect targetDialect) {
+    public String format(final SqlNode node, final String targetDialect) {
         return DialectConverterFactory.toSql(node, targetDialect);
     }
 }

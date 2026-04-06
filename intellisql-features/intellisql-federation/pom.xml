@@ -14,6 +14,11 @@
         <!-- Internal module dependencies -->
         <dependency>
             <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-spi</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
             <artifactId>intellisql-common</artifactId>
             <version>${project.version}</version>
         </dependency>

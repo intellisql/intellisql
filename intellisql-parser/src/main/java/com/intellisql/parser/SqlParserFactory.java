@@ -17,18 +17,20 @@
 
 package com.intellisql.parser;
 
+import com.intellisql.spi.database.DatabaseDialect;
+import com.intellisql.spi.database.DatabaseDialectRegistry;
 import org.apache.calcite.config.Lex;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParser.Config;
 import org.apache.calcite.sql.validate.SqlConformance;
-import org.apache.calcite.sql.validate.SqlConformanceEnum;
-import com.intellisql.common.dialect.SqlDialect;
 import com.intellisql.parser.impl.IntelliSqlParserImpl;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.calcite.sql.parser.SqlParseException;
 
 /**
  * Factory for creating configured SqlParser instances. Supports parsing SQL in multiple dialects
@@ -45,7 +47,7 @@ public final class SqlParserFactory {
      * @param dialect the SQL dialect to use for parsing
      * @return configured SqlParser instance
      */
-    public static SqlParser createParser(final String sql, final SqlDialect dialect) {
+    public static SqlParser createParser(final String sql, final String dialect) {
         Config config = createParserConfig(dialect);
         return SqlParser.create(sql, config);
     }
@@ -56,54 +58,15 @@ public final class SqlParserFactory {
      * @param dialect the SQL dialect
      * @return SqlParser configuration
      */
-    public static Config createParserConfig(final SqlDialect dialect) {
-        SqlParser.ConfigBuilder configBuilder = SqlParser.configBuilder();
-        Lex lex = getLex(dialect);
-        SqlConformance conformance = getConformance(dialect);
+    public static Config createParserConfig(final String dialect) {
+        final SqlParser.ConfigBuilder configBuilder = SqlParser.configBuilder();
+        final DatabaseDialect databaseDialect = DatabaseDialectRegistry.getDialect(dialect);
+        final Lex lex = databaseDialect.getLex();
+        final SqlConformance conformance = databaseDialect.getConformance();
         configBuilder.setLex(lex);
         configBuilder.setConformance(conformance);
 
         return configBuilder.build();
-    }
-
-    private static Lex getLex(final SqlDialect dialect) {
-        switch (dialect) {
-            case MYSQL:
-                return Lex.MYSQL;
-            case ORACLE:
-                return Lex.ORACLE;
-            case SQLSERVER:
-                return Lex.SQL_SERVER;
-            case POSTGRESQL:
-            case HIVE:
-            case STANDARD:
-            default:
-                return Lex.JAVA;
-        }
-    }
-
-    /**
-     * Gets the SQL conformance level for the specified dialect.
-     *
-     * @param dialect the SQL dialect
-     * @return SqlConformance for the dialect
-     */
-    private static SqlConformance getConformance(final SqlDialect dialect) {
-        switch (dialect) {
-            case MYSQL:
-                // MySQL conformance allows LIMIT start, count and other MySQL-specific syntax
-                return SqlConformanceEnum.MYSQL_5;
-            case POSTGRESQL:
-                return SqlConformanceEnum.PRAGMATIC_99;
-            case ORACLE:
-                return SqlConformanceEnum.ORACLE_10;
-            case SQLSERVER:
-                return SqlConformanceEnum.SQL_SERVER_2008;
-            case HIVE:
-            case STANDARD:
-            default:
-                return SqlConformanceEnum.DEFAULT;
-        }
     }
 
     /**
@@ -112,9 +75,9 @@ public final class SqlParserFactory {
      * @param sql the SQL string to parse
      * @param dialect the SQL dialect to use
      * @return parsed SqlNode
-     * @throws org.apache.calcite.sql.parser.SqlParseException if parsing fails
+     * @throws SqlParseException if parsing fails
      */
-    public static SqlNode parse(final String sql, final SqlDialect dialect) throws org.apache.calcite.sql.parser.SqlParseException {
+    public static SqlNode parse(final String sql, final String dialect) throws SqlParseException {
         log.debug("Parsing SQL with dialect {}: {}", dialect, sql);
         SqlParser parser = createParser(sql, dialect);
         return parser.parseQuery();
@@ -126,9 +89,9 @@ public final class SqlParserFactory {
      * @param sql the SQL expression to parse
      * @param dialect the SQL dialect to use
      * @return parsed SqlNode
-     * @throws org.apache.calcite.sql.parser.SqlParseException if parsing fails
+     * @throws SqlParseException if parsing fails
      */
-    public static SqlNode parseExpression(final String sql, final SqlDialect dialect) throws org.apache.calcite.sql.parser.SqlParseException {
+    public static SqlNode parseExpression(final String sql, final String dialect) throws SqlParseException {
         log.debug("Parsing SQL expression with dialect {}: {}", dialect, sql);
         SqlParser parser = createParser(sql, dialect);
         return parser.parseExpression();
@@ -152,9 +115,9 @@ public final class SqlParserFactory {
      *
      * @param sql the SQL string to parse
      * @return parsed SqlNode
-     * @throws org.apache.calcite.sql.parser.SqlParseException if parsing fails
+     * @throws SqlParseException if parsing fails
      */
-    public static SqlNode parseWithBabel(final String sql) throws org.apache.calcite.sql.parser.SqlParseException {
+    public static SqlNode parseWithBabel(final String sql) throws SqlParseException {
         log.debug("Parsing SQL with Babel parser: {}", sql);
         SqlParser parser = createBabelParser(sql);
         return parser.parseQuery();
