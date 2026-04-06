@@ -33,7 +33,6 @@ import com.intellisql.common.config.HealthCheckConfig;
 import com.intellisql.common.config.ModelConfig;
 import com.intellisql.common.logger.StructuredLogger;
 import com.intellisql.common.metadata.enums.DataSourceStatus;
-import com.intellisql.common.metadata.enums.DataSourceType;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -129,10 +128,8 @@ public final class DataSourceManager implements AutoCloseable {
      * @param type the data source type
      * @return the connector
      */
-    private DataSourceConnector getConnectorForType(final DataSourceType type) {
-        final com.intellisql.connector.enums.DataSourceType connectorType =
-                com.intellisql.connector.enums.DataSourceType.valueOf(type.name());
-        return ConnectorRegistry.getInstance().getConnector(connectorType);
+    private DataSourceConnector getConnectorForType(final String type) {
+        return ConnectorRegistry.getInstance().getConnector(type);
     }
 
     /** Starts the health check scheduler. */
@@ -313,18 +310,7 @@ public final class DataSourceManager implements AutoCloseable {
     private com.intellisql.connector.config.DataSourceConfig convertToConnectorConfig(
                                                                                       final String name,
                                                                                       final DataSourceConfig kernelConfig) {
-        return com.intellisql.connector.config.DataSourceConfig.builder()
-                .name(name)
-                .type(com.intellisql.connector.enums.DataSourceType.valueOf(kernelConfig.getType().name()))
-                .jdbcUrl(kernelConfig.getUrl())
-                .username(kernelConfig.getUsername())
-                .password(kernelConfig.getPassword())
-                .maxPoolSize(kernelConfig.getConnectionPool().getMaximumPoolSize())
-                .minIdle(kernelConfig.getConnectionPool().getMinimumIdle())
-                .connectionTimeout(kernelConfig.getConnectionPool().getConnectionTimeout())
-                .idleTimeout(kernelConfig.getConnectionPool().getIdleTimeout())
-                .maxLifetime(kernelConfig.getConnectionPool().getMaxLifetime())
-                .build();
+        return ConnectorDataSourceConfigMapper.toConnectorConfig(name, kernelConfig);
     }
 
     /**

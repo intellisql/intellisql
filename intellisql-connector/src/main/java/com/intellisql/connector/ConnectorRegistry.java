@@ -17,12 +17,13 @@
 
 package com.intellisql.connector;
 
-import java.util.Map;
-import java.util.ServiceLoader;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.intellisql.connector.api.DataSourceConnector;
-import com.intellisql.connector.enums.DataSourceType;
+import com.intellisql.spi.loader.IntelliSqlServiceLoader;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,10 +36,7 @@ public final class ConnectorRegistry {
 
     private static final ConnectorRegistry INSTANCE = new ConnectorRegistry();
 
-    private final Map<DataSourceType, DataSourceConnector> connectors = new ConcurrentHashMap<>();
-
     private ConnectorRegistry() {
-        loadConnectors();
     }
 
     /**
@@ -50,21 +48,14 @@ public final class ConnectorRegistry {
         return INSTANCE;
     }
 
-    private void loadConnectors() {
-        ServiceLoader<DataSourceConnector> loader = ServiceLoader.load(DataSourceConnector.class);
-        for (DataSourceConnector connector : loader) {
-            registerConnector(connector);
-            log.info("Loaded connector for data source type: {}", connector.getDataSourceType());
-        }
-    }
-
     /**
      * Registers a connector with the registry.
      *
      * @param connector the connector to register
      */
     public void registerConnector(final DataSourceConnector connector) {
-        connectors.put(connector.getDataSourceType(), connector);
+        IntelliSqlServiceLoader.register(DataSourceConnector.class);
+        log.info("Connector '{}' registration is managed by ServiceLoader", connector.getType());
     }
 
     /**
@@ -74,12 +65,8 @@ public final class ConnectorRegistry {
      * @return the connector for the specified type
      * @throws IllegalArgumentException if no connector is registered for the type
      */
-    public DataSourceConnector getConnector(final DataSourceType type) {
-        DataSourceConnector connector = connectors.get(type);
-        if (connector == null) {
-            throw new IllegalArgumentException("No connector registered for type: " + type);
-        }
-        return connector;
+    public DataSourceConnector getConnector(final String type) {
+        return IntelliSqlServiceLoader.getService(DataSourceConnector.class, type);
     }
 
     /**
@@ -88,8 +75,13 @@ public final class ConnectorRegistry {
      * @param type the data source type
      * @return true if a connector is registered, false otherwise
      */
-    public boolean hasConnector(final DataSourceType type) {
-        return connectors.containsKey(type);
+    public boolean hasConnector(final String type) {
+        try {
+            getConnector(type);
+            return true;
+        } catch (final IllegalArgumentException ignored) {
+            return false;
+        }
     }
 
     /**
@@ -97,16 +89,24 @@ public final class ConnectorRegistry {
      *
      * @param type the data source type
      */
-    public void unregisterConnector(final DataSourceType type) {
-        DataSourceConnector connector = connectors.remove(type);
-        if (connector != null) {
-            connector.close();
-        }
+    public void unregisterConnector(final String type) {
+        DataSourceConnector connector = getConnector(type);
+        connector.close();
+    }
+
+    /**
+     * Get all registered connector types in sorted order.
+     *
+     * @return connector types
+     */
+    public List<String> getRegisteredTypes() {
+        Collection<DataSourceConnector> connectors = IntelliSqlServiceLoader.getAllServices(DataSourceConnector.class);
+        List<String> result = connectors.stream().map(DataSourceConnector::getType).sorted().collect(Collectors.toList());
+        return Collections.unmodifiableList(result);
     }
 
     /** Closes all registered connectors and clears the registry. */
     public void closeAll() {
-        connectors.values().forEach(DataSourceConnector::close);
-        connectors.clear();
+        IntelliSqlServiceLoader.getAllServices(DataSourceConnector.class).forEach(DataSourceConnector::close);
     }
 }

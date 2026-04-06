@@ -53,8 +53,7 @@ public class PostgreSQLConnectionPool {
 
     private HikariDataSource createDataSource(final DataSourceConfig config) {
         HikariConfig hikariConfig = new HikariConfig();
-        String jdbcUrl = buildJdbcUrl(config);
-        hikariConfig.setJdbcUrl(jdbcUrl);
+        hikariConfig.setJdbcUrl(config.getEffectiveJdbcUrl());
         hikariConfig.setUsername(config.getUsername());
         hikariConfig.setPassword(config.getPassword());
         hikariConfig.setDriverClassName("org.postgresql.Driver");
@@ -72,26 +71,6 @@ public class PostgreSQLConnectionPool {
             config.getProperties().forEach(hikariConfig::addDataSourceProperty);
         }
         return new HikariDataSource(hikariConfig);
-    }
-
-    private String buildJdbcUrl(final DataSourceConfig config) {
-        if (config.getJdbcUrl() != null && !config.getJdbcUrl().isEmpty()) {
-            String url = config.getJdbcUrl();
-            if (!url.contains("sslmode=")) {
-                url = url + (url.contains("?") ? "&" : "?") + "sslmode=require";
-            }
-            return url;
-        }
-        StringBuilder url = new StringBuilder("jdbc:postgresql://");
-        url.append(config.getHost()).append(":").append(config.getPort());
-        if (config.getDatabase() != null && !config.getDatabase().isEmpty()) {
-            url.append("/").append(config.getDatabase());
-        }
-        url.append("?sslmode=require");
-        if (config.getSchema() != null && !config.getSchema().isEmpty()) {
-            url.append("&currentSchema=").append(config.getSchema());
-        }
-        return url.toString();
     }
 
     /**

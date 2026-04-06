@@ -17,7 +17,7 @@
 
 package com.intellisql.common.config;
 
-import com.intellisql.common.metadata.enums.DataSourceType;
+import java.util.Map;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -27,8 +27,20 @@ import lombok.Getter;
 @Builder
 public class DataSourceConfig {
 
-    /** Data source type (MySQL, PostgreSQL, Elasticsearch). */
-    private final DataSourceType type;
+    /** Canonical data source type resolved by SPI. */
+    private final String type;
+
+    /** Data source host. */
+    private final String host;
+
+    /** Data source port. */
+    private final Integer port;
+
+    /** Logical database or catalog name. */
+    private final String database;
+
+    /** Default schema name. */
+    private final String schema;
 
     /** JDBC connection URL. */
     private final String url;
@@ -38,6 +50,9 @@ public class DataSourceConfig {
 
     /** Database password. */
     private final String password;
+
+    /** Connector-specific properties. */
+    private final Map<String, String> properties;
 
     /** Connection pool configuration. */
     @Builder.Default

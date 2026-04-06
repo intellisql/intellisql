@@ -19,7 +19,7 @@ package com.intellisql.connector.config;
 
 import java.util.Map;
 
-import com.intellisql.connector.enums.DataSourceType;
+import com.intellisql.spi.datasource.DataSourceProviderRegistry;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,7 +38,7 @@ public class DataSourceConfig {
 
     private String name;
 
-    private DataSourceType type;
+    private String type;
 
     private String host;
 
@@ -80,7 +80,7 @@ public class DataSourceConfig {
      */
     public String getEffectiveJdbcUrl() {
         if (jdbcUrl != null && !jdbcUrl.isEmpty()) {
-            return jdbcUrl;
+            return DataSourceProviderRegistry.getProvider(type).normalizeJdbcUrl(jdbcUrl, schema, properties);
         }
         return buildJdbcUrl();
     }
@@ -89,26 +89,9 @@ public class DataSourceConfig {
      * Builds a JDBC URL from the configuration components.
      *
      * @return the built JDBC URL
-     * @throws IllegalArgumentException if the data source type is unsupported
      */
     private String buildJdbcUrl() {
-        StringBuilder url = new StringBuilder("jdbc:");
-        switch (type) {
-            case MYSQL:
-                url.append("mysql://").append(host).append(":").append(port);
-                if (database != null && !database.isEmpty()) {
-                    url.append("/").append(database);
-                }
-                break;
-            case POSTGRESQL:
-                url.append("postgresql://").append(host).append(":").append(port);
-                if (database != null && !database.isEmpty()) {
-                    url.append("/").append(database);
-                }
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported data source type: " + type);
-        }
-        return url.toString();
+        Integer actualPort = port > 0 ? port : null;
+        return DataSourceProviderRegistry.getProvider(type).buildJdbcUrl(host, actualPort, database, schema, properties);
     }
 }

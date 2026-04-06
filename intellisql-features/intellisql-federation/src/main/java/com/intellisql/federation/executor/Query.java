@@ -24,6 +24,7 @@ import java.util.UUID;
 
 import com.intellisql.federation.executor.enums.QueryStatus;
 import com.intellisql.optimizer.plan.ExecutionPlan;
+import com.intellisql.spi.database.StandardDatabaseDialect;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -82,7 +83,7 @@ public class Query {
         return Query.builder()
                 .id(UUID.randomUUID().toString())
                 .sql(sql)
-                .sourceDialect("STANDARD")
+                .sourceDialect(StandardDatabaseDialect.TYPE)
                 .status(QueryStatus.PENDING)
                 .build();
     }

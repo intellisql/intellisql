@@ -106,23 +106,10 @@ public final class IntelliSqlKernel implements AutoCloseable {
         for (final String dsName : dataSourceManager.getDataSourceNames()) {
             final com.intellisql.common.config.DataSourceConfig kernelConfig =
                     dataSourceManager.getDataSourceConfig(dsName);
-            final com.intellisql.connector.enums.DataSourceType connectorType =
-                    com.intellisql.connector.enums.DataSourceType.valueOf(kernelConfig.getType().name());
             final com.intellisql.connector.api.DataSourceConnector connector =
-                    com.intellisql.connector.ConnectorRegistry.getInstance().getConnector(connectorType);
+                    com.intellisql.connector.ConnectorRegistry.getInstance().getConnector(kernelConfig.getType());
             final com.intellisql.connector.config.DataSourceConfig connectorConfig =
-                    com.intellisql.connector.config.DataSourceConfig.builder()
-                            .name(dsName)
-                            .type(connectorType)
-                            .jdbcUrl(kernelConfig.getUrl())
-                            .username(kernelConfig.getUsername())
-                            .password(kernelConfig.getPassword())
-                            .maxPoolSize(kernelConfig.getConnectionPool().getMaximumPoolSize())
-                            .minIdle(kernelConfig.getConnectionPool().getMinimumIdle())
-                            .connectionTimeout(kernelConfig.getConnectionPool().getConnectionTimeout())
-                            .idleTimeout(kernelConfig.getConnectionPool().getIdleTimeout())
-                            .maxLifetime(kernelConfig.getConnectionPool().getMaxLifetime())
-                            .build();
+                    ConnectorDataSourceConfigMapper.toConnectorConfig(dsName, kernelConfig);
             connectorMap.put(connector, connectorConfig);
         }
         metadataManager.initialize(connectorMap);

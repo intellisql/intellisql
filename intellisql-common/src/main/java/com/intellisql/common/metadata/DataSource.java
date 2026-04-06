@@ -21,7 +21,6 @@ import java.time.Instant;
 import java.util.List;
 
 import com.intellisql.common.metadata.enums.DataSourceStatus;
-import com.intellisql.common.metadata.enums.DataSourceType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -41,7 +40,7 @@ public final class DataSource {
 
     private String name;
 
-    private DataSourceType type;
+    private String type;
 
     private String url;
 

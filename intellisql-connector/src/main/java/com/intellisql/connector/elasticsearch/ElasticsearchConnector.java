@@ -17,6 +17,8 @@
 
 package com.intellisql.connector.elasticsearch;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,8 +34,8 @@ import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import com.intellisql.connector.api.Connection;
 import com.intellisql.connector.api.DataSourceConnector;
 import com.intellisql.connector.config.DataSourceConfig;
-import com.intellisql.connector.enums.DataSourceType;
 import com.intellisql.connector.model.Schema;
+import com.intellisql.spi.database.StandardDatabaseDialect;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -50,8 +52,36 @@ public class ElasticsearchConnector implements DataSourceConnector {
             new ElasticsearchSchemaDiscoverer();
 
     @Override
-    public DataSourceType getDataSourceType() {
-        return DataSourceType.ELASTICSEARCH;
+    public String getType() {
+        return "ELASTICSEARCH";
+    }
+
+    @Override
+    public Collection<String> getAliases() {
+        return Arrays.asList("elasticsearch", "es");
+    }
+
+    @Override
+    public String getTargetDialectType() {
+        return StandardDatabaseDialect.TYPE;
+    }
+
+    @Override
+    public String buildJdbcUrl(
+                               final String host,
+                               final Integer port,
+                               final String database,
+                               final String schema,
+                               final Map<String, String> properties) {
+        StringBuilder result = new StringBuilder("http://")
+                .append(null == host || host.isEmpty() ? "localhost" : host);
+        if (null != port) {
+            result.append(":").append(port);
+        }
+        if (null != database && !database.isEmpty()) {
+            result.append("/").append(database);
+        }
+        return result.toString();
     }
 
     @Override
