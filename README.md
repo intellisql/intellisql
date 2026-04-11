@@ -148,9 +148,9 @@ intellisql/
 ├── intellisql-common/      # Common utilities and shared models
 ├── intellisql-parser/      # SQL parsing module
 ├── intellisql-features/    # Core features aggregation
-│   ├── intellisql-federation/  # SQL federation engine (metadata, execution)
-│   ├── intellisql-translator/  # SQL translation module
-│   └── intellisql-optimizer/   # Query optimization module
+│   ├── intellisql-feature-federation/  # SQL federation engine (metadata, execution)
+│   ├── intellisql-feature-translator/  # SQL translation module
+│   └── intellisql-feature-optimizer/   # Query optimization module
 ├── intellisql-connector/   # Database connectors
 ├── intellisql-jdbc/        # JDBC driver implementation
 ├── intellisql-server/      # Server implementation
@@ -182,9 +182,9 @@ SQL parsing module based on Apache Calcite. Parses SQL statements into abstract 
 
 Aggregation module for core features:
 
-- **intellisql-federation**: The core federation engine handling metadata management, schema discovery, and distributed query execution.
-- **intellisql-translator**: SQL translation module for converting between different SQL dialects.
-- **intellisql-optimizer**: Cost-based query optimization module with predicate pushdown capabilities.
+- **intellisql-feature-federation**: The core federation engine handling metadata management, schema discovery, and distributed query execution.
+- **intellisql-feature-translator**: SQL translation module for converting between different SQL dialects.
+- **intellisql-feature-optimizer**: Cost-based query optimization module with predicate pushdown capabilities.
 
 ### intellisql-connector
 

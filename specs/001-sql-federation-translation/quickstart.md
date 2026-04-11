@@ -139,9 +139,9 @@ intellisql/
 ├── intellisql-common/              # Common infrastructure (config, logging, retry, metadata entities)
 ├── intellisql-parser/              # SQL parsing
 ├── intellisql-features/            # Feature modules parent
-│   ├── intellisql-optimizer/       # Query optimization (RBO + CBO)
-│   ├── intellisql-translator/      # SQL translation
-│   └── intellisql-federation/      # Federation query core (kernel + executor)
+│   ├── intellisql-feature-optimizer/       # Query optimization (RBO + CBO)
+│   ├── intellisql-feature-translator/      # SQL translation
+│   └── intellisql-feature-federation/      # Federation query core (kernel + executor)
 ├── intellisql-connector/           # Data source adapters
 │   ├── src/main/java/
 │   │   ├── api/                    # Connector SPI
@@ -323,7 +323,7 @@ void assertMySQLToClickHouseTranslation() {
 
 1. **创建规则**：
 ```java
-// intellisql-optimizer/src/main/java/org/intellisql/optimizer/rule/
+// intellisql-feature-optimizer/src/main/java/org/intellisql/optimizer/rule/
 public class MyPushDownRule extends RelOptRule {
     public MyPushDownRule() {
         super(operand(Filter.class, any()));
@@ -338,7 +338,7 @@ public class MyPushDownRule extends RelOptRule {
 
 2. **注册规则**：
 ```java
-// intellisql-optimizer/src/main/java/org/intellisql/optimizer/Optimizer.java
+// intellisql-feature-optimizer/src/main/java/org/intellisql/optimizer/Optimizer.java
 public class Optimizer {
     private void registerRules(RelOptPlanner planner) {
         planner.addRule(MyPushDownRule.INSTANCE);

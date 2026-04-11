@@ -20,15 +20,14 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.intellisql</groupId>
-        <artifactId>intellisql</artifactId>
+        <artifactId>intellisql-features</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
-    <artifactId>intellisql-client</artifactId>
+    <artifactId>intellisql-feature-translator</artifactId>
     <name>${project.artifactId}</name>
-    <description>Client library and CLI tools for IntelliSql</description>
+    <description>SQL translation module for dialect conversion</description>
     
     <dependencies>
-        <!-- Internal module dependencies -->
         <dependency>
             <groupId>com.intellisql</groupId>
             <artifactId>intellisql-spi</artifactId>
@@ -36,7 +35,7 @@
         </dependency>
         <dependency>
             <groupId>com.intellisql</groupId>
-            <artifactId>intellisql-jdbc</artifactId>
+            <artifactId>intellisql-common</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -44,68 +43,50 @@
             <artifactId>intellisql-parser</artifactId>
             <version>${project.version}</version>
         </dependency>
+        
+        <!-- Apache Calcite for SQL nodes -->
         <dependency>
-            <groupId>com.intellisql</groupId>
-            <artifactId>intellisql-feature-translator</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.apache.calcite</groupId>
+            <artifactId>calcite-core</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.intellisql</groupId>
             <artifactId>intellisql-plugin-mysql</artifactId>
-            <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.intellisql</groupId>
             <artifactId>intellisql-plugin-postgresql</artifactId>
-            <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.intellisql</groupId>
             <artifactId>intellisql-plugin-oracle</artifactId>
-            <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.intellisql</groupId>
             <artifactId>intellisql-plugin-sqlserver</artifactId>
-            <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.intellisql</groupId>
             <artifactId>intellisql-plugin-hive</artifactId>
-            <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
-        
-        <!-- JLine for interactive CLI with history support -->
-        <dependency>
-            <groupId>org.jline</groupId>
-            <artifactId>jline</artifactId>
-            <version>3.25.1</version>
-        </dependency>
-        
-        <!-- Logging -->
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-        </dependency>
-        
-        <!-- Picocli -->
-        <dependency>
-            <groupId>info.picocli</groupId>
-            <artifactId>picocli</artifactId>
-            <version>4.7.5</version>
-        </dependency>
-        <dependency>
-            <groupId>info.picocli</groupId>
-            <artifactId>picocli-codegen</artifactId>
-            <version>4.7.5</version>
-            <scope>provided</scope>
-        </dependency>
-        
-        <!-- Testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.10.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -114,19 +95,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-inline</artifactId>
-            <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>net.bytebuddy</groupId>
-            <artifactId>byte-buddy-agent</artifactId>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

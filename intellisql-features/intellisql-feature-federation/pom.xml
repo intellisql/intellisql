@@ -23,11 +23,12 @@
         <artifactId>intellisql-features</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
-    <artifactId>intellisql-translator</artifactId>
+    <artifactId>intellisql-feature-federation</artifactId>
     <name>${project.artifactId}</name>
-    <description>SQL translation module for dialect conversion</description>
+    <description>Federated execution engine handling distributed query processing</description>
     
     <dependencies>
+        <!-- Internal module dependencies -->
         <dependency>
             <groupId>com.intellisql</groupId>
             <artifactId>intellisql-spi</artifactId>
@@ -43,47 +44,33 @@
             <artifactId>intellisql-parser</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-feature-translator</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-feature-optimizer</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.intellisql</groupId>
+            <artifactId>intellisql-connector</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         
-        <!-- Apache Calcite for SQL nodes -->
+        <!-- Apache Calcite -->
         <dependency>
             <groupId>org.apache.calcite</groupId>
             <artifactId>calcite-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.calcite</groupId>
+            <artifactId>calcite-server</artifactId>
+        </dependency>
         
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.intellisql</groupId>
-            <artifactId>intellisql-plugin-mysql</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.intellisql</groupId>
-            <artifactId>intellisql-plugin-postgresql</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.intellisql</groupId>
-            <artifactId>intellisql-plugin-oracle</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.intellisql</groupId>
-            <artifactId>intellisql-plugin-sqlserver</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.intellisql</groupId>
-            <artifactId>intellisql-plugin-hive</artifactId>
-            <scope>test</scope>
-        </dependency>
+        <!-- Test dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -92,11 +79,6 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

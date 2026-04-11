@@ -30,7 +30,7 @@
         <!-- IntelliSql modules -->
         <dependency>
             <groupId>com.intellisql</groupId>
-            <artifactId>intellisql-federation</artifactId>
+            <artifactId>intellisql-feature-federation</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
