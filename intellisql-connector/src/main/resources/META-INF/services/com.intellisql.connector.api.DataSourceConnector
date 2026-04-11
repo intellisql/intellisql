@@ -1,3 +1,0 @@
-com.intellisql.connector.mysql.MySQLConnector
-com.intellisql.connector.postgresql.PostgreSQLConnector
-com.intellisql.connector.elasticsearch.ElasticsearchConnector

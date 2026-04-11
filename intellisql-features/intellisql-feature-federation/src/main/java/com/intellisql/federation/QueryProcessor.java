@@ -19,6 +19,7 @@ package com.intellisql.federation;
 
 import com.intellisql.connector.ConnectorRegistry;
 import com.intellisql.connector.api.DataSourceConnector;
+import com.intellisql.connector.config.DataSourceConfigs;
 import com.intellisql.connector.model.QueryResult;
 import com.intellisql.common.config.Props;
 import com.intellisql.federation.converter.RelConverter;
@@ -248,10 +249,8 @@ public class QueryProcessor {
         }
         try {
             final DataSourceType dataSourceType = determineDataSourceType(dataSourceId);
-            final com.intellisql.connector.enums.DataSourceType connectorType =
-                    com.intellisql.connector.enums.DataSourceType.valueOf(dataSourceType.name());
             final DataSourceConnector connector =
-                    ConnectorRegistry.getInstance().getConnector(connectorType);
+                    ConnectorRegistry.getInstance().getConnector(dataSourceType);
             final com.intellisql.connector.api.Connection connection =
                     getConnection(connector, dataSourceId);
             final String targetSql = generateTargetSQL(stage, dataSourceType);
@@ -292,32 +291,9 @@ public class QueryProcessor {
         final String normalizedName = dataSourceId.replaceAll("[\\[\\]]", "").split(",")[0];
         final com.intellisql.common.config.DataSourceConfig config =
                 dataSourceManager.getDataSourceConfig(normalizedName);
-        final com.intellisql.connector.config.DataSourceConfig connectorConfig = convertConfig(normalizedName, config);
+        final com.intellisql.connector.config.DataSourceConfig connectorConfig =
+                DataSourceConfigs.fromCommonConfig(normalizedName, config);
         return connector.connect(connectorConfig);
-    }
-
-    /**
-     * Converts kernel DataSourceConfig to connector DataSourceConfig.
-     *
-     * @param dataSourceName the data source name
-     * @param kernelConfig the kernel configuration
-     * @return the connector configuration
-     */
-    private com.intellisql.connector.config.DataSourceConfig convertConfig(
-                                                                           final String dataSourceName,
-                                                                           final com.intellisql.common.config.DataSourceConfig kernelConfig) {
-        return com.intellisql.connector.config.DataSourceConfig.builder()
-                .name(dataSourceName)
-                .type(com.intellisql.connector.enums.DataSourceType.valueOf(kernelConfig.getType().name()))
-                .jdbcUrl(kernelConfig.getUrl())
-                .username(kernelConfig.getUsername())
-                .password(kernelConfig.getPassword())
-                .maxPoolSize(kernelConfig.getConnectionPool().getMaximumPoolSize())
-                .minIdle(kernelConfig.getConnectionPool().getMinimumIdle())
-                .connectionTimeout(kernelConfig.getConnectionPool().getConnectionTimeout())
-                .idleTimeout(kernelConfig.getConnectionPool().getIdleTimeout())
-                .maxLifetime(kernelConfig.getConnectionPool().getMaxLifetime())
-                .build();
     }
 
     /**

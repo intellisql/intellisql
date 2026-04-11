@@ -188,7 +188,13 @@ Aggregation module for core features:
 
 ### intellisql-connector
 
-Database connector implementations. Provides unified interface for MySQL, PostgreSQL, and Elasticsearch.
+Connector core contracts and runtime support. Provides the connector SPI, shared models, registry,
+and health checking for datasource plugins.
+
+### intellisql-plugins
+
+All database-specific plugins. Each plugin module packages its own dialect and/or connector
+implementation.
 
 ### intellisql-jdbc
 

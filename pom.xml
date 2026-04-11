@@ -151,6 +151,11 @@
             </dependency>
             <dependency>
                 <groupId>com.intellisql</groupId>
+                <artifactId>intellisql-plugin-elasticsearch</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.intellisql</groupId>
                 <artifactId>intellisql-jdbc</artifactId>
                 <version>${project.version}</version>
             </dependency>

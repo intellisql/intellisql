@@ -32,8 +32,8 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 
+import com.intellisql.common.metadata.enums.DataSourceType;
 import com.intellisql.connector.config.DataSourceConfig;
-import com.intellisql.connector.enums.DataSourceType;
 
 import lombok.extern.slf4j.Slf4j;
 

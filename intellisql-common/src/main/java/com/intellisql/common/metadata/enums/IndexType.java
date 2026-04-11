@@ -17,12 +17,7 @@
 
 package com.intellisql.common.metadata.enums;
 
-/**
- * Enumeration of index types.
- *
- * @deprecated Use com.intellisql.connector.enums.IndexType instead.
- */
-@Deprecated
+/** Enumeration of index types. */
 public enum IndexType {
     BTREE,
     HASH,

@@ -17,12 +17,7 @@
 
 package com.intellisql.common.metadata.enums;
 
-/**
- * Enumeration of data source connection status.
- *
- * @deprecated Use com.intellisql.connector.enums.DataSourceStatus instead.
- */
-@Deprecated
+/** Enumeration of data source connection status. */
 public enum DataSourceStatus {
     UNKNOWN,
     CREATED,

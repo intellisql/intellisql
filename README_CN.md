@@ -188,7 +188,11 @@ intellisql/
 
 ### intellisql-connector
 
-数据库连接器实现。为 MySQL、PostgreSQL 和 Elasticsearch 提供统一接口。
+连接器核心契约与运行时支持。提供连接器 SPI、共享模型、注册表与健康检查能力。
+
+### intellisql-plugins
+
+所有数据库相关插件模块。每个插件模块打包各自的方言能力和/或连接器实现。
 
 ### intellisql-jdbc
 

@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 
 import com.intellisql.connector.ConnectorRegistry;
 import com.intellisql.connector.api.DataSourceConnector;
+import com.intellisql.connector.config.DataSourceConfigs;
 import com.intellisql.common.config.DataSourceConfig;
 import com.intellisql.common.config.HealthCheckConfig;
 import com.intellisql.common.config.ModelConfig;
@@ -107,7 +108,8 @@ public final class DataSourceManager implements AutoCloseable {
         log.info("Initializing data source: {}", name);
         try {
             final DataSourceConnector connector = getConnectorForType(config.getType());
-            final boolean connectionTest = connector.testConnection(convertToConnectorConfig(name, config));
+            final boolean connectionTest =
+                    connector.testConnection(DataSourceConfigs.fromCommonConfig(name, config));
             if (connectionTest) {
                 dataSourceStatuses.put(name, DataSourceStatus.ACTIVE);
                 log.info("Data source {} initialized successfully", name);
@@ -130,9 +132,7 @@ public final class DataSourceManager implements AutoCloseable {
      * @return the connector
      */
     private DataSourceConnector getConnectorForType(final DataSourceType type) {
-        final com.intellisql.connector.enums.DataSourceType connectorType =
-                com.intellisql.connector.enums.DataSourceType.valueOf(type.name());
-        return ConnectorRegistry.getInstance().getConnector(connectorType);
+        return ConnectorRegistry.getInstance().getConnector(type);
     }
 
     /** Starts the health check scheduler. */
@@ -183,7 +183,8 @@ public final class DataSourceManager implements AutoCloseable {
         }
         try {
             final DataSourceConnector connector = getConnectorForType(config.getType());
-            final boolean isHealthy = connector.testConnection(convertToConnectorConfig(name, config));
+            final boolean isHealthy =
+                    connector.testConnection(DataSourceConfigs.fromCommonConfig(name, config));
             final DataSourceStatus newStatus =
                     isHealthy ? DataSourceStatus.ACTIVE : DataSourceStatus.FAILED;
             final DataSourceStatus oldStatus = dataSourceStatuses.put(name, newStatus);
@@ -294,37 +295,13 @@ public final class DataSourceManager implements AutoCloseable {
         final DataSourceConfig config = getDataSourceConfig(name);
         try {
             final DataSourceConnector connector = getConnectorForType(config.getType());
-            return connector.testConnection(convertToConnectorConfig(name, config));
+            return connector.testConnection(DataSourceConfigs.fromCommonConfig(name, config));
             // CHECKSTYLE:OFF
         } catch (final Exception ex) {
             // CHECKSTYLE:ON
             log.error("Connection test failed for data source {}: {}", name, ex.getMessage());
             return false;
         }
-    }
-
-    /**
-     * Converts kernel DataSourceConfig to connector DataSourceConfig.
-     *
-     * @param name the data source name
-     * @param kernelConfig the kernel configuration
-     * @return the connector configuration
-     */
-    private com.intellisql.connector.config.DataSourceConfig convertToConnectorConfig(
-                                                                                      final String name,
-                                                                                      final DataSourceConfig kernelConfig) {
-        return com.intellisql.connector.config.DataSourceConfig.builder()
-                .name(name)
-                .type(com.intellisql.connector.enums.DataSourceType.valueOf(kernelConfig.getType().name()))
-                .jdbcUrl(kernelConfig.getUrl())
-                .username(kernelConfig.getUsername())
-                .password(kernelConfig.getPassword())
-                .maxPoolSize(kernelConfig.getConnectionPool().getMaximumPoolSize())
-                .minIdle(kernelConfig.getConnectionPool().getMinimumIdle())
-                .connectionTimeout(kernelConfig.getConnectionPool().getConnectionTimeout())
-                .idleTimeout(kernelConfig.getConnectionPool().getIdleTimeout())
-                .maxLifetime(kernelConfig.getConnectionPool().getMaxLifetime())
-                .build();
     }
 
     /**

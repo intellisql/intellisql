@@ -19,7 +19,7 @@ package com.intellisql.connector.api;
 
 import java.sql.Connection;
 
-import com.intellisql.connector.model.Schema;
+import com.intellisql.common.metadata.Schema;
 
 /**
  * Interface for discovering database schema metadata. Implementations use DatabaseMetaData to
