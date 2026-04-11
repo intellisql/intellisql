@@ -27,14 +27,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Configuration for a data source connection. Contains all necessary parameters to establish and
- * manage a connection.
+ * Connector-side configuration for a data source connection. Contains the runtime parameters used
+ * to establish and manage a connector session.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DataSourceConfig {
+public class IntelliSQLDataSourceConfig {
 
     private String name;
 

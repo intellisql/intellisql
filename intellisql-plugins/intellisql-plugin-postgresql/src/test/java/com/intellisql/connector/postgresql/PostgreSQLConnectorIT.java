@@ -25,7 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.intellisql.common.metadata.enums.DataSourceType;
-import com.intellisql.connector.config.DataSourceConfig;
+import com.intellisql.connector.config.IntelliSQLDataSourceConfig;
 
 /**
  * Integration tests for PostgreSQLConnector.
@@ -35,13 +35,13 @@ class PostgreSQLConnectorIT {
 
     private PostgreSQLConnector connector;
 
-    private DataSourceConfig config;
+    private IntelliSQLDataSourceConfig config;
 
     @BeforeEach
     void setUp() {
         final String pgUrl = System.getenv("POSTGRESQL_TEST_URL");
         assumeTrue(pgUrl != null, "PostgreSQL test URL not set, skipping test");
-        config = DataSourceConfig.builder()
+        config = IntelliSQLDataSourceConfig.builder()
                 .type(DataSourceType.POSTGRESQL)
                 .jdbcUrl(pgUrl)
                 .username(System.getenv().getOrDefault("POSTGRESQL_TEST_USER", "postgres"))

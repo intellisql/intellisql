@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.Base64;
 import java.util.Properties;
 
 import org.junit.jupiter.api.AfterEach;
@@ -37,6 +38,7 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.postgresql.Driver;
 import org.testcontainers.utility.DockerImageName;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -96,7 +98,7 @@ public class ConfigLoadingE2ETest {
             writer.write("db.url=" + POSTGRES_CONTAINER.getJdbcUrl() + "\n");
             writer.write("db.username=" + POSTGRES_CONTAINER.getUsername() + "\n");
             writer.write("db.password=" + POSTGRES_CONTAINER.getPassword() + "\n");
-            writer.write("db.driver=org.postgresql.Driver\n");
+            writer.write("db.driver=" + Driver.class.getName() + "\n");
             writer.write("db.pool.size=10\n");
             writer.write("db.timeout=30000\n");
         }
@@ -107,7 +109,7 @@ public class ConfigLoadingE2ETest {
         assertThat(props.getProperty("db.url")).isEqualTo(POSTGRES_CONTAINER.getJdbcUrl());
         assertThat(props.getProperty("db.username")).isEqualTo(POSTGRES_CONTAINER.getUsername());
         assertThat(props.getProperty("db.password")).isEqualTo(POSTGRES_CONTAINER.getPassword());
-        assertThat(props.getProperty("db.driver")).isEqualTo("org.postgresql.Driver");
+        assertThat(props.getProperty("db.driver")).isEqualTo(Driver.class.getName());
         assertThat(props.getProperty("db.pool.size")).isEqualTo("10");
         assertThat(props.getProperty("db.timeout")).isEqualTo("30000");
         try (
@@ -276,7 +278,7 @@ public class ConfigLoadingE2ETest {
     @DisplayName("Should handle encrypted password in configuration")
     void shouldHandleEncryptedPassword() throws Exception {
         String plainPassword = POSTGRES_CONTAINER.getPassword();
-        String encodedPassword = java.util.Base64.getEncoder().encodeToString(plainPassword.getBytes());
+        String encodedPassword = Base64.getEncoder().encodeToString(plainPassword.getBytes());
         File configFile = tempDir.resolve("encrypted.properties").toFile();
         try (FileWriter writer = new FileWriter(configFile)) {
             writer.write("db.url=" + POSTGRES_CONTAINER.getJdbcUrl() + "\n");
@@ -288,7 +290,7 @@ public class ConfigLoadingE2ETest {
             props.load(inputStream);
         }
         String encodedPass = props.getProperty("db.password.encoded");
-        String decodedPassword = new String(java.util.Base64.getDecoder().decode(encodedPass));
+        String decodedPassword = new String(Base64.getDecoder().decode(encodedPass));
         assertThat(decodedPassword).isEqualTo(plainPassword);
         try (
                 Connection conn =

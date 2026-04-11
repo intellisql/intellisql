@@ -67,7 +67,7 @@ public class ConsoleReader implements AutoCloseable {
                 .terminal(terminal)
                 .parser(parser)
                 .completer(completer)
-                .highlighter(new SyntaxHighlighter())
+                .highlighter(new IntelliSqlSyntaxHighlighter())
                 .variable(LineReader.HISTORY_FILE, System.getProperty("user.home") + "/.isql_history")
                 .variable("DISABLE_EVENT_EXPANSION", true)
                 .build();

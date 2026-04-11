@@ -20,7 +20,7 @@ package com.intellisql.connector.jdbc;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import com.intellisql.connector.config.DataSourceConfig;
+import com.intellisql.connector.config.IntelliSQLDataSourceConfig;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Getter;
@@ -33,20 +33,20 @@ public abstract class JdbcConnectionPool {
 
     private final HikariDataSource dataSource;
 
-    private final DataSourceConfig config;
+    private final IntelliSQLDataSourceConfig config;
 
     /**
      * Creates a new JDBC connection pool.
      *
      * @param config the data source configuration
      */
-    protected JdbcConnectionPool(final DataSourceConfig config) {
+    protected JdbcConnectionPool(final IntelliSQLDataSourceConfig config) {
         this.config = config;
         this.dataSource = createDataSource(config);
         log.info("{} connection pool initialized for: {}", getDatabaseName(), config.getName());
     }
 
-    private HikariDataSource createDataSource(final DataSourceConfig config) {
+    private HikariDataSource createDataSource(final IntelliSQLDataSourceConfig config) {
         final HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl(resolveJdbcUrl(config));
         hikariConfig.setUsername(config.getUsername());
@@ -124,7 +124,7 @@ public abstract class JdbcConnectionPool {
         return dataSource.getHikariPoolMXBean().getTotalConnections();
     }
 
-    protected String resolveJdbcUrl(final DataSourceConfig config) {
+    protected String resolveJdbcUrl(final IntelliSQLDataSourceConfig config) {
         return config.getEffectiveJdbcUrl();
     }
 
@@ -135,6 +135,6 @@ public abstract class JdbcConnectionPool {
     protected abstract String getPoolNamePrefix();
 
     protected void configureDataSourceProperties(
-                                                 final HikariConfig hikariConfig, final DataSourceConfig config) {
+                                                 final HikariConfig hikariConfig, final IntelliSQLDataSourceConfig config) {
     }
 }

@@ -17,10 +17,6 @@
 
 package com.intellisql.client.console;
 
-import org.jline.reader.Highlighter;
-import org.jline.reader.LineReader;
-import org.jline.utils.AttributedString;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -28,17 +24,22 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.regex.Pattern;
 
+import org.jline.builtins.SyntaxHighlighter;
+import org.jline.reader.Highlighter;
+import org.jline.reader.LineReader;
+import org.jline.utils.AttributedString;
+
 /**
  * SQL syntax highlighter using jline's built-in syntax highlighter.
  */
-public class SyntaxHighlighter implements Highlighter {
+public class IntelliSqlSyntaxHighlighter implements Highlighter {
 
-    private final org.jline.builtins.SyntaxHighlighter delegate;
+    private final SyntaxHighlighter delegate;
 
     /**
-     * Creates a new SyntaxHighlighter instance.
+     * Creates a new IntelliSqlSyntaxHighlighter instance.
      */
-    public SyntaxHighlighter() {
+    public IntelliSqlSyntaxHighlighter() {
         this.delegate = createDelegate();
     }
 
@@ -47,13 +48,13 @@ public class SyntaxHighlighter implements Highlighter {
      *
      * @return the delegate highlighter or null if creation fails
      */
-    private org.jline.builtins.SyntaxHighlighter createDelegate() {
+    private SyntaxHighlighter createDelegate() {
         try {
             Path tempNanorc = Files.createTempFile("sql", ".nanorc");
             tempNanorc.toFile().deleteOnExit();
             return loadNanorcHighlighter(tempNanorc);
         } catch (final IOException ex) {
-            System.err.println("[ERROR] SyntaxHighlighter initialization failed: " + ex.getMessage());
+            System.err.println("[ERROR] IntelliSqlSyntaxHighlighter initialization failed: " + ex.getMessage());
             ex.printStackTrace();
         }
         return null;
@@ -66,13 +67,13 @@ public class SyntaxHighlighter implements Highlighter {
      * @return the highlighter or null if loading fails
      * @throws IOException if an I/O error occurs
      */
-    private org.jline.builtins.SyntaxHighlighter loadNanorcHighlighter(final Path tempNanorc) throws IOException {
+    private SyntaxHighlighter loadNanorcHighlighter(final Path tempNanorc) throws IOException {
         try (InputStream is = getClass().getResourceAsStream("/sql.nanorc")) {
             if (is != null) {
                 Files.copy(is, tempNanorc, StandardCopyOption.REPLACE_EXISTING);
-                return org.jline.builtins.SyntaxHighlighter.build(tempNanorc, "SQL");
+                return SyntaxHighlighter.build(tempNanorc, "SQL");
             } else {
-                System.err.println("[WARN] SyntaxHighlighter: /sql.nanorc not found in classpath");
+                System.err.println("[WARN] IntelliSqlSyntaxHighlighter: /sql.nanorc not found in classpath");
             }
         }
         return null;

@@ -101,7 +101,7 @@ public class IntelliSqlResultSet implements ResultSet {
         this.signature = signature;
         try {
             this.connection = (IntelliSqlConnection) statement.getConnection();
-        } catch (final java.sql.SQLException ex) {
+        } catch (final SQLException ex) {
             throw new RuntimeException("Failed to get connection", ex);
         }
         this.columnMetaData = signature != null ? signature.columns : new ArrayList<>();

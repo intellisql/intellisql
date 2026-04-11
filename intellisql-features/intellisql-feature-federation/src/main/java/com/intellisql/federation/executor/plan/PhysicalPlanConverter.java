@@ -19,9 +19,11 @@ package com.intellisql.federation.executor.plan;
 
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.apache.calcite.rel.RelNode;
@@ -171,7 +173,7 @@ public class PhysicalPlanConverter {
     private QueryIterator<Row> convertProject(final Project project, final Map<String, List<String>> columnNames) {
         log.debug("Converting Project with {} columns", project.getProjects().size());
         final QueryIterator<Row> child = convertNode(project.getInput(), columnNames);
-        final List<java.util.function.Function<Row, Object>> projections = new ArrayList<>();
+        final List<Function<Row, Object>> projections = new ArrayList<>();
         final List<String> outputColumnNames = new ArrayList<>();
         for (int i = 0; i < project.getProjects().size(); i++) {
             final RexNode expr = project.getProjects().get(i);
@@ -195,8 +197,8 @@ public class PhysicalPlanConverter {
         final QueryIterator<Row> right = convertNode(join.getRight(), columnNames);
         // Extract join keys from condition
         final JoinKeyExtractor extractor = new JoinKeyExtractor(join);
-        final java.util.function.Function<Row, Object> leftKeyExtractor = extractor.getLeftKeyExtractor();
-        final java.util.function.Function<Row, Object> rightKeyExtractor = extractor.getRightKeyExtractor();
+        final Function<Row, Object> leftKeyExtractor = extractor.getLeftKeyExtractor();
+        final Function<Row, Object> rightKeyExtractor = extractor.getRightKeyExtractor();
         // Get column names for output
         final List<String> leftColumnNames = join.getLeft().getRowType().getFieldNames();
         final List<String> rightColumnNames = join.getRight().getRowType().getFieldNames();
@@ -219,7 +221,7 @@ public class PhysicalPlanConverter {
         log.debug("Converting Aggregate with {} group keys", aggregate.getGroupSet().cardinality());
         final QueryIterator<Row> child = convertNode(aggregate.getInput(), columnNames);
         // Create group by key extractors
-        final List<java.util.function.Function<Row, Object>> groupByKeyExtractors = new ArrayList<>();
+        final List<Function<Row, Object>> groupByKeyExtractors = new ArrayList<>();
         final ImmutableBitSet groupSet = aggregate.getGroupSet();
         for (int i = 0; i < groupSet.cardinality(); i++) {
             final int groupIndex = groupSet.nth(i);
@@ -285,7 +287,7 @@ public class PhysicalPlanConverter {
             columnIndices[i] = fc.getFieldIndex();
             ascendings[i] = !fc.direction.isDescending();
         }
-        final java.util.Comparator<Row> comparator = SortOperator.compositeComparator(columnIndices, ascendings);
+        final Comparator<Row> comparator = SortOperator.compositeComparator(columnIndices, ascendings);
         // Handle LIMIT and OFFSET
         final int limit = sort.fetch != null ? RexLiteral.intValue(sort.fetch) : -1;
         final int offset = sort.offset != null ? RexLiteral.intValue(sort.offset) : 0;
@@ -314,7 +316,7 @@ public class PhysicalPlanConverter {
      * @param expr the RexNode expression
      * @return the projection function
      */
-    private java.util.function.Function<Row, Object> createProjectionFunction(final RexNode expr) {
+    private Function<Row, Object> createProjectionFunction(final RexNode expr) {
         if (expr instanceof RexInputRef) {
             final int index = ((RexInputRef) expr).getIndex();
             return row -> row.getValue(index);
@@ -331,9 +333,9 @@ public class PhysicalPlanConverter {
      */
     private static class JoinKeyExtractor {
 
-        private java.util.function.Function<Row, Object> leftKeyExtractor;
+        private Function<Row, Object> leftKeyExtractor;
 
-        private java.util.function.Function<Row, Object> rightKeyExtractor;
+        private Function<Row, Object> rightKeyExtractor;
 
         JoinKeyExtractor(final Join join) {
             extractKeys(join);
@@ -361,11 +363,11 @@ public class PhysicalPlanConverter {
             }
         }
 
-        java.util.function.Function<Row, Object> getLeftKeyExtractor() {
+        Function<Row, Object> getLeftKeyExtractor() {
             return leftKeyExtractor;
         }
 
-        java.util.function.Function<Row, Object> getRightKeyExtractor() {
+        Function<Row, Object> getRightKeyExtractor() {
             return rightKeyExtractor;
         }
     }

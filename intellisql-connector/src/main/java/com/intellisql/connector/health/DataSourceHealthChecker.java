@@ -26,14 +26,20 @@ import java.sql.Statement;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 
 import com.intellisql.common.metadata.enums.DataSourceType;
-import com.intellisql.connector.config.DataSourceConfig;
+import com.intellisql.connector.config.IntelliSQLDataSourceConfig;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,7 +54,7 @@ public class DataSourceHealthChecker implements HealthChecker {
     private final Map<String, Object> connectionCache = new ConcurrentHashMap<>();
 
     @Override
-    public HealthCheckResult check(final DataSourceConfig config) {
+    public HealthCheckResult check(final IntelliSQLDataSourceConfig config) {
         long startTime = System.currentTimeMillis();
         boolean healthy = performHealthCheck(config);
         long responseTime = System.currentTimeMillis() - startTime;
@@ -67,7 +73,7 @@ public class DataSourceHealthChecker implements HealthChecker {
         return "DataSourceHealthChecker";
     }
 
-    private boolean performHealthCheck(final DataSourceConfig config) {
+    private boolean performHealthCheck(final IntelliSQLDataSourceConfig config) {
         DataSourceType type = config.getType();
         switch (type) {
             case MYSQL:
@@ -81,7 +87,7 @@ public class DataSourceHealthChecker implements HealthChecker {
         }
     }
 
-    private boolean checkMySQL(final DataSourceConfig config) {
+    private boolean checkMySQL(final IntelliSQLDataSourceConfig config) {
         String jdbcUrl = buildJdbcUrl(config, "mysql");
         try (
                 Connection conn =
@@ -93,7 +99,7 @@ public class DataSourceHealthChecker implements HealthChecker {
         }
     }
 
-    private boolean checkPostgreSQL(final DataSourceConfig config) {
+    private boolean checkPostgreSQL(final IntelliSQLDataSourceConfig config) {
         String jdbcUrl = buildJdbcUrl(config, "postgresql");
         try (
                 Connection conn =
@@ -113,7 +119,7 @@ public class DataSourceHealthChecker implements HealthChecker {
         }
     }
 
-    private boolean checkElasticsearch(final DataSourceConfig config) {
+    private boolean checkElasticsearch(final IntelliSQLDataSourceConfig config) {
         RestHighLevelClient client = getOrCreateElasticsearchClient(config);
         ClusterHealthResponse health;
         try {
@@ -136,7 +142,7 @@ public class DataSourceHealthChecker implements HealthChecker {
         return true;
     }
 
-    private RestHighLevelClient getOrCreateElasticsearchClient(final DataSourceConfig config) {
+    private RestHighLevelClient getOrCreateElasticsearchClient(final IntelliSQLDataSourceConfig config) {
         return (RestHighLevelClient) connectionCache.computeIfAbsent(
                 config.getName(),
                 name -> createElasticsearchClient(config));
@@ -148,7 +154,7 @@ public class DataSourceHealthChecker implements HealthChecker {
      * @param config the data source configuration
      * @return the created Elasticsearch RestHighLevelClient
      */
-    private RestHighLevelClient createElasticsearchClient(final DataSourceConfig config) {
+    private RestHighLevelClient createElasticsearchClient(final IntelliSQLDataSourceConfig config) {
         String scheme = "http";
         if (config.getProperties() != null
                 && "true".equalsIgnoreCase(config.getProperties().get("ssl"))) {
@@ -156,23 +162,20 @@ public class DataSourceHealthChecker implements HealthChecker {
         }
         String host = config.getHost() != null ? config.getHost() : "localhost";
         int port = config.getPort() > 0 ? config.getPort() : 9200;
-        org.apache.http.HttpHost httpHost = new org.apache.http.HttpHost(host, port, scheme);
-        org.elasticsearch.client.RestClientBuilder builder =
-                org.elasticsearch.client.RestClient.builder(httpHost);
+        HttpHost httpHost = new HttpHost(host, port, scheme);
+        RestClientBuilder builder = RestClient.builder(httpHost);
         if (config.getUsername() != null && config.getPassword() != null) {
-            org.apache.http.impl.client.BasicCredentialsProvider credentialsProvider =
-                    new org.apache.http.impl.client.BasicCredentialsProvider();
+            BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
             credentialsProvider.setCredentials(
-                    org.apache.http.auth.AuthScope.ANY,
-                    new org.apache.http.auth.UsernamePasswordCredentials(
-                            config.getUsername(), config.getPassword()));
+                    AuthScope.ANY,
+                    new UsernamePasswordCredentials(config.getUsername(), config.getPassword()));
             builder.setHttpClientConfigCallback(
                     httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
         }
         return new RestHighLevelClient(builder);
     }
 
-    private String buildJdbcUrl(final DataSourceConfig config, final String dbType) {
+    private String buildJdbcUrl(final IntelliSQLDataSourceConfig config, final String dbType) {
         if (config.getJdbcUrl() != null && !config.getJdbcUrl().isEmpty()) {
             return config.getJdbcUrl();
         }

@@ -17,7 +17,7 @@
 
 package com.intellisql.connector.postgresql;
 
-import com.intellisql.connector.config.DataSourceConfig;
+import com.intellisql.connector.config.IntelliSQLDataSourceConfig;
 import com.intellisql.connector.jdbc.JdbcConnectionPool;
 import com.zaxxer.hikari.HikariConfig;
 
@@ -32,7 +32,7 @@ public class PostgreSQLConnectionPool extends JdbcConnectionPool {
      *
      * @param config the data source configuration
      */
-    public PostgreSQLConnectionPool(final DataSourceConfig config) {
+    public PostgreSQLConnectionPool(final IntelliSQLDataSourceConfig config) {
         super(config);
     }
 
@@ -52,7 +52,7 @@ public class PostgreSQLConnectionPool extends JdbcConnectionPool {
     }
 
     @Override
-    protected String resolveJdbcUrl(final DataSourceConfig config) {
+    protected String resolveJdbcUrl(final IntelliSQLDataSourceConfig config) {
         if (config.getJdbcUrl() != null && !config.getJdbcUrl().isEmpty()) {
             String url = config.getJdbcUrl();
             if (!url.contains("sslmode=")) {
@@ -73,7 +73,7 @@ public class PostgreSQLConnectionPool extends JdbcConnectionPool {
     }
 
     @Override
-    protected void configureDataSourceProperties(final HikariConfig hikariConfig, final DataSourceConfig config) {
+    protected void configureDataSourceProperties(final HikariConfig hikariConfig, final IntelliSQLDataSourceConfig config) {
         hikariConfig.addDataSourceProperty("preparedStatementCacheQueries", "256");
         hikariConfig.addDataSourceProperty("preparedStatementCacheSizeMiB", "5");
         hikariConfig.addDataSourceProperty("stringtype", "unspecified");

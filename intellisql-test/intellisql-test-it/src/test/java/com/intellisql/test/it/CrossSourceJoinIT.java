@@ -18,10 +18,14 @@
 package com.intellisql.test.it;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -158,11 +162,11 @@ public class CrossSourceJoinIT extends AbstractIntegrationTest {
     void shouldAggregateDataAcrossSources() throws Exception {
         List<Customer> customers = fetchCustomersFromMySQL();
         List<Order> orders = fetchOrdersFromPostgreSQL();
-        java.util.Map<Integer, String> customerMap = new java.util.HashMap<>();
+        Map<Integer, String> customerMap = new HashMap<>();
         for (Customer customer : customers) {
             customerMap.put(customer.id, customer.name);
         }
-        java.util.Map<String, Double> regionTotals = new java.util.HashMap<>();
+        Map<String, Double> regionTotals = new HashMap<>();
         for (Order order : orders) {
             String customerName = customerMap.get(order.customerId);
             if (customerName != null) {
@@ -209,7 +213,7 @@ public class CrossSourceJoinIT extends AbstractIntegrationTest {
                 orders.stream()
                         .sorted((o1, o2) -> Double.compare(o2.amount, o1.amount))
                         .limit(2)
-                        .collect(java.util.stream.Collectors.toList());
+                        .collect(Collectors.toList());
         assertThat(paginatedOrders).hasSize(2);
         assertThat(paginatedOrders.get(0).amount).isGreaterThanOrEqualTo(paginatedOrders.get(1).amount);
     }
@@ -294,8 +298,8 @@ public class CrossSourceJoinIT extends AbstractIntegrationTest {
 
     private List<JoinedResult> performInMemoryJoin(final List<Customer> customers, final List<Order> orders) {
         List<JoinedResult> results = new ArrayList<>();
-        java.util.Map<Integer, Customer> customerMap =
-                customers.stream().collect(java.util.stream.Collectors.toMap(c -> c.id, c -> c));
+        Map<Integer, Customer> customerMap =
+                customers.stream().collect(Collectors.toMap(c -> c.id, c -> c));
         for (Order order : orders) {
             Customer customer = customerMap.get(order.customerId);
             if (customer != null) {
@@ -329,9 +333,9 @@ public class CrossSourceJoinIT extends AbstractIntegrationTest {
 
         private final double amount;
 
-        private final java.sql.Date orderDate;
+        private final Date orderDate;
 
-        Order(final int id, final int customerId, final double amount, final java.sql.Date orderDate) {
+        Order(final int id, final int customerId, final double amount, final Date orderDate) {
             this.id = id;
             this.customerId = customerId;
             this.amount = amount;
@@ -347,9 +351,9 @@ public class CrossSourceJoinIT extends AbstractIntegrationTest {
 
         private final double amount;
 
-        private final java.sql.Date orderDate;
+        private final Date orderDate;
 
-        JoinedResult(final String customerName, final String region, final double amount, final java.sql.Date orderDate) {
+        JoinedResult(final String customerName, final String region, final double amount, final Date orderDate) {
             this.customerName = customerName;
             this.region = region;
             this.amount = amount;

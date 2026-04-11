@@ -17,12 +17,19 @@
 
 package com.intellisql.server;
 
+import java.sql.ResultSetMetaData;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import com.intellisql.common.metadata.Table;
 import com.intellisql.connector.model.QueryResult;
 import com.intellisql.federation.IntelliSqlKernel;
 import com.intellisql.federation.metadata.MetadataManager;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.avatica.AvaticaParameter;
 import org.apache.calcite.avatica.ColumnMetaData;
 import org.apache.calcite.avatica.Meta;
@@ -32,12 +39,9 @@ import org.apache.calcite.avatica.NoSuchStatementException;
 import org.apache.calcite.avatica.QueryState;
 import org.apache.calcite.avatica.remote.TypedValue;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Avatica Meta implementation for IntelliSql. Provides metadata and query execution services.
@@ -302,17 +306,17 @@ public class IntelliSqlMeta implements Meta {
         // Create column metadata for TABLE_NAME column
         ColumnMetaData.Rep rep = ColumnMetaData.Rep.of(String.class);
         ColumnMetaData.AvaticaType avaticaType =
-                new ColumnMetaData.AvaticaType(java.sql.Types.VARCHAR, "VARCHAR", rep);
+                new ColumnMetaData.AvaticaType(Types.VARCHAR, "VARCHAR", rep);
         ColumnMetaData columnMetaData =
                 new ColumnMetaData(0, false, false, false, false,
-                        java.sql.ResultSetMetaData.columnNullableUnknown, true,
+                        ResultSetMetaData.columnNullableUnknown, true,
                         -1, "TABLE_NAME", "TABLE_NAME", "", 0, 0, "", "", avaticaType, true, false, false, "");
         columns.add(columnMetaData);
         // Get tables from metadata manager
         List<Object> rows = new ArrayList<>();
         if (metadataManager != null) {
             log.info("Getting tables from metadataManager, current count: {}", metadataManager.getAllTables().size());
-            for (com.intellisql.common.metadata.Table table : metadataManager.getAllTables()) {
+            for (Table table : metadataManager.getAllTables()) {
                 log.info("Found table: {}", table.getName());
                 rows.add(Collections.singletonList(table.getName()));
             }
@@ -402,10 +406,10 @@ public class IntelliSqlMeta implements Meta {
                 for (String columnName : queryResult.getColumnNames()) {
                     ColumnMetaData.Rep rep = ColumnMetaData.Rep.of(String.class);
                     ColumnMetaData.AvaticaType avaticaType =
-                            new ColumnMetaData.AvaticaType(java.sql.Types.VARCHAR, "VARCHAR", rep);
+                            new ColumnMetaData.AvaticaType(Types.VARCHAR, "VARCHAR", rep);
                     ColumnMetaData columnMetaData =
                             new ColumnMetaData(colIndex, false, false, false, false,
-                                    java.sql.ResultSetMetaData.columnNullableUnknown, true,
+                                    ResultSetMetaData.columnNullableUnknown, true,
                                     -1, columnName, columnName, "", 0, 0, "", "",
                                     avaticaType, true, false, false, "");
                     columns.add(columnMetaData);

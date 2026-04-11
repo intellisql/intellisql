@@ -17,6 +17,7 @@
 
 package com.intellisql.optimizer.rule;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.calcite.plan.RelOptRule;
@@ -178,8 +179,7 @@ public class PredicatePushDownRule extends RelOptRule {
      * @return the merged filter
      */
     private RelNode mergeWithFilter(final Filter existingFilter, final RexNode newPredicate) {
-        final List<RexNode> conditions =
-                java.util.Arrays.asList(existingFilter.getCondition(), newPredicate);
+        final List<RexNode> conditions = Arrays.asList(existingFilter.getCondition(), newPredicate);
         return existingFilter.copy(
                 existingFilter.getTraitSet(),
                 existingFilter.getInput(),

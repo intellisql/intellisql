@@ -18,7 +18,7 @@
 package com.intellisql.connector.mysql;
 
 import com.intellisql.common.metadata.enums.DataSourceType;
-import com.intellisql.connector.config.DataSourceConfig;
+import com.intellisql.connector.config.IntelliSQLDataSourceConfig;
 import com.intellisql.connector.jdbc.AbstractJdbcConnector;
 
 /**
@@ -43,7 +43,7 @@ public class MySQLConnector extends AbstractJdbcConnector<MySQLConnectionPool> {
     }
 
     @Override
-    protected MySQLConnectionPool createConnectionPool(final DataSourceConfig config) {
+    protected MySQLConnectionPool createConnectionPool(final IntelliSQLDataSourceConfig config) {
         return new MySQLConnectionPool(config);
     }
 }

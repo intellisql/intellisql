@@ -19,7 +19,7 @@ package com.intellisql.connector.api;
 
 import com.intellisql.common.metadata.Schema;
 import com.intellisql.common.metadata.enums.DataSourceType;
-import com.intellisql.connector.config.DataSourceConfig;
+import com.intellisql.connector.config.IntelliSQLDataSourceConfig;
 
 /**
  * Main interface for data source connectors. Each supported database type should provide an
@@ -41,7 +41,7 @@ public interface DataSourceConnector {
      * @return a connection to the data source
      * @throws Exception if connection fails
      */
-    Connection connect(DataSourceConfig config) throws Exception;
+    IntelliSQLConnection connect(IntelliSQLDataSourceConfig config) throws Exception;
 
     /**
      * Tests if a connection can be established to the data source.
@@ -49,7 +49,7 @@ public interface DataSourceConnector {
      * @param config the data source configuration
      * @return true if connection test succeeds, false otherwise
      */
-    boolean testConnection(DataSourceConfig config);
+    boolean testConnection(IntelliSQLDataSourceConfig config);
 
     /**
      * Discovers and returns the schema of the data source.
@@ -58,7 +58,7 @@ public interface DataSourceConnector {
      * @return the discovered schema
      * @throws Exception if schema discovery fails
      */
-    Schema discoverSchema(DataSourceConfig config) throws Exception;
+    Schema discoverSchema(IntelliSQLDataSourceConfig config) throws Exception;
 
     /** Closes the connector and releases all resources. */
     void close();

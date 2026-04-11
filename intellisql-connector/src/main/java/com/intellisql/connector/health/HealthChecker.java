@@ -17,7 +17,7 @@
 
 package com.intellisql.connector.health;
 
-import com.intellisql.connector.config.DataSourceConfig;
+import com.intellisql.connector.config.IntelliSQLDataSourceConfig;
 
 /**
  * Interface for performing health checks on data sources. Implementations provide data source
@@ -31,7 +31,7 @@ public interface HealthChecker {
      * @param config the data source configuration
      * @return the health check result
      */
-    HealthCheckResult check(DataSourceConfig config);
+    HealthCheckResult check(IntelliSQLDataSourceConfig config);
 
     /**
      * Gets the name of this health checker.

@@ -25,6 +25,7 @@ import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.plan.volcano.VolcanoPlanner;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.schema.Table;
 
 import com.intellisql.optimizer.metadata.DataSourceAware;
 import com.intellisql.optimizer.plan.ExecutionPlan;
@@ -200,7 +201,7 @@ public class HybridOptimizer {
                 return dataSourceAware.getDataSourceId();
             }
             // Fallback: try to unwrap to the table class directly
-            final org.apache.calcite.schema.Table calciteTable = table.unwrap(org.apache.calcite.schema.Table.class);
+            final Table calciteTable = table.unwrap(Table.class);
             if (calciteTable instanceof DataSourceAware) {
                 return ((DataSourceAware) calciteTable).getDataSourceId();
             }

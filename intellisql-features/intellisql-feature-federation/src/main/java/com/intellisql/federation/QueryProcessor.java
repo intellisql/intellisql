@@ -17,8 +17,11 @@
 
 package com.intellisql.federation;
 
+import java.util.Collections;
+
 import com.intellisql.connector.ConnectorRegistry;
 import com.intellisql.connector.api.DataSourceConnector;
+import com.intellisql.connector.api.IntelliSQLConnection;
 import com.intellisql.connector.config.DataSourceConfigs;
 import com.intellisql.connector.model.QueryResult;
 import com.intellisql.common.config.Props;
@@ -32,6 +35,7 @@ import com.intellisql.common.retry.ExponentialBackoffRetry;
 import com.intellisql.common.retry.RetryableOperation;
 import com.intellisql.optimizer.HybridOptimizer;
 import com.intellisql.optimizer.plan.ExecutionPlan;
+import com.intellisql.optimizer.plan.ExecutionStage;
 import com.intellisql.parser.SqlParserFactory;
 import com.intellisql.parser.SqlNodeToStringConverter;
 
@@ -219,9 +223,8 @@ public class QueryProcessor {
     private QueryResult executePlan(final ExecutionPlan executionPlan, final QueryContext context) {
         structuredLogger.debug(
                 context, "Executing execution plan with {} stages", executionPlan.getStages().size());
-        QueryResult result =
-                QueryResult.success(java.util.Collections.emptyList(), java.util.Collections.emptyList());
-        for (final com.intellisql.optimizer.plan.ExecutionStage stage : executionPlan.getStages()) {
+        QueryResult result = QueryResult.success(Collections.emptyList(), Collections.emptyList());
+        for (final ExecutionStage stage : executionPlan.getStages()) {
             result = executeStage(stage, context, result);
             if (!result.isSuccess()) {
                 return result;
@@ -239,7 +242,7 @@ public class QueryProcessor {
      * @return the query result
      */
     private QueryResult executeStage(
-                                     final com.intellisql.optimizer.plan.ExecutionStage stage,
+                                     final ExecutionStage stage,
                                      final QueryContext context,
                                      final QueryResult previousResult) {
         structuredLogger.debug(context, "Executing stage: {}", stage.getId());
@@ -251,8 +254,7 @@ public class QueryProcessor {
             final DataSourceType dataSourceType = determineDataSourceType(dataSourceId);
             final DataSourceConnector connector =
                     ConnectorRegistry.getInstance().getConnector(dataSourceType);
-            final com.intellisql.connector.api.Connection connection =
-                    getConnection(connector, dataSourceId);
+            final IntelliSQLConnection connection = getConnection(connector, dataSourceId);
             final String targetSql = generateTargetSQL(stage, dataSourceType);
             return connection.executeQuery(targetSql);
             // CHECKSTYLE:OFF
@@ -286,14 +288,11 @@ public class QueryProcessor {
      * @return the connection
      * @throws Exception if connection fails
      */
-    private com.intellisql.connector.api.Connection getConnection(
-                                                                  final DataSourceConnector connector, final String dataSourceId) throws Exception {
+    private IntelliSQLConnection getConnection(final DataSourceConnector connector, final String dataSourceId) throws Exception {
         final String normalizedName = dataSourceId.replaceAll("[\\[\\]]", "").split(",")[0];
-        final com.intellisql.common.config.DataSourceConfig config =
-                dataSourceManager.getDataSourceConfig(normalizedName);
-        final com.intellisql.connector.config.DataSourceConfig connectorConfig =
-                DataSourceConfigs.fromCommonConfig(normalizedName, config);
-        return connector.connect(connectorConfig);
+        return connector.connect(
+                DataSourceConfigs.fromCommonConfig(
+                        normalizedName, dataSourceManager.getDataSourceConfig(normalizedName)));
     }
 
     /**
@@ -304,7 +303,7 @@ public class QueryProcessor {
      * @return the generated SQL
      */
     private String generateTargetSQL(
-                                     final com.intellisql.optimizer.plan.ExecutionStage stage,
+                                     final ExecutionStage stage,
                                      final DataSourceType dataSourceType) {
         final String targetDialect = toSqlDialect(dataSourceType);
         final RelNode operation = stage.getOperation();

@@ -17,7 +17,9 @@
 
 package com.intellisql.connector.elasticsearch;
 
+import java.time.temporal.Temporal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -231,7 +233,7 @@ public class ElasticsearchQueryExecutor {
         if (value instanceof Boolean) {
             return DataType.BOOLEAN;
         }
-        if (value instanceof java.util.Date || value instanceof java.time.temporal.Temporal) {
+        if (value instanceof Date || value instanceof Temporal) {
             return DataType.TIMESTAMP;
         }
         if (value instanceof List) {

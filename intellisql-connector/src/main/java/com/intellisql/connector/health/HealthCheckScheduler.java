@@ -21,10 +21,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import com.intellisql.connector.config.DataSourceConfig;
+import com.intellisql.connector.config.IntelliSQLDataSourceConfig;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,7 +40,7 @@ public class HealthCheckScheduler {
 
     private final HealthChecker healthChecker;
 
-    private final Map<String, java.util.concurrent.ScheduledFuture<?>> scheduledTasks =
+    private final Map<String, ScheduledFuture<?>> scheduledTasks =
             new ConcurrentHashMap<>();
 
     private final Map<String, HealthCheckResult> lastResults = new ConcurrentHashMap<>();
@@ -74,14 +75,14 @@ public class HealthCheckScheduler {
      * @param config the data source configuration
      * @param intervalSeconds the interval between health checks in seconds
      */
-    public void scheduleHealthCheck(final DataSourceConfig config, final long intervalSeconds) {
+    public void scheduleHealthCheck(final IntelliSQLDataSourceConfig config, final long intervalSeconds) {
         String dataSourceName = config.getName();
         if (scheduledTasks.containsKey(dataSourceName)) {
             log.warn("Health check already scheduled for data source: {}", dataSourceName);
             return;
         }
         log.info("Scheduling health check for '{}' every {} seconds", dataSourceName, intervalSeconds);
-        java.util.concurrent.ScheduledFuture<?> future =
+        ScheduledFuture<?> future =
                 scheduler.scheduleAtFixedRate(
                         () -> performHealthCheck(config), 0, intervalSeconds, TimeUnit.SECONDS);
         scheduledTasks.put(dataSourceName, future);
@@ -95,7 +96,7 @@ public class HealthCheckScheduler {
      * @param intervalSeconds the interval between health checks in seconds
      */
     public void scheduleHealthCheck(
-                                    final DataSourceConfig config, final long initialDelaySeconds, final long intervalSeconds) {
+                                    final IntelliSQLDataSourceConfig config, final long initialDelaySeconds, final long intervalSeconds) {
         String dataSourceName = config.getName();
         if (scheduledTasks.containsKey(dataSourceName)) {
             log.warn("Health check already scheduled for data source: {}", dataSourceName);
@@ -106,7 +107,7 @@ public class HealthCheckScheduler {
                 dataSourceName,
                 intervalSeconds,
                 initialDelaySeconds);
-        java.util.concurrent.ScheduledFuture<?> future =
+        ScheduledFuture<?> future =
                 scheduler.scheduleAtFixedRate(
                         () -> performHealthCheck(config),
                         initialDelaySeconds,
@@ -121,7 +122,7 @@ public class HealthCheckScheduler {
      * @param dataSourceName the name of the data source
      */
     public void cancelHealthCheck(final String dataSourceName) {
-        java.util.concurrent.ScheduledFuture<?> future = scheduledTasks.remove(dataSourceName);
+        ScheduledFuture<?> future = scheduledTasks.remove(dataSourceName);
         if (future != null) {
             future.cancel(false);
             log.info("Cancelled health check for data source: {}", dataSourceName);
@@ -134,7 +135,7 @@ public class HealthCheckScheduler {
      * @param config the data source configuration
      * @return the health check result
      */
-    public HealthCheckResult performHealthCheck(final DataSourceConfig config) {
+    public HealthCheckResult performHealthCheck(final IntelliSQLDataSourceConfig config) {
         String dataSourceName = config.getName();
         HealthCheckResult result = healthChecker.check(config);
         lastResults.put(dataSourceName, result);
@@ -204,7 +205,7 @@ public class HealthCheckScheduler {
      * @return true if a health check is scheduled, false otherwise
      */
     public boolean isScheduled(final String dataSourceName) {
-        java.util.concurrent.ScheduledFuture<?> future = scheduledTasks.get(dataSourceName);
+        ScheduledFuture<?> future = scheduledTasks.get(dataSourceName);
         return future != null && !future.isCancelled() && !future.isDone();
     }
 

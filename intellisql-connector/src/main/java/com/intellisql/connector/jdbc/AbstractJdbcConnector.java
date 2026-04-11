@@ -17,15 +17,16 @@
 
 package com.intellisql.connector.jdbc;
 
+import java.sql.Connection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.intellisql.common.metadata.Schema;
-import com.intellisql.connector.api.Connection;
 import com.intellisql.connector.api.DataSourceConnector;
+import com.intellisql.connector.api.IntelliSQLConnection;
 import com.intellisql.connector.api.QueryExecutor;
 import com.intellisql.connector.api.SchemaDiscoverer;
-import com.intellisql.connector.config.DataSourceConfig;
+import com.intellisql.connector.config.IntelliSQLDataSourceConfig;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -48,13 +49,13 @@ public abstract class AbstractJdbcConnector<P extends JdbcConnectionPool> implem
     }
 
     @Override
-    public Connection connect(final DataSourceConfig config) throws Exception {
+    public IntelliSQLConnection connect(final IntelliSQLDataSourceConfig config) throws Exception {
         final P pool = getOrCreatePool(config);
         return new JdbcConnectionAdapter(pool.getConnection(), queryExecutor, getDatabaseName());
     }
 
     @Override
-    public boolean testConnection(final DataSourceConfig config) {
+    public boolean testConnection(final IntelliSQLDataSourceConfig config) {
         try {
             final P pool = getOrCreatePool(config);
             final boolean success = pool.testConnection();
@@ -78,9 +79,9 @@ public abstract class AbstractJdbcConnector<P extends JdbcConnectionPool> implem
     }
 
     @Override
-    public Schema discoverSchema(final DataSourceConfig config) throws Exception {
+    public Schema discoverSchema(final IntelliSQLDataSourceConfig config) throws Exception {
         final P pool = getOrCreatePool(config);
-        try (java.sql.Connection connection = pool.getConnection()) {
+        try (Connection connection = pool.getConnection()) {
             return schemaDiscoverer.discoverSchema(connection, config.getSchema(), config.getName());
         }
     }
@@ -127,7 +128,7 @@ public abstract class AbstractJdbcConnector<P extends JdbcConnectionPool> implem
         return pool != null ? pool.getIdleConnections() : 0;
     }
 
-    protected P getOrCreatePool(final DataSourceConfig config) {
+    protected P getOrCreatePool(final IntelliSQLDataSourceConfig config) {
         return connectionPools.computeIfAbsent(
                 config.getName(),
                 name -> {
@@ -138,5 +139,5 @@ public abstract class AbstractJdbcConnector<P extends JdbcConnectionPool> implem
 
     protected abstract String getDatabaseName();
 
-    protected abstract P createConnectionPool(DataSourceConfig config);
+    protected abstract P createConnectionPool(IntelliSQLDataSourceConfig config);
 }
