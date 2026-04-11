@@ -21,8 +21,8 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.intellisql.common.metadata.enums.DataSourceType;
 import com.intellisql.connector.api.DataSourceConnector;
-import com.intellisql.connector.enums.DataSourceType;
 
 import lombok.extern.slf4j.Slf4j;
 

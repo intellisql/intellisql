@@ -29,7 +29,7 @@ import lombok.RequiredArgsConstructor;
 /** Table definition representing a table or index in a schema. */
 @Getter
 @RequiredArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public final class Table {
 
     private final String name;

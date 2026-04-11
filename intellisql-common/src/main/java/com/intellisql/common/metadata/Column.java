@@ -17,6 +17,8 @@
 
 package com.intellisql.common.metadata;
 
+import java.util.Map;
+
 import com.intellisql.common.metadata.enums.DataType;
 
 import lombok.Builder;
@@ -26,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 /** Column definition representing a column in a table with type information. */
 @Getter
 @RequiredArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public final class Column {
 
     private final String name;
@@ -44,4 +46,6 @@ public final class Column {
     private final Integer precision;
 
     private final Integer scale;
+
+    private final Map<String, String> metadata;
 }

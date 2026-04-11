@@ -32,5 +32,6 @@
         <module>intellisql-plugin-oracle</module>
         <module>intellisql-plugin-sqlserver</module>
         <module>intellisql-plugin-hive</module>
+        <module>intellisql-plugin-elasticsearch</module>
     </modules>
 </project>

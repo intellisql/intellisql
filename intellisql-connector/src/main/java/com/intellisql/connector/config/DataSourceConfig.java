@@ -19,7 +19,7 @@ package com.intellisql.connector.config;
 
 import java.util.Map;
 
-import com.intellisql.connector.enums.DataSourceType;
+import com.intellisql.common.metadata.enums.DataSourceType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -20,7 +20,7 @@ package com.intellisql.connector.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.intellisql.connector.enums.DataType;
+import com.intellisql.common.metadata.enums.DataType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

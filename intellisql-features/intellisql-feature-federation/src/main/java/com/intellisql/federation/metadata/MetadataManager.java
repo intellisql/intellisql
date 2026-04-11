@@ -27,7 +27,6 @@ import com.intellisql.common.metadata.DataSource;
 import com.intellisql.common.metadata.Schema;
 import com.intellisql.common.metadata.Table;
 import com.intellisql.common.metadata.Column;
-import com.intellisql.common.metadata.enums.SchemaType;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -310,7 +309,7 @@ public final class MetadataManager {
                 final DataSourceConfig config = entry.getValue();
                 log.info("Discovering schema for data source: {} ({})",
                         config.getName(), config.getJdbcUrl());
-                final com.intellisql.connector.model.Schema connectorSchema =
+                final Schema connectorSchema =
                         entry.getKey().discoverSchema(config);
                 if (connectorSchema != null) {
                     log.info("Discovered schema '{}' with {} tables",
@@ -335,37 +334,8 @@ public final class MetadataManager {
      *
      * @param connectorSchema the connector schema
      */
-    private void registerFromConnectorSchema(
-                                             final com.intellisql.connector.model.Schema connectorSchema) {
-        final String dataSourceId = connectorSchema.getDataSourceName();
-        final Map<String, Table> schemaTables = new ConcurrentHashMap<>();
-        if (connectorSchema.getTables() != null) {
-            for (final com.intellisql.connector.model.Table connectorTable : connectorSchema.getTables()) {
-                final java.util.List<Column> columns = new java.util.ArrayList<>();
-                if (connectorTable.getColumns() != null) {
-                    for (final com.intellisql.connector.model.Column column : connectorTable.getColumns()) {
-                        columns.add(
-                                Column.builder().name(column.getName()).nullable(column.isNullable()).build());
-                    }
-                }
-                final Table table = Table.builder()
-                        .name(connectorTable.getName())
-                        .dataSourceId(dataSourceId)
-                        .schemaName(connectorSchema.getName())
-                        .columns(columns)
-                        .build();
-                schemaTables.put(connectorTable.getName(), table);
-                tables.put(connectorTable.getName(), table);
-            }
-        }
-        final Schema schema =
-                Schema.builder()
-                        .name(connectorSchema.getName())
-                        .dataSourceId(dataSourceId)
-                        .tables(schemaTables)
-                        .type(SchemaType.valueOf(connectorSchema.getType().name()))
-                        .build();
-        schemas.put(connectorSchema.getName(), schema);
+    private void registerFromConnectorSchema(final Schema connectorSchema) {
+        registerSchema(connectorSchema);
     }
 
     /**

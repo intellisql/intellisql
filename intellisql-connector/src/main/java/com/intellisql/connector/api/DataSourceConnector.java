@@ -17,9 +17,9 @@
 
 package com.intellisql.connector.api;
 
+import com.intellisql.common.metadata.Schema;
+import com.intellisql.common.metadata.enums.DataSourceType;
 import com.intellisql.connector.config.DataSourceConfig;
-import com.intellisql.connector.enums.DataSourceType;
-import com.intellisql.connector.model.Schema;
 
 /**
  * Main interface for data source connectors. Each supported database type should provide an
