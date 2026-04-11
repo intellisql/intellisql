@@ -15,6 +15,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
+
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.intellisql</groupId>
@@ -405,6 +406,44 @@
                     <artifactId>spotless-maven-plugin</artifactId>
                     <version>${spotless.version}</version>
                     <configuration>
+                        <formats>
+                            <format>
+                                <includes>
+                                    <include>.github/workflows/*.yml</include>
+                                </includes>
+                                <licenseHeader>
+                                    <file>${maven.multiModuleProjectDirectory}/src/resources/spotless/copyright-hash.txt</file>
+                                    <delimiter>^name:</delimiter>
+                                </licenseHeader>
+                                <replaceRegex>
+                                    <name>blankLineAfterHashHeader</name>
+                                    <searchRegex>(# limitations under the License\.
+)(\S)</searchRegex>
+                                    <replacement>$1
+$2</replacement>
+                                </replaceRegex>
+                                <trimTrailingWhitespace />
+                                <endWithNewline />
+                            </format>
+                            <format>
+                                <includes>
+                                    <include>.mvn/wrapper/maven-wrapper.properties</include>
+                                </includes>
+                                <licenseHeader>
+                                    <file>${maven.multiModuleProjectDirectory}/src/resources/spotless/copyright-hash.txt</file>
+                                    <delimiter>^distributionUrl=</delimiter>
+                                </licenseHeader>
+                                <replaceRegex>
+                                    <name>blankLineAfterPropertiesHeader</name>
+                                    <searchRegex>(# limitations under the License\.
+)(\S)</searchRegex>
+                                    <replacement>$1
+$2</replacement>
+                                </replaceRegex>
+                                <trimTrailingWhitespace />
+                                <endWithNewline />
+                            </format>
+                        </formats>
                         <java>
                             <eclipse>
                                 <file>${maven.multiModuleProjectDirectory}/src/resources/spotless/java.xml</file>
@@ -417,6 +456,10 @@
                             <endWithNewline />
                         </java>
                         <pom>
+                            <licenseHeader>
+                                <file>${maven.multiModuleProjectDirectory}/src/resources/spotless/copyright-pom.txt</file>
+                                <delimiter>&lt;project</delimiter>
+                            </licenseHeader>
                             <sortPom>
                                 <encoding>UTF-8</encoding>
                                 <nrOfIndentSpace>4</nrOfIndentSpace>
@@ -430,6 +473,13 @@
                                 <expandEmptyElements>false</expandEmptyElements>
                                 <sortProperties>false</sortProperties>
                             </sortPom>
+                            <replaceRegex>
+                                <name>blankLineAfterPomHeader</name>
+                                <searchRegex>(  --&gt;
+)(&lt;project)</searchRegex>
+                                <replacement>$1
+$2</replacement>
+                            </replaceRegex>
                         </pom>
                         <upToDateChecking>
                             <enabled>true</enabled>
