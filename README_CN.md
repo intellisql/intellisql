@@ -148,9 +148,9 @@ intellisql/
 ├── intellisql-common/      # 通用工具与共享模型
 ├── intellisql-parser/      # SQL 解析模块
 ├── intellisql-features/    # 核心特性聚合模块
-│   ├── intellisql-federation/  # SQL 联邦引擎（元数据、执行）
-│   ├── intellisql-translator/  # SQL 翻译模块
-│   └── intellisql-optimizer/   # 查询优化模块
+│   ├── intellisql-feature-federation/  # SQL 联邦引擎（元数据、执行）
+│   ├── intellisql-feature-translator/  # SQL 翻译模块
+│   └── intellisql-feature-optimizer/   # 查询优化模块
 ├── intellisql-connector/   # 数据库连接器
 ├── intellisql-jdbc/        # JDBC 驱动实现
 ├── intellisql-server/      # 服务器实现
@@ -182,9 +182,9 @@ intellisql/
 
 核心特性聚合模块：
 
-- **intellisql-federation**：核心联邦引擎，处理元数据管理、模式发现和分布式查询执行。
-- **intellisql-translator**：SQL 翻译模块，用于在不同 SQL 方言之间进行转换。
-- **intellisql-optimizer**：基于代价的查询优化模块，支持谓词下推能力。
+- **intellisql-feature-federation**：核心联邦引擎，处理元数据管理、模式发现和分布式查询执行。
+- **intellisql-feature-translator**：SQL 翻译模块，用于在不同 SQL 方言之间进行转换。
+- **intellisql-feature-optimizer**：基于代价的查询优化模块，支持谓词下推能力。
 
 ### intellisql-connector
 

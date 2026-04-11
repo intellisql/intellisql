@@ -74,18 +74,18 @@ intellisql/
 │       ├── main/java/
 │       └── test/java/
 ├── intellisql-features/            # 功能特性父模块
-│   ├── intellisql-optimizer/       # SQL 优化器
+│   ├── intellisql-feature-optimizer/       # SQL 优化器
 │   │   └── src/main/java/com/intellisql/optimizer/
 │   │       ├── cost/               # 代价模型（FederatedCost, CostFactor）
 │   │       ├── metadata/           # 元数据提供者
 │   │       ├── plan/               # 逻辑执行计划
 │   │       └── rule/               # 优化规则
-│   ├── intellisql-translator/      # SQL 翻译器
+│   ├── intellisql-feature-translator/      # SQL 翻译器
 │   │   └── src/main/java/com/intellisql/translator/
 │   │       ├── dialect/            # 方言转换器
 │   │       ├── SqlTranslator.java
 │   │       └── Translation.java
-│   └── intellisql-federation/      # 联邦查询核心
+│   └── intellisql-feature-federation/      # 联邦查询核心
 │       └── src/main/java/com/intellisql/federation/
 │           ├── IntelliSqlKernel.java       # 内核入口
 │           ├── QueryProcessor.java         # 查询处理器
@@ -533,7 +533,7 @@ public class ExtensionSqlParserTest extends SqlParserTest {
 
 ---
 
-# 模块实现计划：联邦查询增强 (intellisql-optimizer & intellisql-federation)
+# 模块实现计划：联邦查询增强 (intellisql-feature-optimizer & intellisql-feature-federation)
 
 **参考实现**: ShardingSphere sql-federation
 **日期**: 2026-02-20
@@ -556,7 +556,7 @@ public class ExtensionSqlParserTest extends SqlParserTest {
 ### 关键文件
 
 ```
-intellisql-features/intellisql-optimizer/
+intellisql-features/intellisql-feature-optimizer/
 ├── src/main/java/com/intellisql/optimizer/
 │   ├── Optimizer.java                    # 当前仅 HepPlanner (RBO)
 │   ├── plan/
@@ -566,7 +566,7 @@ intellisql-features/intellisql-optimizer/
 │       ├── PredicatePushDownRule.java    # 已实现
 │       └── ProjectionPushDownRule.java   # 已实现
 
-intellisql-features/intellisql-federation/
+intellisql-features/intellisql-feature-federation/
 ├── src/main/java/com/intellisql/federation/
 │   ├── IntelliSqlKernel.java             # 核心入口
 │   ├── QueryProcessor.java               # 查询处理管道
@@ -598,7 +598,7 @@ SQL → SqlParserFactory.parseWithBabel() → SqlNode
 **新增文件**:
 
 ```
-intellisql-features/intellisql-optimizer/src/main/java/com/intellisql/optimizer/
+intellisql-features/intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/
 ├── HybridOptimizer.java              # 混合优化器入口
 ├── RboOptimizer.java                 # RBO 优化器（重构自 Optimizer）
 ├── CboOptimizer.java                 # CBO 优化器（新增）
@@ -711,7 +711,7 @@ public class FederatedJoinCostEstimator {
 
 **目标**: 参考 ShardingSphere 完善规则
 
-**新增规则** (位于 `intellisql-features/intellisql-optimizer/src/main/java/com/intellisql/optimizer/rule/`):
+**新增规则** (位于 `intellisql-features/intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/rule/`):
 
 | 规则 | 类名 | 功能 | 优先级 |
 |------|------|------|--------|
@@ -762,7 +762,7 @@ shardingsphere-sql-parser/
 **新增文件**:
 
 ```
-intellisql-features/intellisql-federation/src/main/java/com/intellisql/federation/executor/
+intellisql-features/intellisql-feature-federation/src/main/java/com/intellisql/federation/executor/
 ├── iterator/
 │   ├── QueryIterator.java            # 迭代器接口
 │   ├── AbstractOperator.java         # 算子基类
@@ -884,7 +884,7 @@ public class PhysicalPlanConverter {
 **新增文件**:
 
 ```
-intellisql-features/intellisql-optimizer/src/main/java/com/intellisql/optimizer/metadata/
+intellisql-features/intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/metadata/
 ├── FederatedMetadataProvider.java    # 元数据提供者
 ├── FederatedRelMetadataQuery.java    # 元数据查询
 ├── StatisticsHandler.java            # 统计信息处理

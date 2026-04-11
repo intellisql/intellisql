@@ -226,9 +226,9 @@
 |------|------|
 | **intellisql-parser** | SQL 解析模块，基于 Calcite Parser.jj 模板（参考 Quicksql 实现，使用 JavaCC + FreeMarker），支持多方言解析和方言间转换，通过 parserImpls.ftl 扩展语法规则 |
 | **intellisql-features** | 功能特性父模块，聚合核心功能子模块 |
-| ├─ **intellisql-optimizer** | SQL 优化器，包含查询优化规则、逻辑计划转换、元数据管理。采用混合优化策略：HepPlanner 用于 RBO，VolcanoPlanner 用于 CBO |
-| ├─ **intellisql-translator** | SQL 翻译器，支持多种数据库方言间的 SQL 转换，提供在线模式（连接数据库获取元数据）和离线模式（纯语法转换） |
-| └─ **intellisql-federation** | 联邦查询核心，包含执行引擎（QueryExecutor, FederatedQueryExecutor）、迭代器模型（QueryIterator 系列算子）、元数据管理（MetadataManager）、核心编排（IntelliSqlKernel, QueryProcessor） |
+| ├─ **intellisql-feature-optimizer** | SQL 优化器，包含查询优化规则、逻辑计划转换、元数据管理。采用混合优化策略：HepPlanner 用于 RBO，VolcanoPlanner 用于 CBO |
+| ├─ **intellisql-feature-translator** | SQL 翻译器，支持多种数据库方言间的 SQL 转换，提供在线模式（连接数据库获取元数据）和离线模式（纯语法转换） |
+| └─ **intellisql-feature-federation** | 联邦查询核心，包含执行引擎（QueryExecutor, FederatedQueryExecutor）、迭代器模型（QueryIterator 系列算子）、元数据管理（MetadataManager）、核心编排（IntelliSqlKernel, QueryProcessor） |
 | **intellisql-connector** | 数据源连接器，包含各数据源（MySQL/PostgreSQL/Elasticsearch）的 Schema 映射和查询下推规则 |
 
 **协议适配层（Protocol Layer）**
@@ -295,7 +295,7 @@
 - Q: 模块命名调整？ → A: intellisql-storage 改为 intellisql-connector；新增 intellisql-distribution（打包分发模块，含子模块 intellisql-distribution-driver、intellisql-distribution-server）；新增 intellisql-driver（含子模块 intellisql-driver-jdbc，未来增加 intellisql-driver-odbc）
 - Q: intellisql-server 模块结构？ → A: intellisql-server 作为父模块，本期实现 intellisql-server-avatica，未来支持 intellisql-server-mysql、intellisql-server-postgresql 等数据库协议
 - Q: 测试模块结构？ → A: 新增 intellisql-test 父模块，包含 intellisql-test-it（集成测试，单元功能测试）和 intellisql-test-e2e（端到端完整 SQL 测试）
-- Q: intellisql-core 模块拆分？ → A: 拆分为 intellisql-optimizer（SQL 优化，翻译和执行共用）和 intellisql-executor（SQL 执行），因为 SQL 翻译不需要执行能力
+- Q: intellisql-core 模块拆分？ → A: 拆分为 intellisql-feature-optimizer（SQL 优化，翻译和执行共用）和 intellisql-executor（SQL 执行），因为 SQL 翻译不需要执行能力
 - Q: intellisql-kernel 模块？ → A: 新增 intellisql-kernel 作为核心处理层，driver 和 server 模块都依赖它，它依赖 parser、optimizer、executor、connector 等功能模块
 - Q: intellisql-server 模块架构简化？ → A: intellisql-server 不再作为父模块，直接作为单一模块实现（基于 Avatica 协议），不实现 MySQL/PostgreSQL 协议
 - Q: JDBC URL 格式？ → A: 使用自定义前缀 `jdbc:intellisql`（而非 `jdbc:avatica:remote:url=...`），简化连接配置
@@ -336,9 +336,9 @@
 
 ### Session 2026-02-22
 
-- Q: 最终模块结构确认？ → A: 采用四层架构：(1) Common Layer - intellisql-common（配置、日志、重试、元数据实体）；(2) Features Layer - intellisql-features 父模块，包含 intellisql-optimizer、intellisql-translator、intellisql-federation；(3) Protocol Layer - intellisql-jdbc、intellisql-server；(4) Tooling Layer - intellisql-client、intellisql-distribution、intellisql-test
-- Q: intellisql-kernel 和 intellisql-executor 的最终归属？ → A: 合并到 intellisql-features/intellisql-federation 模块中，federation 模块现在包含核心编排（IntelliSqlKernel, QueryProcessor）、执行引擎（FederatedQueryExecutor, QueryIterator 系列算子）、元数据管理（MetadataManager）
-- Q: 翻译器模块位置？ → A: 独立为 intellisql-features/intellisql-translator，与 optimizer 和 federation 平级
+- Q: 最终模块结构确认？ → A: 采用四层架构：(1) Common Layer - intellisql-common（配置、日志、重试、元数据实体）；(2) Features Layer - intellisql-features 父模块，包含 intellisql-feature-optimizer、intellisql-feature-translator、intellisql-feature-federation；(3) Protocol Layer - intellisql-jdbc、intellisql-server；(4) Tooling Layer - intellisql-client、intellisql-distribution、intellisql-test
+- Q: intellisql-kernel 和 intellisql-executor 的最终归属？ → A: 合并到 intellisql-features/intellisql-feature-federation 模块中，federation 模块现在包含核心编排（IntelliSqlKernel, QueryProcessor）、执行引擎（FederatedQueryExecutor, QueryIterator 系列算子）、元数据管理（MetadataManager）
+- Q: 翻译器模块位置？ → A: 独立为 intellisql-features/intellisql-feature-translator，与 optimizer 和 federation 平级
 
 ## Assumptions
 

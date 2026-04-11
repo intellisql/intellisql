@@ -12,8 +12,8 @@
     <description>Features module aggregating federation, translator, and optimizer</description>
     
     <modules>
-        <module>intellisql-federation</module>
-        <module>intellisql-translator</module>
-        <module>intellisql-optimizer</module>
+        <module>intellisql-feature-federation</module>
+        <module>intellisql-feature-translator</module>
+        <module>intellisql-feature-optimizer</module>
     </modules>
 </project>

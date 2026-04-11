@@ -105,17 +105,17 @@
             </dependency>
             <dependency>
                 <groupId>com.intellisql</groupId>
-                <artifactId>intellisql-federation</artifactId>
+                <artifactId>intellisql-feature-federation</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.intellisql</groupId>
-                <artifactId>intellisql-translator</artifactId>
+                <artifactId>intellisql-feature-translator</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.intellisql</groupId>
-                <artifactId>intellisql-optimizer</artifactId>
+                <artifactId>intellisql-feature-optimizer</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

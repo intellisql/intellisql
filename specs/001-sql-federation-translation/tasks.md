@@ -20,7 +20,7 @@
 ```
 intellisql/                        # 仓库根目录
 ├── intellisql-parser/             # SQL 解析模块
-├── intellisql-optimizer/          # SQL 优化模块
+├── intellisql-feature-optimizer/          # SQL 优化模块
 │   ├── cost/                      # 代价模型
 │   ├── metadata/                  # 元数据提供者
 │   ├── plan/                      # 逻辑执行计划、物理计划转换
@@ -118,10 +118,10 @@ intellisql/                        # 仓库根目录
 - [x] T031 [P] [US1] 创建 PostgreSQLConnectorIT in intellisql-connector/src/test/java/com/intellisql/connector/postgresql/PostgreSQLConnectorIT.java
 - [x] T032 [P] [US1] 创建 ElasticsearchConnectorIT in intellisql-connector/src/test/java/com/intellisql/connector/elasticsearch/ElasticsearchConnectorIT.java
 - [x] T033 [US1] 创建 CrossSourceJoinIT in intellisql-test/intellisql-test-it/src/test/java/com/intellisql/it/federation/CrossSourceJoinIT.java
-- [x] T034 [P] [US1] 创建 HybridOptimizerTest in intellisql-optimizer/src/test/java/com/intellisql/optimizer/HybridOptimizerTest.java
-- [x] T035 [P] [US1] 创建 FederatedCostTest in intellisql-optimizer/src/test/java/com/intellisql/optimizer/cost/FederatedCostTest.java
+- [x] T034 [P] [US1] 创建 HybridOptimizerTest in intellisql-feature-optimizer/src/test/java/com/intellisql/optimizer/HybridOptimizerTest.java
+- [x] T035 [P] [US1] 创建 FederatedCostTest in intellisql-feature-optimizer/src/test/java/com/intellisql/optimizer/cost/FederatedCostTest.java
 - [x] T036 [P] [US1] 创建 QueryIteratorTest in intellisql-executor/src/test/java/com/intellisql/executor/iterator/QueryIteratorTest.java
-- [x] T037 [P] [US1] 创建 PhysicalPlanConverterTest in intellisql-optimizer/src/test/java/com/intellisql/optimizer/plan/PhysicalPlanConverterTest.java
+- [x] T037 [P] [US1] 创建 PhysicalPlanConverterTest in intellisql-feature-optimizer/src/test/java/com/intellisql/optimizer/plan/PhysicalPlanConverterTest.java
 
 ### 3.2 元数据模型
 
@@ -176,27 +176,27 @@ intellisql/                        # 仓库根目录
 
 #### 优化器核心
 
-- [x] T066 [US1] 重构 Optimizer.java 为 RboOptimizer.java in intellisql-optimizer/src/main/java/com/intellisql/optimizer/RboOptimizer.java
-- [x] T067 [US1] 实现 CboOptimizer (VolcanoPlanner) in intellisql-optimizer/src/main/java/com/intellisql/optimizer/CboOptimizer.java
-- [x] T068 [US1] 实现 HybridOptimizer (RBO → CBO) in intellisql-optimizer/src/main/java/com/intellisql/optimizer/HybridOptimizer.java
+- [x] T066 [US1] 重构 Optimizer.java 为 RboOptimizer.java in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/RboOptimizer.java
+- [x] T067 [US1] 实现 CboOptimizer (VolcanoPlanner) in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/CboOptimizer.java
+- [x] T068 [US1] 实现 HybridOptimizer (RBO → CBO) in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/HybridOptimizer.java
 - [x] T069 [US1] 更新 QueryProcessor 使用 HybridOptimizer in intellisql-kernel/src/main/java/com/intellisql/kernel/QueryProcessor.java
 
 ### 3.10 完整代价模型（新增 - 参考 ShardingSphere）
 
-- [x] T070 [US1] 实现 CostFactor 枚举 (CPU/IO/NETWORK/MEMORY) in intellisql-optimizer/src/main/java/com/intellisql/optimizer/cost/CostFactor.java
-- [x] T071 [US1] 实现 FederatedCost (RelOptCost 接口) in intellisql-optimizer/src/main/java/com/intellisql/optimizer/cost/FederatedCost.java
-- [x] T072 [US1] 实现 FederatedCostFactory in intellisql-optimizer/src/main/java/com/intellisql/optimizer/cost/FederatedCostFactory.java
-- [x] T073 [US1] 注册 FederatedCostFactory 到 VolcanoPlanner in intellisql-optimizer/src/main/java/com/intellisql/optimizer/CboOptimizer.java
+- [x] T070 [US1] 实现 CostFactor 枚举 (CPU/IO/NETWORK/MEMORY) in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/cost/CostFactor.java
+- [x] T071 [US1] 实现 FederatedCost (RelOptCost 接口) in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/cost/FederatedCost.java
+- [x] T072 [US1] 实现 FederatedCostFactory in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/cost/FederatedCostFactory.java
+- [x] T073 [US1] 注册 FederatedCostFactory 到 VolcanoPlanner in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/CboOptimizer.java
 
 ### 3.11 扩展 RBO 规则集（新增 - 参考 ShardingSphere PushFilterIntoScanRule 等）
 
-- [x] T074 [P] [US1] 实现 PredicatePushDownRule in intellisql-optimizer/src/main/java/com/intellisql/optimizer/rule/PredicatePushDownRule.java
-- [x] T075 [P] [US1] 实现 ProjectionPushDownRule in intellisql-optimizer/src/main/java/com/intellisql/optimizer/rule/ProjectionPushDownRule.java
-- [x] T076 [P] [US1] 实现 JoinReorderRule in intellisql-optimizer/src/main/java/com/intellisql/optimizer/rule/JoinReorderRule.java
-- [x] T077 [P] [US1] 实现 SubqueryRewriteRule in intellisql-optimizer/src/main/java/com/intellisql/optimizer/rule/SubqueryRewriteRule.java
-- [x] T078 [P] [US1] 实现 AggregateSplitRule in intellisql-optimizer/src/main/java/com/intellisql/optimizer/rule/AggregateSplitRule.java
-- [x] T079 [P] [US1] 实现 LimitPushDownRule in intellisql-optimizer/src/main/java/com/intellisql/optimizer/rule/LimitPushDownRule.java
-- [x] T080 [US1] 注册所有规则到 RboOptimizer in intellisql-optimizer/src/main/java/com/intellisql/optimizer/RboOptimizer.java
+- [x] T074 [P] [US1] 实现 PredicatePushDownRule in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/rule/PredicatePushDownRule.java
+- [x] T075 [P] [US1] 实现 ProjectionPushDownRule in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/rule/ProjectionPushDownRule.java
+- [x] T076 [P] [US1] 实现 JoinReorderRule in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/rule/JoinReorderRule.java
+- [x] T077 [P] [US1] 实现 SubqueryRewriteRule in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/rule/SubqueryRewriteRule.java
+- [x] T078 [P] [US1] 实现 AggregateSplitRule in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/rule/AggregateSplitRule.java
+- [x] T079 [P] [US1] 实现 LimitPushDownRule in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/rule/LimitPushDownRule.java
+- [x] T080 [US1] 注册所有规则到 RboOptimizer in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/RboOptimizer.java
 
 ### 3.12 Volcano 迭代器执行模型（新增 - 参考 ShardingSphere Enumerator 模式）
 
@@ -220,14 +220,14 @@ intellisql/                        # 仓库根目录
 
 ### 3.13 RelMetadataQuery 元数据支持（新增）
 
-- [x] T090 [US1] 实现 TableStatistics 实体 in intellisql-optimizer/src/main/java/com/intellisql/optimizer/metadata/TableStatistics.java
-- [x] T091 [US1] 实现 StatisticsHandler in intellisql-optimizer/src/main/java/com/intellisql/optimizer/metadata/StatisticsHandler.java
-- [x] T092 [US1] 实现 FederatedMetadataProvider in intellisql-optimizer/src/main/java/com/intellisql/optimizer/metadata/FederatedMetadataProvider.java
+- [x] T090 [US1] 实现 TableStatistics 实体 in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/metadata/TableStatistics.java
+- [x] T091 [US1] 实现 StatisticsHandler in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/metadata/StatisticsHandler.java
+- [x] T092 [US1] 实现 FederatedMetadataProvider in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/metadata/FederatedMetadataProvider.java
 
 ### 3.14 执行计划和查询处理
 
-- [x] T093 [P] [US1] 验证 ExecutionPlan 实体 in intellisql-optimizer/src/main/java/com/intellisql/optimizer/plan/ExecutionPlan.java
-- [x] T094 [P] [US1] 验证 ExecutionStage 实体 in intellisql-optimizer/src/main/java/com/intellisql/optimizer/plan/ExecutionStage.java
+- [x] T093 [P] [US1] 验证 ExecutionPlan 实体 in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/plan/ExecutionPlan.java
+- [x] T094 [P] [US1] 验证 ExecutionStage 实体 in intellisql-feature-optimizer/src/main/java/com/intellisql/optimizer/plan/ExecutionStage.java
 
 ### 3.15 查询结果模型
 

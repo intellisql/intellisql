@@ -45,7 +45,7 @@
         </dependency>
         <dependency>
             <groupId>com.intellisql</groupId>
-            <artifactId>intellisql-translator</artifactId>
+            <artifactId>intellisql-feature-translator</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
