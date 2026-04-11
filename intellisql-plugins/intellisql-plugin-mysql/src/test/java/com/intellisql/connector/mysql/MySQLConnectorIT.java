@@ -25,7 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.intellisql.common.metadata.enums.DataSourceType;
-import com.intellisql.connector.config.DataSourceConfig;
+import com.intellisql.connector.config.IntelliSQLDataSourceConfig;
 
 /**
  * Integration tests for MySQLConnector.
@@ -35,13 +35,13 @@ class MySQLConnectorIT {
 
     private MySQLConnector connector;
 
-    private DataSourceConfig config;
+    private IntelliSQLDataSourceConfig config;
 
     @BeforeEach
     void setUp() {
         final String mysqlUrl = System.getenv("MYSQL_TEST_URL");
         assumeTrue(mysqlUrl != null, "MySQL test URL not set, skipping test");
-        config = DataSourceConfig.builder()
+        config = IntelliSQLDataSourceConfig.builder()
                 .type(DataSourceType.MYSQL)
                 .jdbcUrl(mysqlUrl)
                 .username(System.getenv().getOrDefault("MYSQL_TEST_USER", "root"))

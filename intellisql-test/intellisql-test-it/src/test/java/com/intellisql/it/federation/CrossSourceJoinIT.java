@@ -21,7 +21,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.nio.file.Paths;
+
+import com.intellisql.common.config.ConfigLoader;
 import com.intellisql.federation.IntelliSqlKernel;
+import com.intellisql.connector.model.QueryResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -39,8 +43,7 @@ class CrossSourceJoinIT {
     void setUp() throws Exception {
         final String configPath = System.getenv("INTELLISQL_TEST_CONFIG");
         assumeTrue(configPath != null, "Test config not set, skipping IT");
-        final ModelConfig config = com.intellisql.common.config.ConfigLoader.load(
-                java.nio.file.Paths.get(configPath));
+        final ModelConfig config = ConfigLoader.load(Paths.get(configPath));
         kernel = new IntelliSqlKernel(config);
         kernel.initialize();
     }
@@ -55,7 +58,7 @@ class CrossSourceJoinIT {
     void testSimpleQuery() {
         assumeTrue(kernel != null && kernel.isInitialized(), "Kernel not initialized");
         // Test simple query execution
-        final com.intellisql.connector.model.QueryResult result = kernel.query("SELECT 1");
+        final QueryResult result = kernel.query("SELECT 1");
         assertNotNull(result, "Query result should not be null");
     }
 

@@ -17,24 +17,30 @@
 
 package com.intellisql.federation.metadata;
 
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.schema.SchemaPlus;
-import com.intellisql.connector.api.DataSourceConnector;
-import com.intellisql.connector.config.DataSourceConfig;
-import com.intellisql.common.metadata.DataSource;
-import com.intellisql.common.metadata.Schema;
-import com.intellisql.common.metadata.Table;
-import com.intellisql.common.metadata.Column;
-
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
+import com.intellisql.common.metadata.DataSource;
+import com.intellisql.common.metadata.Table;
+import com.intellisql.common.metadata.Column;
+import com.intellisql.common.metadata.Schema;
+import com.intellisql.connector.api.DataSourceConnector;
+import com.intellisql.connector.config.IntelliSQLDataSourceConfig;
+import com.intellisql.federation.metadata.calcite.FederatedSchema;
+import com.intellisql.federation.metadata.calcite.FederatedTable;
+
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+
+import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 /** Metadata manager for managing DataSource, Schema, and Table registration and queries. */
@@ -157,7 +163,7 @@ public final class MetadataManager {
         return Collections.unmodifiableCollection(
                 schemas.values().stream()
                         .filter(s -> s.getDataSourceId() != null && s.getDataSourceId().equals(dataSourceId))
-                        .collect(java.util.stream.Collectors.toList()));
+                        .collect(Collectors.toList()));
     }
 
     /**
@@ -270,8 +276,7 @@ public final class MetadataManager {
     public SchemaPlus getRootSchema() {
         log.info("Creating root schema with {} tables and {} schemas", tables.size(), schemas.size());
         // Create root schema with tables directly accessible (no schema prefix needed)
-        final com.intellisql.federation.metadata.calcite.FederatedSchema rootFederatedSchema =
-                new com.intellisql.federation.metadata.calcite.FederatedSchema("root");
+        final FederatedSchema rootFederatedSchema = new FederatedSchema("root");
         // Add all tables to root schema for unqualified table access
         for (final Table table : tables.values()) {
             rootFederatedSchema.addTable(table.getName(), createCalciteTable(table));
@@ -285,8 +290,7 @@ public final class MetadataManager {
         }
         // Create sub-schemas for qualified access (schema.table)
         for (final Schema schema : schemas.values()) {
-            final com.intellisql.federation.metadata.calcite.FederatedSchema federatedSchema =
-                    new com.intellisql.federation.metadata.calcite.FederatedSchema(schema.getName());
+            final FederatedSchema federatedSchema = new FederatedSchema(schema.getName());
             if (schema.getTables() != null) {
                 for (final Entry<String, Table> entry : schema.getTables().entrySet()) {
                     federatedSchema.addTable(entry.getKey(), createCalciteTable(entry.getValue()));
@@ -302,11 +306,11 @@ public final class MetadataManager {
      *
      * @param connectors the data source connectors with their configurations
      */
-    public void initialize(final Map<DataSourceConnector, DataSourceConfig> connectors) {
+    public void initialize(final Map<DataSourceConnector, IntelliSQLDataSourceConfig> connectors) {
         log.info("Initializing metadata from {} connector(s)", connectors.size());
-        for (Entry<DataSourceConnector, DataSourceConfig> entry : connectors.entrySet()) {
+        for (Entry<DataSourceConnector, IntelliSQLDataSourceConfig> entry : connectors.entrySet()) {
             try {
-                final DataSourceConfig config = entry.getValue();
+                final IntelliSQLDataSourceConfig config = entry.getValue();
                 log.info("Discovering schema for data source: {} ({})",
                         config.getName(), config.getJdbcUrl());
                 final Schema connectorSchema =
@@ -344,17 +348,18 @@ public final class MetadataManager {
      * @param table the table metadata
      * @return the Calcite table
      */
+    // CHECKSTYLE:OFF
     private org.apache.calcite.schema.Table createCalciteTable(final Table table) {
-        final java.util.List<String> columnNames = new java.util.ArrayList<>();
-        final java.util.List<SqlTypeName> columnTypes = new java.util.ArrayList<>();
+        // CHECKSTYLE:ON
+        final List<String> columnNames = new ArrayList<>();
+        final List<SqlTypeName> columnTypes = new ArrayList<>();
         if (table.getColumns() != null) {
             for (final Column column : table.getColumns()) {
                 columnNames.add(column.getName());
                 columnTypes.add(SqlTypeName.VARCHAR);
             }
         }
-        return new com.intellisql.federation.metadata.calcite.FederatedTable(
-                table.getName(), table.getDataSourceId(), columnNames, columnTypes);
+        return new FederatedTable(table.getName(), table.getDataSourceId(), columnNames, columnTypes);
     }
 
     /** Closes the metadata manager and releases resources. */

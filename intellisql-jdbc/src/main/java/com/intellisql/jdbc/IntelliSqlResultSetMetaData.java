@@ -17,9 +17,14 @@
 
 package com.intellisql.jdbc;
 
+import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.calcite.avatica.ColumnMetaData;
@@ -42,7 +47,7 @@ public class IntelliSqlResultSetMetaData implements ResultSetMetaData {
      * @param columnMetaData the column metadata list
      */
     public IntelliSqlResultSetMetaData(final List<ColumnMetaData> columnMetaData) {
-        this.columnMetaData = columnMetaData != null ? columnMetaData : new java.util.ArrayList<>();
+        this.columnMetaData = columnMetaData != null ? columnMetaData : new ArrayList<>();
         this.closed = false;
     }
 
@@ -220,15 +225,15 @@ public class IntelliSqlResultSetMetaData implements ResultSetMetaData {
         } else if (meta.type.id == Types.DOUBLE) {
             return Double.class.getName();
         } else if (meta.type.id == Types.NUMERIC || meta.type.id == Types.DECIMAL) {
-            return java.math.BigDecimal.class.getName();
+            return BigDecimal.class.getName();
         } else if (meta.type.id == Types.BOOLEAN || meta.type.id == Types.BIT) {
             return Boolean.class.getName();
         } else if (meta.type.id == Types.DATE) {
-            return java.sql.Date.class.getName();
+            return Date.class.getName();
         } else if (meta.type.id == Types.TIME) {
-            return java.sql.Time.class.getName();
+            return Time.class.getName();
         } else if (meta.type.id == Types.TIMESTAMP) {
-            return java.sql.Timestamp.class.getName();
+            return Timestamp.class.getName();
         } else if (meta.type.id == Types.BLOB || meta.type.id == Types.BINARY
                 || meta.type.id == Types.VARBINARY || meta.type.id == Types.LONGVARBINARY) {
             return byte[].class.getName();

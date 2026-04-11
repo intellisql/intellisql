@@ -300,9 +300,11 @@ public class Row {
         if (value instanceof Timestamp) {
             return new Date(((Timestamp) value).getTime());
         }
+        // CHECKSTYLE:OFF
         if (value instanceof java.util.Date) {
             return new Date(((java.util.Date) value).getTime());
         }
+        // CHECKSTYLE:ON
         if (value instanceof Long) {
             return new Date((Long) value);
         }
@@ -325,9 +327,11 @@ public class Row {
         if (value instanceof Timestamp) {
             return (Timestamp) value;
         }
+        // CHECKSTYLE:OFF
         if (value instanceof java.util.Date) {
             return new Timestamp(((java.util.Date) value).getTime());
         }
+        // CHECKSTYLE:ON
         if (value instanceof Long) {
             return new Timestamp((Long) value);
         }

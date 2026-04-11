@@ -23,12 +23,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.intellisql.common.config.ConfigLoader;
 import com.intellisql.common.config.ModelConfig;
 import com.intellisql.common.logger.QueryContext;
 import com.intellisql.connector.ConnectorRegistry;
 import com.intellisql.connector.api.DataSourceConnector;
-import com.intellisql.connector.config.DataSourceConfig;
+import com.intellisql.connector.config.IntelliSQLDataSourceConfig;
 import com.intellisql.connector.config.DataSourceConfigs;
+import com.intellisql.connector.model.QueryResult;
 import com.intellisql.federation.metadata.MetadataManager;
 import com.intellisql.optimizer.HybridOptimizer;
 import com.intellisql.parser.SqlParserFactory;
@@ -85,7 +87,7 @@ public final class IntelliSqlKernel implements AutoCloseable {
      * @throws IOException if the configuration file cannot be read
      */
     public static IntelliSqlKernel create(final Path configPath) throws IOException {
-        final ModelConfig config = com.intellisql.common.config.ConfigLoader.load(configPath);
+        final ModelConfig config = ConfigLoader.load(configPath);
         return new IntelliSqlKernel(config);
     }
 
@@ -108,12 +110,14 @@ public final class IntelliSqlKernel implements AutoCloseable {
     }
 
     private void initializeMetadata() {
-        final Map<DataSourceConnector, DataSourceConfig> connectorMap = new HashMap<>();
+        final Map<DataSourceConnector, IntelliSQLDataSourceConfig> connectorMap = new HashMap<>();
         for (final String dsName : dataSourceManager.getDataSourceNames()) {
-            final com.intellisql.common.config.DataSourceConfig kernelConfig = dataSourceManager.getDataSourceConfig(dsName);
             final DataSourceConnector connector =
-                    ConnectorRegistry.getInstance().getConnector(kernelConfig.getType());
-            final DataSourceConfig connectorConfig = DataSourceConfigs.fromCommonConfig(dsName, kernelConfig);
+                    ConnectorRegistry.getInstance()
+                            .getConnector(dataSourceManager.getDataSourceConfig(dsName).getType());
+            final IntelliSQLDataSourceConfig connectorConfig =
+                    DataSourceConfigs.fromCommonConfig(
+                            dsName, dataSourceManager.getDataSourceConfig(dsName));
             connectorMap.put(connector, connectorConfig);
         }
         metadataManager.initialize(connectorMap);
@@ -125,7 +129,7 @@ public final class IntelliSqlKernel implements AutoCloseable {
      * @param sql the SQL query to execute
      * @return the query result
      */
-    public com.intellisql.connector.model.QueryResult query(final String sql) {
+    public QueryResult query(final String sql) {
         ensureInitialized();
         final QueryContext context = QueryContext.create(sql, "system", "kernel");
         return queryProcessor.process(sql, context);
@@ -139,8 +143,8 @@ public final class IntelliSqlKernel implements AutoCloseable {
      * @param connectionId the connection identifier
      * @return the query result
      */
-    public com.intellisql.connector.model.QueryResult query(
-                                                            final String sql, final String user, final String connectionId) {
+    public QueryResult query(
+                             final String sql, final String user, final String connectionId) {
         ensureInitialized();
         final QueryContext context = QueryContext.create(sql, user, connectionId);
         return queryProcessor.process(sql, context);

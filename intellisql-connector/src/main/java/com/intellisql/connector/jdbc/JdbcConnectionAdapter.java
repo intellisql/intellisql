@@ -17,9 +17,10 @@
 
 package com.intellisql.connector.jdbc;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 
-import com.intellisql.connector.api.Connection;
+import com.intellisql.connector.api.IntelliSQLConnection;
 import com.intellisql.connector.api.QueryExecutor;
 import com.intellisql.connector.model.QueryResult;
 import lombok.Getter;
@@ -27,10 +28,10 @@ import lombok.extern.slf4j.Slf4j;
 
 /** Generic JDBC-backed connection adapter shared by connector plugins. */
 @Slf4j
-public class JdbcConnectionAdapter implements Connection {
+public class JdbcConnectionAdapter implements IntelliSQLConnection {
 
     @Getter
-    private final java.sql.Connection jdbcConnection;
+    private final Connection jdbcConnection;
 
     private final QueryExecutor queryExecutor;
 
@@ -46,7 +47,7 @@ public class JdbcConnectionAdapter implements Connection {
      * @param databaseName the user-facing database label for logging
      */
     public JdbcConnectionAdapter(
-                                 final java.sql.Connection jdbcConnection, final QueryExecutor queryExecutor, final String databaseName) {
+                                 final Connection jdbcConnection, final QueryExecutor queryExecutor, final String databaseName) {
         this.jdbcConnection = jdbcConnection;
         this.queryExecutor = queryExecutor;
         this.databaseName = databaseName;

@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.calcite.avatica.remote.LocalService;
@@ -107,7 +108,7 @@ public class IntelliSqlServer {
             if (configStream != null) {
                 log.info("Loading configuration from {}", DEFAULT_CONFIG_PATH);
                 Path tempConfig = Files.createTempFile("intellisql-config", ".yaml");
-                Files.copy(configStream, tempConfig, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(configStream, tempConfig, StandardCopyOption.REPLACE_EXISTING);
                 configStream.close();
                 kernel = IntelliSqlKernel.create(tempConfig);
                 kernel.initialize();

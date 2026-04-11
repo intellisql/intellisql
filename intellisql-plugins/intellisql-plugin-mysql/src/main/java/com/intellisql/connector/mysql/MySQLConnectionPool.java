@@ -17,7 +17,7 @@
 
 package com.intellisql.connector.mysql;
 
-import com.intellisql.connector.config.DataSourceConfig;
+import com.intellisql.connector.config.IntelliSQLDataSourceConfig;
 import com.intellisql.connector.jdbc.JdbcConnectionPool;
 import com.zaxxer.hikari.HikariConfig;
 
@@ -29,7 +29,7 @@ public class MySQLConnectionPool extends JdbcConnectionPool {
      *
      * @param config the data source configuration
      */
-    public MySQLConnectionPool(final DataSourceConfig config) {
+    public MySQLConnectionPool(final IntelliSQLDataSourceConfig config) {
         super(config);
     }
 
@@ -49,7 +49,7 @@ public class MySQLConnectionPool extends JdbcConnectionPool {
     }
 
     @Override
-    protected void configureDataSourceProperties(final HikariConfig hikariConfig, final DataSourceConfig config) {
+    protected void configureDataSourceProperties(final HikariConfig hikariConfig, final IntelliSQLDataSourceConfig config) {
         hikariConfig.addDataSourceProperty("cachePrepStmts", "true");
         hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250");
         hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");

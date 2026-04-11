@@ -17,13 +17,15 @@
 
 package com.intellisql.connector.api;
 
+import java.sql.Connection;
+
 import com.intellisql.connector.model.QueryResult;
 
 /**
- * Connection interface representing a connection to a data source. Provides methods for query
- * execution and connection management.
+ * IntelliSQLConnection interface representing a connection to a data source. Provides methods for
+ * query execution and connection management.
  */
-public interface Connection extends AutoCloseable {
+public interface IntelliSQLConnection extends AutoCloseable {
 
     /**
      * Executes a SQL query and returns the result.
@@ -59,5 +61,5 @@ public interface Connection extends AutoCloseable {
      *
      * @return the JDBC connection or null if not applicable
      */
-    java.sql.Connection getJdbcConnection();
+    Connection getJdbcConnection();
 }

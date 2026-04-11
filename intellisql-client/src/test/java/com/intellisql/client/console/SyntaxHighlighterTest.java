@@ -26,7 +26,7 @@ class SyntaxHighlighterTest {
 
     @Test
     void testHighlight() {
-        SyntaxHighlighter highlighter = new SyntaxHighlighter();
+        IntelliSqlSyntaxHighlighter highlighter = new IntelliSqlSyntaxHighlighter();
         AttributedString result = highlighter.highlight(null, "SELECT * FROM table");
         assertNotNull(result);
     }

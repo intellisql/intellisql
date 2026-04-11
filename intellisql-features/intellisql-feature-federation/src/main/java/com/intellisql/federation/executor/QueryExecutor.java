@@ -22,6 +22,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -218,44 +219,44 @@ public class QueryExecutor {
      */
     private DataType mapSqlTypeToDataType(final int sqlType) {
         switch (sqlType) {
-            case java.sql.Types.CHAR:
-            case java.sql.Types.VARCHAR:
-            case java.sql.Types.LONGVARCHAR:
-            case java.sql.Types.NCHAR:
-            case java.sql.Types.NVARCHAR:
-            case java.sql.Types.LONGNVARCHAR:
-            case java.sql.Types.CLOB:
-            case java.sql.Types.NCLOB:
+            case Types.CHAR:
+            case Types.VARCHAR:
+            case Types.LONGVARCHAR:
+            case Types.NCHAR:
+            case Types.NVARCHAR:
+            case Types.LONGNVARCHAR:
+            case Types.CLOB:
+            case Types.NCLOB:
                 return DataType.STRING;
-            case java.sql.Types.BIT:
-            case java.sql.Types.BOOLEAN:
+            case Types.BIT:
+            case Types.BOOLEAN:
                 return DataType.BOOLEAN;
-            case java.sql.Types.TINYINT:
-            case java.sql.Types.SMALLINT:
-            case java.sql.Types.INTEGER:
+            case Types.TINYINT:
+            case Types.SMALLINT:
+            case Types.INTEGER:
                 return DataType.INTEGER;
-            case java.sql.Types.BIGINT:
+            case Types.BIGINT:
                 return DataType.LONG;
-            case java.sql.Types.FLOAT:
-            case java.sql.Types.REAL:
-            case java.sql.Types.DOUBLE:
+            case Types.FLOAT:
+            case Types.REAL:
+            case Types.DOUBLE:
                 return DataType.DOUBLE;
-            case java.sql.Types.NUMERIC:
-            case java.sql.Types.DECIMAL:
+            case Types.NUMERIC:
+            case Types.DECIMAL:
                 return DataType.DOUBLE;
-            case java.sql.Types.DATE:
+            case Types.DATE:
                 return DataType.DATE;
-            case java.sql.Types.TIME:
-            case java.sql.Types.TIMESTAMP:
-            case java.sql.Types.TIME_WITH_TIMEZONE:
-            case java.sql.Types.TIMESTAMP_WITH_TIMEZONE:
+            case Types.TIME:
+            case Types.TIMESTAMP:
+            case Types.TIME_WITH_TIMEZONE:
+            case Types.TIMESTAMP_WITH_TIMEZONE:
                 return DataType.TIMESTAMP;
-            case java.sql.Types.BINARY:
-            case java.sql.Types.VARBINARY:
-            case java.sql.Types.LONGVARBINARY:
-            case java.sql.Types.BLOB:
+            case Types.BINARY:
+            case Types.VARBINARY:
+            case Types.LONGVARBINARY:
+            case Types.BLOB:
                 return DataType.BINARY;
-            case java.sql.Types.ARRAY:
+            case Types.ARRAY:
                 return DataType.ARRAY;
             default:
                 return DataType.STRING;

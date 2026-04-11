@@ -25,7 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.intellisql.common.metadata.enums.DataSourceType;
-import com.intellisql.connector.config.DataSourceConfig;
+import com.intellisql.connector.config.IntelliSQLDataSourceConfig;
 
 /**
  * Integration tests for ElasticsearchConnector.
@@ -35,13 +35,13 @@ class ElasticsearchConnectorIT {
 
     private ElasticsearchConnector connector;
 
-    private DataSourceConfig config;
+    private IntelliSQLDataSourceConfig config;
 
     @BeforeEach
     void setUp() {
         final String esUrl = System.getenv("ELASTICSEARCH_TEST_URL");
         assumeTrue(esUrl != null, "Elasticsearch test URL not set, skipping test");
-        config = DataSourceConfig.builder()
+        config = IntelliSQLDataSourceConfig.builder()
                 .type(DataSourceType.ELASTICSEARCH)
                 .jdbcUrl(esUrl)
                 .username(System.getenv().getOrDefault("ELASTICSEARCH_TEST_USER", ""))

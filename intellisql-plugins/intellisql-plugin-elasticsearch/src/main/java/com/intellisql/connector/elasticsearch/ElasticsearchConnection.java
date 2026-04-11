@@ -19,20 +19,24 @@ package com.intellisql.connector.elasticsearch;
 
 import java.sql.Connection;
 
-import com.intellisql.connector.model.QueryResult;
-
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
+
+import com.intellisql.connector.api.IntelliSQLConnection;
+import com.intellisql.connector.model.QueryResult;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Elasticsearch implementation of Connection interface. Wraps an Elasticsearch RestHighLevelClient for
+ * Elasticsearch implementation of IntelliSQLConnection. Wraps an Elasticsearch RestHighLevelClient for
  * query execution. Uses Elasticsearch 7.x API for JDK 8 compatibility.
  */
 @Slf4j
-public class ElasticsearchConnection implements com.intellisql.connector.api.Connection {
+public class ElasticsearchConnection implements IntelliSQLConnection {
 
     @Getter
     private final RestHighLevelClient client;
@@ -69,10 +73,8 @@ public class ElasticsearchConnection implements com.intellisql.connector.api.Con
             return false;
         }
         try {
-            org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse health =
-                    client.cluster().health(
-                            new org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest(),
-                            org.elasticsearch.client.RequestOptions.DEFAULT);
+            ClusterHealthResponse health =
+                    client.cluster().health(new ClusterHealthRequest(), RequestOptions.DEFAULT);
             return health != null && health.getStatus() != ClusterHealthStatus.RED;
             // CHECKSTYLE:OFF: IllegalCatch
         } catch (final Exception ex) {

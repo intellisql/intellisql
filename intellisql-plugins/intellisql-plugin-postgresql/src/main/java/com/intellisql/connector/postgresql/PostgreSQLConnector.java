@@ -18,7 +18,7 @@
 package com.intellisql.connector.postgresql;
 
 import com.intellisql.common.metadata.enums.DataSourceType;
-import com.intellisql.connector.config.DataSourceConfig;
+import com.intellisql.connector.config.IntelliSQLDataSourceConfig;
 import com.intellisql.connector.jdbc.AbstractJdbcConnector;
 
 /**
@@ -44,7 +44,7 @@ public class PostgreSQLConnector extends AbstractJdbcConnector<PostgreSQLConnect
     }
 
     @Override
-    protected PostgreSQLConnectionPool createConnectionPool(final DataSourceConfig config) {
+    protected PostgreSQLConnectionPool createConnectionPool(final IntelliSQLDataSourceConfig config) {
         return new PostgreSQLConnectionPool(config);
     }
 }

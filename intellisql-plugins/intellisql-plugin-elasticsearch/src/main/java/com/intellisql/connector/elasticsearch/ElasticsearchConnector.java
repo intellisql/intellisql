@@ -24,6 +24,9 @@ import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -31,9 +34,9 @@ import org.elasticsearch.cluster.health.ClusterHealthStatus;
 
 import com.intellisql.common.metadata.Schema;
 import com.intellisql.common.metadata.enums.DataSourceType;
-import com.intellisql.connector.api.Connection;
 import com.intellisql.connector.api.DataSourceConnector;
-import com.intellisql.connector.config.DataSourceConfig;
+import com.intellisql.connector.api.IntelliSQLConnection;
+import com.intellisql.connector.config.IntelliSQLDataSourceConfig;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -55,19 +58,17 @@ public class ElasticsearchConnector implements DataSourceConnector {
     }
 
     @Override
-    public Connection connect(final DataSourceConfig config) throws Exception {
+    public IntelliSQLConnection connect(final IntelliSQLDataSourceConfig config) throws Exception {
         RestHighLevelClient client = getOrCreateClient(config);
         return new ElasticsearchConnection(client);
     }
 
     @Override
-    public boolean testConnection(final DataSourceConfig config) {
+    public boolean testConnection(final IntelliSQLDataSourceConfig config) {
         try {
             RestHighLevelClient client = getOrCreateClient(config);
-            org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse health =
-                    client.cluster().health(
-                            new org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest(),
-                            org.elasticsearch.client.RequestOptions.DEFAULT);
+            ClusterHealthResponse health =
+                    client.cluster().health(new ClusterHealthRequest(), RequestOptions.DEFAULT);
             boolean success = health != null && health.getStatus() != ClusterHealthStatus.RED;
             log.info(
                     "Elasticsearch connection test for '{}': {}",
@@ -84,12 +85,12 @@ public class ElasticsearchConnector implements DataSourceConnector {
     }
 
     @Override
-    public Schema discoverSchema(final DataSourceConfig config) throws Exception {
+    public Schema discoverSchema(final IntelliSQLDataSourceConfig config) throws Exception {
         RestHighLevelClient client = getOrCreateClient(config);
         return schemaDiscoverer.discoverSchema(client, config.getSchema(), config.getName());
     }
 
-    private RestHighLevelClient getOrCreateClient(final DataSourceConfig config) {
+    private RestHighLevelClient getOrCreateClient(final IntelliSQLDataSourceConfig config) {
         return clients.computeIfAbsent(
                 config.getName(),
                 name -> {
@@ -98,7 +99,7 @@ public class ElasticsearchConnector implements DataSourceConnector {
                 });
     }
 
-    private RestHighLevelClient createClient(final DataSourceConfig config) {
+    private RestHighLevelClient createClient(final IntelliSQLDataSourceConfig config) {
         String scheme = getScheme(config);
         String host = config.getHost() != null ? config.getHost() : "localhost";
         int port = config.getPort() > 0 ? config.getPort() : 9200;
@@ -129,7 +130,7 @@ public class ElasticsearchConnector implements DataSourceConnector {
         return new RestHighLevelClient(builder);
     }
 
-    private String getScheme(final DataSourceConfig config) {
+    private String getScheme(final IntelliSQLDataSourceConfig config) {
         if (config.getProperties() != null) {
             String ssl = config.getProperties().get("ssl");
             if ("true".equalsIgnoreCase(ssl)) {

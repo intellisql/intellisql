@@ -17,6 +17,8 @@
 
 package com.intellisql.connector.config;
 
+import com.intellisql.common.config.DataSourceConfig;
+
 /**
  * Factory methods for connector data source configuration.
  */
@@ -32,10 +34,10 @@ public final class DataSourceConfigs {
      * @param commonConfig the framework datasource configuration
      * @return the connector configuration
      */
-    public static DataSourceConfig fromCommonConfig(
-                                                    final String dataSourceName,
-                                                    final com.intellisql.common.config.DataSourceConfig commonConfig) {
-        return DataSourceConfig.builder()
+    public static IntelliSQLDataSourceConfig fromCommonConfig(
+                                                              final String dataSourceName,
+                                                              final DataSourceConfig commonConfig) {
+        return IntelliSQLDataSourceConfig.builder()
                 .name(dataSourceName)
                 .type(commonConfig.getType())
                 .jdbcUrl(commonConfig.getUrl())

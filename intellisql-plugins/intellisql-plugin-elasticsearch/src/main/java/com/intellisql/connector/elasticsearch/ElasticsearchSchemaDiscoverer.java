@@ -26,6 +26,7 @@ import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequest;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.cluster.metadata.MappingMetadata;
 
 import com.intellisql.common.metadata.Column;
@@ -64,8 +65,7 @@ public class ElasticsearchSchemaDiscoverer {
         }
         final GetMappingsResponse response = client.indices().getMapping(request, RequestOptions.DEFAULT);
         for (final String indexName : response.mappings().keys().toArray(String.class)) {
-            final org.elasticsearch.common.collect.ImmutableOpenMap<String, MappingMetadata> typeMappings =
-                    response.mappings().get(indexName);
+            final ImmutableOpenMap<String, MappingMetadata> typeMappings = response.mappings().get(indexName);
             final MappingMetadata mapping = typeMappings.values().iterator().next();
             final Table table = discoverIndexMapping(indexName, mapping, "elasticsearch", dataSourceName);
             tables.put(table.getName(), table);
