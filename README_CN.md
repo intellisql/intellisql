@@ -42,7 +42,7 @@ cd intellisql
 ./mvnw clean install -DskipTests
 
 # 构建原生客户端（需要 GraalVM）
-./mvnw package -pl intellisql-distribution/intellisql-distribution-client -am
+./mvnw package -pl intellisql-distributions/intellisql-distribution-client -am
 
 # 构建项目（包含测试）
 ./mvnw clean install
@@ -76,7 +76,7 @@ dataSources:
 ```bash
 # 构建并解压发布包
 ./mvnw clean package -DskipTests
-cd intellisql-distribution/intellisql-distribution-server/target
+cd intellisql-distributions/intellisql-distribution-server/target
 unzip intellisql-server-1.0.0-SNAPSHOT.zip
 cd intellisql-server-1.0.0-SNAPSHOT
 
@@ -159,7 +159,7 @@ intellisql/
 │           ├── model.yaml  # 主配置文件
 │           └── logback.xml # 日志配置
 ├── intellisql-client/      # 命令行客户端
-├── intellisql-distribution/
+├── intellisql-distributions/
 │   └── intellisql-distribution-server/
 │       └── bin/            # 启动脚本
 │           ├── start.sh    # 服务器启动脚本
@@ -206,7 +206,7 @@ intellisql/
 
 命令行客户端，用于交互式 SQL 查询。
 
-### intellisql-distribution
+### intellisql-distributions
 
 打包模块，将所有组件打包为可分发的归档文件。
 

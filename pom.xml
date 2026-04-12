@@ -42,7 +42,7 @@
         <module>intellisql-jdbc</module>
         <module>intellisql-server</module>
         <module>intellisql-client</module>
-        <module>intellisql-distribution</module>
+        <module>intellisql-distributions</module>
         <module>intellisql-test</module>
     </modules>
     <properties>
@@ -171,7 +171,7 @@
             </dependency>
             <dependency>
                 <groupId>com.intellisql</groupId>
-                <artifactId>intellisql-distribution</artifactId>
+                <artifactId>intellisql-distributions</artifactId>
                 <version>${project.version}</version>
             </dependency>
             

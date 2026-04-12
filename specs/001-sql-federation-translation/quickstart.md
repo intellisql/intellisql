@@ -151,7 +151,7 @@ intellisql/
 ├── intellisql-jdbc/                # JDBC driver
 ├── intellisql-server/              # Server implementation (Avatica protocol)
 ├── intellisql-client/              # isql CLI
-├── intellisql-distribution/        # Packaging and distribution
+├── intellisql-distributions/       # Packaging and distribution
 │   ├── intellisql-distribution-jdbc/
 │   └── intellisql-distribution-server/
 ├── intellisql-test/                # Testing

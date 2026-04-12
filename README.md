@@ -42,7 +42,7 @@ cd intellisql
 ./mvnw clean install -DskipTests
 
 # Build Native Client (requires GraalVM)
-./mvnw package -pl intellisql-distribution/intellisql-distribution-client -am
+./mvnw package -pl intellisql-distributions/intellisql-distribution-client -am
 
 # Build with tests
 ./mvnw clean install
@@ -76,7 +76,7 @@ dataSources:
 ```bash
 # Build and extract distribution
 ./mvnw clean package -DskipTests
-cd intellisql-distribution/intellisql-distribution-server/target
+cd intellisql-distributions/intellisql-distribution-server/target
 unzip intellisql-server-1.0.0-SNAPSHOT.zip
 cd intellisql-server-1.0.0-SNAPSHOT
 
@@ -159,7 +159,7 @@ intellisql/
 │           ├── model.yaml  # Main configuration
 │           └── logback.xml # Logging configuration
 ├── intellisql-client/      # CLI client
-├── intellisql-distribution/
+├── intellisql-distributions/
 │   └── intellisql-distribution-server/
 │       └── bin/            # Startup scripts
 │           ├── start.sh    # Server start script
@@ -208,7 +208,7 @@ Server module that exposes JDBC protocol and handles client connections.
 
 Command-line interface client for interactive SQL queries.
 
-### intellisql-distribution
+### intellisql-distributions
 
 Assembly module that packages all components into a distributable archive.
 
