@@ -33,7 +33,7 @@ intellisql/                        # 仓库根目录
 ├── intellisql-server/             # 服务端
 ├── intellisql-client/             # CLI 工具
 ├── intellisql-distributions/      # 打包分发
-├── intellisql-test/               # 测试模块
+├── intellisql-tests/              # 测试模块
 ├── conf/                          # 配置文件
 ├── pom.xml                        # 父 POM
 └── mvnw                           # Maven Wrapper
@@ -117,7 +117,7 @@ intellisql/                        # 仓库根目录
 - [x] T030 [P] [US1] 创建 MySQLConnectorIT in intellisql-connector/src/test/java/com/intellisql/connector/mysql/MySQLConnectorIT.java
 - [x] T031 [P] [US1] 创建 PostgreSQLConnectorIT in intellisql-connector/src/test/java/com/intellisql/connector/postgresql/PostgreSQLConnectorIT.java
 - [x] T032 [P] [US1] 创建 ElasticsearchConnectorIT in intellisql-connector/src/test/java/com/intellisql/connector/elasticsearch/ElasticsearchConnectorIT.java
-- [x] T033 [US1] 创建 CrossSourceJoinIT in intellisql-test/intellisql-test-it/src/test/java/com/intellisql/it/federation/CrossSourceJoinIT.java
+- [x] T033 [US1] 创建 CrossSourceJoinIT in intellisql-tests/intellisql-test-it/src/test/java/com/intellisql/it/federation/CrossSourceJoinIT.java
 - [x] T034 [P] [US1] 创建 HybridOptimizerTest in intellisql-feature-optimizer/src/test/java/com/intellisql/optimizer/HybridOptimizerTest.java
 - [x] T035 [P] [US1] 创建 FederatedCostTest in intellisql-feature-optimizer/src/test/java/com/intellisql/optimizer/cost/FederatedCostTest.java
 - [x] T036 [P] [US1] 创建 QueryIteratorTest in intellisql-executor/src/test/java/com/intellisql/executor/iterator/QueryIteratorTest.java
@@ -318,7 +318,7 @@ intellisql/                        # 仓库根目录
 
 - [x] T127 [P] [US3] 验证 IntelliSqlDriverTest in intellisql-jdbc/src/test/java/com/intellisql/jdbc/IntelliSqlDriverTest.java
 - [x] T128 [P] [US3] 验证 IntelliSqlConnectionTest in intellisql-jdbc/src/test/java/com/intellisql/jdbc/IntelliSqlConnectionTest.java
-- [x] T129 [US3] 创建 JdbcProtocolIT in intellisql-test/intellisql-test-it/src/test/java/com/intellisql/it/jdbc/JdbcProtocolIT.java
+- [x] T129 [US3] 创建 JdbcProtocolIT in intellisql-tests/intellisql-test-it/src/test/java/com/intellisql/it/jdbc/JdbcProtocolIT.java
 
 ### 5.2 JDBC 驱动实现（已有基础）
 
@@ -344,8 +344,8 @@ intellisql/                        # 仓库根目录
 
 ### 5.4 E2E 测试
 
-- [x] T146 [US3] 创建 JdbcE2ETest in intellisql-test/intellisql-test-e2e/src/test/java/com/intellisql/e2e/jdbc/JdbcE2ETest.java
-- [x] T147 [US3] 创建 LargeResultSetE2ETest (100万行) in intellisql-test/intellisql-test-e2e/src/test/java/com/intellisql/e2e/jdbc/LargeResultSetE2ETest.java
+- [x] T146 [US3] 创建 JdbcE2ETest in intellisql-tests/intellisql-test-e2e/src/test/java/com/intellisql/e2e/jdbc/JdbcE2ETest.java
+- [x] T147 [US3] 创建 LargeResultSetE2ETest (100万行) in intellisql-tests/intellisql-test-e2e/src/test/java/com/intellisql/e2e/jdbc/LargeResultSetE2ETest.java
 
 **Checkpoint**: US3 完成 - JDBC 标准接口访问可独立测试
 
@@ -387,7 +387,7 @@ intellisql/                        # 仓库根目录
 
 ### 6.5 E2E 测试
 
-- [x] T161 [US4] 创建 CommandLineIT in intellisql-test/intellisql-test-e2e/src/test/java/com/intellisql/e2e/CommandLineIT.java
+- [x] T161 [US4] 创建 CommandLineIT in intellisql-tests/intellisql-test-e2e/src/test/java/com/intellisql/e2e/CommandLineIT.java
 
 **Checkpoint**: US4 完成 - 命令行工具 isql 可独立测试
 
@@ -405,7 +405,7 @@ intellisql/                        # 仓库根目录
 ### 7.1 Tests for User Story 5
 
 - [x] T162 [P] [US5] 验证 SchemaMappingTest in intellisql-kernel/src/test/java/com/intellisql/kernel/metadata/SchemaMappingTest.java
-- [x] T163 [US5] 创建 MetadataManagementIT in intellisql-test/intellisql-test-it/src/test/java/com/intellisql/it/metadata/MetadataManagementIT.java
+- [x] T163 [US5] 创建 MetadataManagementIT in intellisql-tests/intellisql-test-it/src/test/java/com/intellisql/it/metadata/MetadataManagementIT.java
 
 ### 7.2 Implementation for User Story 5
 
@@ -437,8 +437,8 @@ intellisql/                        # 仓库根目录
 
 ### E2E 测试
 
-- [x] T175 创建 E2E 完整流程测试 in intellisql-test/intellisql-test-e2e/src/test/java/com/intellisql/e2e/EndToEndTest.java
-- [x] T176 [P] 创建性能基准测试 in intellisql-test/intellisql-test-e2e/src/test/java/com/intellisql/e2e/PerformanceBenchmarkTest.java
+- [x] T175 创建 E2E 完整流程测试 in intellisql-tests/intellisql-test-e2e/src/test/java/com/intellisql/e2e/EndToEndTest.java
+- [x] T176 [P] 创建性能基准测试 in intellisql-tests/intellisql-test-e2e/src/test/java/com/intellisql/e2e/PerformanceBenchmarkTest.java
 
 ### 质量检查
 

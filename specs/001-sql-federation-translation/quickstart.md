@@ -154,7 +154,7 @@ intellisql/
 ├── intellisql-distributions/       # Packaging and distribution
 │   ├── intellisql-distribution-jdbc/
 │   └── intellisql-distribution-server/
-├── intellisql-test/                # Testing
+├── intellisql-tests/               # Testing
 │   ├── intellisql-test-it/         # Integration tests
 │   └── intellisql-test-e2e/        # End-to-end tests
 └── conf/
@@ -584,7 +584,7 @@ Closes #42
 
 - Example configurations: `conf/examples/` (YAML format)
 - Sample queries: `examples/queries/`
-- Integration test scenarios: `intellisql-test-e2e/src/test/resources/`
+- Integration test scenarios: `intellisql-tests/intellisql-test-e2e/src/test/resources/`
 
 ### 支持
 

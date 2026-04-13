@@ -165,7 +165,7 @@ intellisql/
 │           ├── start.sh    # Server start script
 │           ├── stop.sh     # Server stop script
 │           └── isql        # CLI client script
-└── intellisql-test/        # Integration tests
+└── intellisql-tests/       # Integration tests
 ```
 
 ## Module Descriptions
@@ -212,7 +212,7 @@ Command-line interface client for interactive SQL queries.
 
 Assembly module that packages all components into a distributable archive.
 
-### intellisql-test
+### intellisql-tests
 
 Integration tests using Testcontainers for testing against real database instances.
 
