@@ -36,7 +36,7 @@ import static org.mockito.Mockito.when;
 class MetaDataLoaderTest {
 
     @Test
-    void testLoad() throws SQLException, InterruptedException {
+    void testLoad() throws SQLException {
         Connection connection = mock(Connection.class);
         DatabaseMetaData metaData = mock(DatabaseMetaData.class);
         ResultSet tablesRs = mock(ResultSet.class);
@@ -52,14 +52,8 @@ class MetaDataLoaderTest {
         Mockito.when(metaData.getSchemas()).thenReturn(schemasRs);
         when(schemasRs.next()).thenReturn(true, false);
         when(schemasRs.getString("TABLE_SCHEM")).thenReturn("test_schema");
-        MetaDataLoader loader = new MetaDataLoader();
+        MetaDataLoader loader = new MetaDataLoader(Runnable::run);
         loader.load(connection);
-        // Wait for async task
-        int retries = 0;
-        while (loader.getTables().isEmpty() && retries < 20) {
-            Thread.sleep(50);
-            retries++;
-        }
         Assertions.assertTrue(loader.getTables().contains("test_table"));
         Assertions.assertTrue(loader.getColumns().contains("test_column"));
         Assertions.assertTrue(loader.getSchemas().contains("test_schema"));

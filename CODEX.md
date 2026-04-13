@@ -20,7 +20,7 @@ intellisql-connector/     Data source connectors
 intellisql-jdbc/          JDBC driver
 intellisql-server/        Server runtime and packaged config
 intellisql-client/        CLI client
-intellisql-distribution/  Server and client distribution packaging
+intellisql-distributions/ Server and client distribution packaging
 intellisql-test/          Integration and end-to-end tests
 src/resources/            Spotless, Checkstyle, and shared build config
 ```

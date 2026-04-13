@@ -121,7 +121,7 @@ intellisql/
 │   │   │   └── sql.nanorc             # 语法高亮配置
 │   │   └── test/java/
 │   └── pom.xml                     # 含 native-maven-plugin
-├── intellisql-distribution/        # 打包分发父模块
+├── intellisql-distributions/       # 打包分发父模块
 │   ├── intellisql-distribution-jdbc/
 │   └── intellisql-distribution-server/
 ├── intellisql-test/                # 测试模块父模块
@@ -1192,4 +1192,3 @@ Start → Picocli Parse Args
 
 - **原生测试**: 使用 `native-image-agent` 辅助生成配置，并在 CI 中运行 native-image 测试
 - **交互测试**: 模拟 PTY 进行自动化交互测试 (使用 Expect 脚本或 Java PTY 库)
-

@@ -21,9 +21,10 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 /**
@@ -37,7 +38,23 @@ public class MetaDataLoader {
 
     private final Set<String> schemas = ConcurrentHashMap.newKeySet();
 
-    private final ExecutorService executor = Executors.newSingleThreadExecutor(this::createDaemonThread);
+    private final Executor executor;
+
+    /**
+     * Creates a metadata loader backed by a single background thread.
+     */
+    public MetaDataLoader() {
+        this(Executors.newSingleThreadExecutor(MetaDataLoader::createDaemonThread));
+    }
+
+    /**
+     * Creates a metadata loader that uses the provided executor.
+     *
+     * @param executor the executor used to load metadata
+     */
+    MetaDataLoader(final Executor executor) {
+        this.executor = Objects.requireNonNull(executor, "executor");
+    }
 
     /**
      * Asynchronously loads metadata from the given connection.
@@ -48,7 +65,7 @@ public class MetaDataLoader {
         if (connection == null) {
             return;
         }
-        executor.submit(() -> loadMetadataInternal(connection));
+        executor.execute(() -> loadMetadataInternal(connection));
     }
 
     /**
@@ -57,7 +74,7 @@ public class MetaDataLoader {
      * @param runnable the runnable to execute
      * @return the daemon thread
      */
-    private Thread createDaemonThread(final Runnable runnable) {
+    private static Thread createDaemonThread(final Runnable runnable) {
         Thread t = new Thread(runnable, "metadata-loader");
         t.setDaemon(true);
         return t;

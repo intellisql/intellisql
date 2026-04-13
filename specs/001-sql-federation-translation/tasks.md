@@ -32,7 +32,7 @@ intellisql/                        # 仓库根目录
 ├── intellisql-jdbc/               # JDBC 驱动
 ├── intellisql-server/             # 服务端
 ├── intellisql-client/             # CLI 工具
-├── intellisql-distribution/       # 打包分发
+├── intellisql-distributions/      # 打包分发
 ├── intellisql-test/               # 测试模块
 ├── conf/                          # 配置文件
 ├── pom.xml                        # 父 POM
@@ -424,11 +424,11 @@ intellisql/                        # 仓库根目录
 
 ### 分发包
 
-- [x] T168 [P] 配置 intellisql-distribution-jdbc assembly in intellisql-distribution/intellisql-distribution-jdbc/pom.xml
-- [x] T169 [P] 配置 intellisql-distribution-server assembly in intellisql-distribution/intellisql-distribution-server/pom.xml
-- [x] T170 创建 bin/start.sh 启动脚本 in intellisql-distribution/intellisql-distribution-server/src/main/assembly/bin/start.sh
-- [x] T171 [P] 创建 bin/stop.sh 停止脚本 in intellisql-distribution/intellisql-distribution-server/src/main/assembly/bin/stop.sh
-- [x] T172 [P] 创建 bin/isql 客户端脚本 in intellisql-distribution/intellisql-distribution-jdbc/src/main/assembly/bin/isql
+- [x] T168 [P] 配置 intellisql-distribution-jdbc assembly in intellisql-distributions/intellisql-distribution-jdbc/pom.xml
+- [x] T169 [P] 配置 intellisql-distribution-server assembly in intellisql-distributions/intellisql-distribution-server/pom.xml
+- [x] T170 创建 bin/start.sh 启动脚本 in intellisql-distributions/intellisql-distribution-server/src/main/assembly/bin/start.sh
+- [x] T171 [P] 创建 bin/stop.sh 停止脚本 in intellisql-distributions/intellisql-distribution-server/src/main/assembly/bin/stop.sh
+- [x] T172 [P] 创建 bin/isql 客户端脚本 in intellisql-distributions/intellisql-distribution-jdbc/src/main/assembly/bin/isql
 
 ### 文档
 

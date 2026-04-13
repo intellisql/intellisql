@@ -244,7 +244,7 @@
 | 模块 | 职责 |
 |------|------|
 | **intellisql-client** | 客户端工具，打包 isql 命令行工具 |
-| **intellisql-distribution** | 打包分发父模块，负责不同组件的打包发布 |
+| **intellisql-distributions** | 打包分发父模块，负责不同组件的打包发布 |
 | ├─ **intellisql-distribution-jdbc** | JDBC Driver 包打包分发 |
 | └─ **intellisql-distribution-server** | Server 包打包分发 |
 | **intellisql-test** | 测试模块父模块，包含各类测试 |
@@ -292,7 +292,7 @@
 - Q: 支持的数据库方言？ → A: MySQL, PostgreSQL, Oracle, SQL Server, Hive
 - Q: SQL 翻译模式？ → A: 同时支持在线模式（连接数据库获取元数据）和离线模式（纯语法转换）
 - Q: SQL 翻译 CLI 交互方式？ → A: 使用 isql 参数方式（如 `isql --translate`），统一交互方式
-- Q: 模块命名调整？ → A: intellisql-storage 改为 intellisql-connector；新增 intellisql-distribution（打包分发模块，含子模块 intellisql-distribution-driver、intellisql-distribution-server）；新增 intellisql-driver（含子模块 intellisql-driver-jdbc，未来增加 intellisql-driver-odbc）
+- Q: 模块命名调整？ → A: intellisql-storage 改为 intellisql-connector；新增 intellisql-distributions（打包分发模块，含子模块 intellisql-distribution-driver、intellisql-distribution-server）；新增 intellisql-driver（含子模块 intellisql-driver-jdbc，未来增加 intellisql-driver-odbc）
 - Q: intellisql-server 模块结构？ → A: intellisql-server 作为父模块，本期实现 intellisql-server-avatica，未来支持 intellisql-server-mysql、intellisql-server-postgresql 等数据库协议
 - Q: 测试模块结构？ → A: 新增 intellisql-test 父模块，包含 intellisql-test-it（集成测试，单元功能测试）和 intellisql-test-e2e（端到端完整 SQL 测试）
 - Q: intellisql-core 模块拆分？ → A: 拆分为 intellisql-feature-optimizer（SQL 优化，翻译和执行共用）和 intellisql-executor（SQL 执行），因为 SQL 翻译不需要执行能力
@@ -336,7 +336,7 @@
 
 ### Session 2026-02-22
 
-- Q: 最终模块结构确认？ → A: 采用四层架构：(1) Common Layer - intellisql-common（配置、日志、重试、元数据实体）；(2) Features Layer - intellisql-features 父模块，包含 intellisql-feature-optimizer、intellisql-feature-translator、intellisql-feature-federation；(3) Protocol Layer - intellisql-jdbc、intellisql-server；(4) Tooling Layer - intellisql-client、intellisql-distribution、intellisql-test
+- Q: 最终模块结构确认？ → A: 采用四层架构：(1) Common Layer - intellisql-common（配置、日志、重试、元数据实体）；(2) Features Layer - intellisql-features 父模块，包含 intellisql-feature-optimizer、intellisql-feature-translator、intellisql-feature-federation；(3) Protocol Layer - intellisql-jdbc、intellisql-server；(4) Tooling Layer - intellisql-client、intellisql-distributions、intellisql-test
 - Q: intellisql-kernel 和 intellisql-executor 的最终归属？ → A: 合并到 intellisql-features/intellisql-feature-federation 模块中，federation 模块现在包含核心编排（IntelliSqlKernel, QueryProcessor）、执行引擎（FederatedQueryExecutor, QueryIterator 系列算子）、元数据管理（MetadataManager）
 - Q: 翻译器模块位置？ → A: 独立为 intellisql-features/intellisql-feature-translator，与 optimizer 和 federation 平级
 
