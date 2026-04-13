@@ -124,7 +124,7 @@ intellisql/
 ├── intellisql-distributions/       # 打包分发父模块
 │   ├── intellisql-distribution-jdbc/
 │   └── intellisql-distribution-server/
-├── intellisql-test/                # 测试模块父模块
+├── intellisql-tests/               # 测试模块父模块
 │   ├── intellisql-test-it/         # 集成测试
 │   └── intellisql-test-e2e/        # 端到端测试
 ├── conf/                           # 配置文件

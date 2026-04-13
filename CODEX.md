@@ -21,7 +21,7 @@ intellisql-jdbc/          JDBC driver
 intellisql-server/        Server runtime and packaged config
 intellisql-client/        CLI client
 intellisql-distributions/ Server and client distribution packaging
-intellisql-test/          Integration and end-to-end tests
+intellisql-tests/         Integration and end-to-end tests
 src/resources/            Spotless, Checkstyle, and shared build config
 ```
 
@@ -60,7 +60,7 @@ src/resources/            Spotless, Checkstyle, and shared build config
 - Preserve Apache license headers in Java source files.
 - Keep Maven source/target at Java 8 and preserve existing profiles such as `check` and `jdk9-plus`.
 - Do not introduce new dependencies or APIs without confirming Java 8 compatibility.
-- Integration and end-to-end tests under `intellisql-test` use Testcontainers and usually require Docker.
+- Integration and end-to-end tests under `intellisql-tests` use Testcontainers and usually require Docker.
 - When changing formatting-sensitive files, rely on Spotless and existing Checkstyle rules rather than manual style exceptions.
 
 ## Code Style

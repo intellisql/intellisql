@@ -43,7 +43,7 @@
         <module>intellisql-server</module>
         <module>intellisql-client</module>
         <module>intellisql-distributions</module>
-        <module>intellisql-test</module>
+        <module>intellisql-tests</module>
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

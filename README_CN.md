@@ -165,7 +165,7 @@ intellisql/
 │           ├── start.sh    # 服务器启动脚本
 │           ├── stop.sh     # 服务器停止脚本
 │           └── isql        # 客户端脚本
-└── intellisql-test/        # 集成测试
+└── intellisql-tests/       # 集成测试
 ```
 
 ## 模块说明
@@ -210,7 +210,7 @@ intellisql/
 
 打包模块，将所有组件打包为可分发的归档文件。
 
-### intellisql-test
+### intellisql-tests
 
 使用 Testcontainers 的集成测试，支持对真实数据库实例进行测试。
 

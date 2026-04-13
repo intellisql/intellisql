@@ -23,7 +23,7 @@
         <artifactId>intellisql</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
-    <artifactId>intellisql-test</artifactId>
+    <artifactId>intellisql-tests</artifactId>
     <packaging>pom</packaging>
     <name>${project.artifactId}</name>
     <description>Test modules for unit, integration, and end-to-end testing</description>
