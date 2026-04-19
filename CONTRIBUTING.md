@@ -1,360 +1,349 @@
 # Contributing to IntelliSql
 
-Thank you for your interest in contributing to IntelliSql! This document provides guidelines and instructions for contributing.
+## Foundation
 
-## Table of Contents
+IntelliSql follows the Apache Software Foundation code of conduct and expects every contribution to reflect responsibility, professionalism, and respect for code quality.
 
-- [Code of Conduct](#code-of-conduct)
-- [Getting Started](#getting-started)
-- [Development Setup](#development-setup)
-- [Code Style](#code-style)
-- [Commit Guidelines](#commit-guidelines)
-- [Pull Request Process](#pull-request-process)
-- [Testing Guidelines](#testing-guidelines)
+## Core Principles
 
-## Code of Conduct
+### 1. Care
 
-By participating in this project, you agree to maintain a respectful and inclusive environment. Please be considerate of others and follow standard open-source community guidelines.
+Treat every contribution as crafted work.
 
-## Getting Started
+- Every change must reflect thoughtful design and professional discipline.
+- Code is expected to be a product of craftsmanship, not only an implementation artifact.
+- Continuous improvement and attention to detail are mandatory.
 
-1. Fork the repository
-2. Clone your fork:
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/intellisql.git
-   cd intellisql
-   ```
-3. Add upstream remote:
-   ```bash
-   git remote add upstream https://github.com/intellisql/intellisql.git
-   ```
-4. Create a feature branch:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+Reason: high-quality software depends on sincere ownership and disciplined execution.
 
-## Development Setup
+### 2. Readability
 
-### Prerequisites
+Code must express intent through reading alone.
 
-- Java 8 or higher (JDK 8 recommended for compatibility)
-- Maven 3.6+
-- Git
-- IDE (IntelliJ IDEA recommended)
+- Prefer self-documenting code through clear naming and structure.
+- Readers must understand the logic without stepping through a debugger.
+- Split complex logic into well-named methods.
 
-### Build the Project
+Reason: code is read far more often than it is written, and readability directly determines maintainability.
 
-```bash
-./mvnw clean install -DskipTests
-```
+### 3. Cleanliness
 
-### IDE Configuration
+Follow the spirit of clean code and refactoring.
 
-#### IntelliJ IDEA
+- Apply clean code principles consistently.
+- Refactor when quality declines.
+- Pay technical debt down promptly.
 
-1. Import the project as a Maven project
-2. Enable annotation processing:
-   - Settings -> Build, Execution, Deployment -> Compiler -> Annotation Processors
-   - Enable annotation processing
-3. Install Lombok plugin:
-   - Settings -> Plugins -> Search "Lombok" -> Install
-4. Set code style:
-   - Settings -> Editor -> Code Style -> Java
-   - Set indent to 4 spaces
+Reason: clean code reduces defects, improves maintainability, and keeps delivery fast.
 
-## Code Style
+### 4. Consistency
 
-IntelliSql follows strict code style guidelines based on ShardingSphere's conventions.
+Keep style, naming, and usage patterns aligned across the project.
 
-### Formatting
+- Follow the same formatting and naming conventions everywhere.
+- Solve similar problems in similar ways.
+- Maintain consistency in naming, file layout, error handling, and logging.
 
-We use Spotless with Palantir Java Format for code formatting:
+Reason: consistency lowers cognitive load and speeds up comprehension.
 
-```bash
-# Format all code
-./mvnw spotless:apply
+### 5. Simplicity
 
-# Check formatting
-./mvnw spotless:check
-```
+Express the right intent with the least necessary code.
 
-### Checkstyle
+- Remove dead code promptly.
+- Every line must have a clear purpose.
+- DRY is mandatory.
+- Repeated configuration is treated as duplication and must be eliminated.
 
-We use Checkstyle for code quality checks:
+Reason: less code yields fewer defects, easier maintenance, and clearer understanding.
 
-```bash
-# Run checkstyle
-./mvnw checkstyle:check
-```
+### 6. Abstraction
 
-### Key Style Rules
+Keep responsibilities and abstraction levels clear.
 
-#### Import Order
+- Each layer must carry a single responsibility.
+- Concepts must be extracted and named correctly.
+- Do not mix abstraction levels inside the same class or method.
 
-Imports should be ordered as follows:
-1. `com.intellisql.*`
-2. `org.apache.*`
-3. Other imports (alphabetical)
-4. `javax.*`
-5. `java.*`
-6. Static imports
+Reason: sound abstraction makes complex systems easier to reason about.
+
+### 7. Excellence
+
+Every character, statement, and space must justify its existence.
+
+- Placeholder code and untracked `TODO` items are prohibited.
+- Remove unnecessary imports, variables, and statements.
+- Reviews should challenge anything that lacks clear value.
+
+Reason: excellence in small details accumulates into excellence across the system.
+
+## Coding Standards
+
+### Formatting Rules
+
+- Use LF line endings.
+- Lines up to 200 characters may stay on one line.
+- Avoid meaningless blank lines.
+- Do not separate statements inside a method body with cosmetic blank lines.
+- Do not add blank lines between variable declarations and the following code.
+- Do not use blank lines to separate logic blocks; extract private methods instead.
+- Use spinal-case for configuration file names.
+
+Example:
 
 ```java
-import com.intellisql.parser.SqlParser;
-import com.intellisql.optimizer.QueryOptimizer;
-
-import org.apache.calcite.sql.SqlNode;
-
-import com.google.common.collect.Lists;
-
-import javax.annotation.Nullable;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-```
-
-#### Naming Conventions
-
-- **Classes**: PascalCase (e.g., `QueryExecutor`, `MySQLConnector`)
-- **Methods**: camelCase (e.g., `executeQuery`, `parseStatement`)
-- **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_CONNECTIONS`, `DEFAULT_TIMEOUT`)
-- **Variables**: camelCase (e.g., `connectionPool`, `resultSet`)
-
-#### Blank Lines
-
-- One blank line between methods
-- One blank line between import groups
-- No trailing whitespace
-- No multiple consecutive blank lines
-
-#### Braces
-
-Always use braces, even for single-line statements:
-
-```java
-// Good
-if (condition) {
-    doSomething();
-}
-
-// Bad
-if (condition)
-    doSomething();
-```
-
-#### License Header
-
-All Java files must include the Apache License header:
-
-```java
-/*
- * Licensed to the IntelliSql Project under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The IntelliSql Project licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-```
-
-## Commit Guidelines
-
-### Commit Message Format
-
-We follow a conventional commit format:
-
-```
-<type>(<scope>): <subject>
-
-<body>
-
-<footer>
-```
-
-#### Types
-
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `style`: Code style changes (formatting, no code change)
-- `refactor`: Code refactoring
-- `test`: Adding or modifying tests
-- `chore`: Build process or auxiliary tool changes
-- `perf`: Performance improvements
-
-#### Scope
-
-The module or component affected:
-- `parser`
-- `optimizer`
-- `executor`
-- `connector`
-- `jdbc`
-- `server`
-- `client`
-- `kernel`
-
-#### Examples
-
-```
-feat(connector): add PostgreSQL connector implementation
-
-Implement PostgreSQL database connector with connection pooling
-support using HikariCP. Includes schema discovery and query
-pushdown capabilities.
-
-Closes #123
-```
-
-```
-fix(optimizer): correct predicate pushdown for nested queries
-
-Fixed an issue where predicates were not correctly pushed down
-through nested subqueries, causing performance degradation.
-
-Fixes #456
-```
-
-```
-docs(readme): update quick start guide
-
-Added more detailed instructions for local development setup.
-```
-
-### Commit Best Practices
-
-1. **Keep commits atomic**: One logical change per commit
-2. **Write clear messages**: Explain what and why, not how
-3. **Reference issues**: Include issue numbers when applicable
-4. **Sign your work**: Use `git commit -s` for DCO sign-off
-
-## Pull Request Process
-
-### Before Submitting
-
-1. **Sync with upstream**:
-   ```bash
-   git fetch upstream
-   git rebase upstream/main
-   ```
-
-2. **Run all checks**:
-   ```bash
-   ./mvnw clean verify -Pcheck
-   ```
-
-3. **Ensure tests pass**:
-   ```bash
-   ./mvnw test
-   ```
-
-4. **Update documentation**: If applicable, update README.md or other docs
-
-### PR Requirements
-
-- [ ] Code compiles without warnings
-- [ ] All tests pass
-- [ ] Code coverage maintained or improved
-- [ ] Checkstyle passes
-- [ ] Spotless formatting applied
-- [ ] Documentation updated (if applicable)
-- [ ] Commit messages follow guidelines
-- [ ] PR description explains the change
-
-### PR Description Template
-
-```markdown
-## Summary
-Brief description of the changes.
-
-## Changes
-- List of specific changes made
-- Another change
-
-## Testing
-How was this tested?
-
-## Related Issues
-Fixes #123
-```
-
-### Review Process
-
-1. At least one approval required from a maintainer
-2. All CI checks must pass
-3. No merge conflicts
-4. Address all review comments
-
-### After Merge
-
-- Delete your feature branch
-- Sync your fork with upstream
-
-## Testing Guidelines
-
-### Unit Tests
-
-- Use JUnit 5
-- Use AssertJ for assertions
-- Use Mockito for mocking
-- Name tests descriptively: `shouldReturnEmptyListWhenNoResults()`
-
-```java
+// Incorrect: unnecessary blank line
 @Test
-void shouldParseSimpleSelectStatement() {
-    // Given
-    String sql = "SELECT * FROM users";
+void assertConfigParsing() {
+    String yaml = Files.readString(Paths.get("conf/model.yaml"));
+    ModelConfig config = ConfigLoader.parse(yaml);
 
-    // When
-    SqlNode result = parser.parse(sql);
-
-    // Then
-    assertThat(result).isNotNull();
-    assertThat(result.getKind()).isEqualTo(SqlKind.SELECT);
+    assertThat(config.getDataSources(), hasSize(2));
+    assertThat(config.getDataSources().get(0).getType(), is(DataSourceType.MYSQL));
 }
-```
 
-### Integration Tests
-
-- Use Testcontainers for database tests
-- Place integration tests in `src/test/java` with `*IT.java` suffix
-- Use `@Tag("integration")` annotation
-
-```java
+// Correct: continuous code without cosmetic blank lines
 @Test
-@Tag("integration")
-void shouldExecuteQueryAcrossMultipleDatabases() {
-    try (MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0");
-         PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")) {
-
-        mysql.start();
-        postgres.start();
-
-        // Test implementation
-    }
+void assertConfigParsing() {
+    String yaml = Files.readString(Paths.get("conf/model.yaml"));
+    ModelConfig config = ConfigLoader.parse(yaml);
+    assertThat(config.getDataSources(), hasSize(2));
+    assertThat(config.getDataSources().get(0).getType(), is(DataSourceType.MYSQL));
 }
 ```
 
-### Test Coverage
+### Naming Rules
 
-- Maintain at least 80% code coverage
-- Use JaCoCo for coverage reporting:
-  ```bash
-  ./mvnw jacoco:report
-  ```
+General rules:
 
-## Questions?
+- Names must be self-explanatory.
+- Avoid abbreviations in class and method names.
+- Limited abbreviations are acceptable for some variable names.
 
-If you have questions, feel free to:
-- Open an issue for discussion
-- Reach out to maintainers
+Standard abbreviations:
 
-Thank you for contributing to IntelliSql!
+- `arguments` -> `args`
+- `parameters` -> `params`
+- `environment` -> `env`
+- `properties` -> `props`
+- `configuration` -> `config`
+
+Proper noun abbreviations:
+
+- Acronyms with up to three characters stay uppercase, for example `SQL92Lexer`, `XMLTransfer`, `MySQLAdminExecutorCreator`.
+- Acronyms longer than three characters use camel-case style, for example `JdbcUrlAppender`, `YamlAgentConfigurationSwapper`.
+- Variables always use lower camel case, for example `mysqlAuthenticationMethod`, `sqlStatement`, `mysqlConfig`.
+
+Local variable rules:
+
+- Use `result` for returned local variables unless directly returning a method parameter.
+- Use `each` as the loop variable in collection iteration.
+- Use `entry` for map entries.
+- Name caught exceptions `ex`.
+- Name intentionally ignored exceptions `ignored`.
+- Method parameters must not be named `result`, `each`, or `entry`.
+- Utility classes should use the `XxxUtils` pattern.
+
+Condition rules:
+
+- For `equals` and `==`, place constants on the left and variables on the right.
+- For greater-than or less-than comparisons, place variables on the left and constants on the right.
+
+### Code Style Rules
+
+- Avoid `this` unless it disambiguates constructor parameters or fields.
+- Local variables should not be declared `final`.
+- Prefer `final` classes unless inheritance is required.
+- Extract nested loops into methods when practical.
+- Keep field declaration order and parameter order consistent across related classes and methods.
+- Prefer guard clauses.
+- Use the narrowest reasonable visibility for classes and methods.
+- Keep private helper methods immediately after the methods that use them, in the same appearance order.
+- Method parameters and return values must not be `null`.
+- Do not use `Optional` as a method parameter; pass ordinary values instead. `null` is allowed only when required by the API contract.
+- Prefer Lombok for constructors, accessors, and logger fields.
+- Import class names instead of inlining fully qualified names.
+- Prefer `LinkedList`; use `ArrayList` only when indexed access is required.
+- Initialize collection capacities for `ArrayList`, `HashMap`, and similar resizeable collections.
+- Prefer ternary operators for simple return and assignment branches.
+- Keep ternary expressions flat.
+- Prefer positive semantics in conditions.
+
+### Performance Annotation
+
+Use `@HighFrequencyInvocation` to mark code paths that require performance-focused implementation.
+
+Apply it when:
+
+- A class, method, or constructor sits on a frequently executed request path.
+- `canBeCached = true` identifies reusable cached resources such as database connections.
+
+Within annotated code, avoid:
+
+- Java Stream API
+- String concatenation through `+`
+- `LinkedList#get(int index)`
+
+### Comments and Logging
+
+- Write logs and comments in English.
+- Only `JAVADOC`, `TODO`, and `FIXME` comments are allowed.
+- Public classes and methods must include `JAVADOC`.
+- Public API and SPI documentation must be clear and complete.
+- Other classes, internal methods, and overridden methods do not require `JAVADOC`.
+- Prefer extracting small methods over explaining code with inline comments.
+
+## Testing Standards
+
+### AIR Principles
+
+Automatic:
+
+- Unit tests must run automatically.
+- Manual output inspection is prohibited.
+- Use assertions instead of `System.out` or logs for verification.
+
+Independent:
+
+- Test cases must not call one another.
+- Test execution order must not matter.
+- Every unit test must run independently.
+
+Repeatable:
+
+- Tests must not depend on the external environment.
+- Tests must be repeatable.
+
+### BCDE Principles
+
+- Border: cover loop boundaries, special values, and data-order edge cases.
+- Correct: verify expected behavior with valid input.
+- Design: shape tests in a way that supports production design quality.
+- Error: verify expected behavior for invalid data and exceptional flows.
+
+### Test Naming and Structure
+
+- Name all test cases with the `assert` prefix.
+- Verify behavior through public APIs only.
+- Do not call private members through reflection.
+- If reflection access to fields is required, use `Plugins.getMemberAccessor()`.
+- If one production method is covered by exactly one test, use `assert<MethodName>` without a suffix.
+- Use one test method per public production method when practical.
+- Keep test method order aligned with production method order when practical.
+- Parameterized tests must provide display names through arguments and use `"{0}"` as the display-name template.
+- Keep assertions precise; minimize fuzzy assertions such as `containsString`.
+- Separate setup code from verification code.
+- Limit static imports to Mockito, JUnit assertions, Hamcrest `CoreMatchers`, and `MatcherAssert`.
+
+### Assertion Rules
+
+- Use `assertTrue` and `assertFalse` for booleans.
+- Use `assertNull` and `assertNotNull` for nullability.
+- Use `assertThat(actual, is(expected))` instead of `assertEquals`.
+- Use `assertThat(..., isA(...))` instead of `instanceOf`.
+- Replace `assertSame` and `assertNotSame` with value-based assertions.
+- Use Hamcrest matchers such as `is()` and `not()` for precise and readable assertions.
+- Name actual values `actualXxx`.
+- Name expected values `expectedXxx`.
+- Test classes and `@Test` methods do not require `JAVADOC`.
+
+### Mocking Rules
+
+Use mocks when:
+
+- A unit test would otherwise need to connect to an environment.
+- A unit test depends on objects that are expensive or irrelevant to construct, such as deeply nested unrelated graphs.
+
+For static methods and constructors:
+
+- Prefer `AutoMockExtension` and `StaticMockSettings` from the test framework so resources are released automatically.
+- If using Mockito `mockStatic` or `mockConstruction`, close them with try-with-resources or explicit cleanup.
+
+Additional rules:
+
+- If verifying a single invocation, use `verify(...)` directly instead of `times(1)`.
+- Use Mockito `RETURNS_DEEP_STUBS` for deep chained interactions instead of manual layer-by-layer mocking.
+- Use standardized prefixes such as `foo_` and `bar_` for test data.
+- Use `PropertiesBuilder` to simplify `Properties` construction.
+
+## Technical Constraints
+
+### JDK Compatibility
+
+- Backend code must use JDK 8 syntax.
+- Keep compatibility with JDK 8 as the minimum supported version.
+
+### Enforced Style
+
+- Backend code must comply with ShardingSphere `spotless` and `checkstyle`.
+- Java code must stay free of useless blank lines.
+- Naming must remain easy to understand.
+- Preserve elegance through reasonable class and method decomposition.
+
+### Architecture
+
+- Project modules follow the multi-module direction used by 360 QuickSql.
+- Design for extensibility and maintainability.
+
+### Security
+
+- Use the latest release versions of dependencies.
+- Keep the project free of known CVE vulnerabilities.
+
+## Submission Requirements
+
+### Build Process
+
+Before submitting code:
+
+1. Follow all coding standards.
+2. Ensure the full build process succeeds:
+   - Apache license header checks
+   - Checkstyle
+   - Compilation
+   - Unit tests
+3. Run `./mvnw clean install -B -T1C -Pcheck`.
+4. Run `./mvnw spotless:apply -Pcheck`.
+
+### Coverage
+
+- Keep coverage at least as high as the `master` branch.
+- Except for trivial getters and setters, unit tests should cover production code fully.
+
+### Commit Guidance
+
+- Split design changes carefully.
+- Prefer small, focused commits.
+- Preserve the completeness of each commit.
+
+### IDEA Configuration
+
+- Import `src/resources/idea/code-style.xml` in IntelliJ IDEA to align formatting.
+- Import `src/resources/idea/inspections.xml` in IntelliJ IDEA to detect potential issues early.
+
+## Governance
+
+### Amendment Process
+
+1. Constitution changes must record:
+   - The exact sections changed
+   - The reason for the change
+   - A migration plan for existing code when applicable
+2. Every pull request and review must validate compliance with this document.
+3. Any introduced complexity must be justified against the principle of simplicity.
+
+### Versioning Policy
+
+- MAJOR: incompatible governance changes, removals, or principle redefinitions
+- MINOR: new principles, new sections, or substantial guidance expansion
+- PATCH: clarifications, wording fixes, and non-semantic improvements
+
+### Compliance Review
+
+- Every code review must include a compliance check against this document.
+- Violations must be fixed or explicitly justified before merge.
+- Complexity justifications must reference the concrete alternatives that were rejected.
+
+Version: 1.0.1  
+Approved: 2026-02-16  
+Last Revised: 2026-02-17
