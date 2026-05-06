@@ -45,6 +45,8 @@ public final class FederatedTable extends AbstractTable implements DataSourceAwa
 
     private final List<SqlTypeName> columnTypes;
 
+    private final List<Boolean> columnNullables;
+
     private RelDataType rowType;
 
     @Override
@@ -56,11 +58,15 @@ public final class FederatedTable extends AbstractTable implements DataSourceAwa
         if (columnNames != null && columnTypes != null) {
             for (int i = 0; i < columnNames.size(); i++) {
                 final SqlTypeName typeName = i < columnTypes.size() ? columnTypes.get(i) : SqlTypeName.VARCHAR;
-                builder.add(columnNames.get(i), typeFactory.createSqlType(typeName));
+                builder.add(columnNames.get(i), typeFactory.createTypeWithNullability(typeFactory.createSqlType(typeName), isNullable(i)));
             }
         }
         rowType = builder.build();
         return rowType;
+    }
+
+    private boolean isNullable(final int index) {
+        return columnNullables == null || index >= columnNullables.size() || Boolean.TRUE.equals(columnNullables.get(index));
     }
 
     @Override

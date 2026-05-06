@@ -44,6 +44,7 @@ import java.util.Map;
 
 import org.apache.calcite.avatica.ColumnMetaData;
 import org.apache.calcite.avatica.Meta;
+import org.apache.calcite.avatica.remote.Service;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -72,6 +73,8 @@ public class IntelliSqlResultSet implements ResultSet {
     private List<List<Object>> rows;
 
     private Iterator<List<Object>> rowIterator;
+
+    private boolean frameDone = true;
 
     private boolean closed;
 
@@ -107,13 +110,14 @@ public class IntelliSqlResultSet implements ResultSet {
         this.columnMetaData = signature != null ? signature.columns : new ArrayList<>();
         this.resultSetMetaData = new IntelliSqlResultSetMetaData(this.columnMetaData);
         this.rows = new ArrayList<>();
-        this.fetchSize = connection.getIntProperty("fetchSize", 1000);
+        this.fetchSize = statement instanceof IntelliSqlStatement ? ((IntelliSqlStatement) statement).fetchSize : connection.getIntProperty("fetchSize", 1000);
         if (firstFrame != null && firstFrame.rows != null) {
             for (Object row : firstFrame.rows) {
                 if (row instanceof List) {
                     rows.add((List<Object>) row);
                 }
             }
+            frameDone = firstFrame.done;
         }
         this.rowIterator = rows.iterator();
         log.debug("Created result set with {} columns and {} rows", columnMetaData.size(), rows.size());
@@ -127,7 +131,48 @@ public class IntelliSqlResultSet implements ResultSet {
             currentRowIndex++;
             return true;
         }
+        if (fetchNextFrame()) {
+            currentRow = rowIterator.next();
+            currentRowIndex++;
+            return true;
+        }
         return false;
+    }
+
+    private boolean fetchNextFrame() throws SQLException {
+        if (frameDone || statementHandle == null) {
+            return false;
+        }
+        Service.FetchResponse response;
+        try {
+            response = connection.getClient().fetch(statementHandle.connectionId, statementHandle.id, rows.size(), fetchSize);
+            // CHECKSTYLE:OFF: IllegalCatch
+        } catch (final RuntimeException ex) {
+            // CHECKSTYLE:ON: IllegalCatch
+            throw new SQLException("Failed to fetch result frame", ex);
+        }
+        if (response == null || response.frame == null) {
+            frameDone = true;
+            return false;
+        }
+        List<List<Object>> fetchedRows = readFrameRows(response.frame);
+        frameDone = response.frame.done;
+        rows.addAll(fetchedRows);
+        rowIterator = fetchedRows.iterator();
+        return rowIterator.hasNext();
+    }
+
+    private List<List<Object>> readFrameRows(final Meta.Frame frame) {
+        List<List<Object>> result = new ArrayList<>();
+        if (frame.rows == null) {
+            return result;
+        }
+        for (Object row : frame.rows) {
+            if (row instanceof List) {
+                result.add((List<Object>) row);
+            }
+        }
+        return result;
     }
 
     @Override

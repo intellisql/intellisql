@@ -151,6 +151,18 @@ public final class IntelliSqlKernel implements AutoCloseable {
     }
 
     /**
+     * Executes a SQL update statement and returns the affected row count.
+     *
+     * @param sql the SQL update statement to execute
+     * @return the affected row count
+     */
+    public int executeUpdate(final String sql) {
+        ensureInitialized();
+        final QueryContext context = QueryContext.create(sql, "system", "kernel");
+        return queryProcessor.executeUpdate(sql, context);
+    }
+
+    /**
      * Translates SQL from one dialect to another.
      *
      * @param sql the SQL to translate

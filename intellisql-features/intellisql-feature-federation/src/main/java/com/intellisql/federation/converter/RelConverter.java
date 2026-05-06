@@ -30,6 +30,9 @@ import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.plan.volcano.VolcanoPlanner;
 import org.apache.calcite.rel.RelRoot;
+import org.apache.calcite.rel.metadata.DefaultRelMetadataProvider;
+import org.apache.calcite.rel.metadata.JaninoRelMetadataProvider;
+import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
@@ -37,6 +40,8 @@ import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperatorTable;
+import org.apache.calcite.sql.fun.SqlLibrary;
+import org.apache.calcite.sql.fun.SqlLibraryOperatorTableFactory;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.util.SqlOperatorTables;
 import org.apache.calcite.sql.validate.SqlConformanceEnum;
@@ -117,6 +122,7 @@ public final class RelConverter {
                                             final CalciteConnectionConfig connectionConfig) {
         final SqlOperatorTable operatorTable = SqlOperatorTables.chain(
                 SqlStdOperatorTable.instance(),
+                SqlLibraryOperatorTableFactory.INSTANCE.getOperatorTable(SqlLibrary.MYSQL),
                 catalogReader);
         final SqlValidator.Config validatorConfig = SqlValidator.Config.DEFAULT
                 .withLenientOperatorLookup(connectionConfig.lenientOperatorLookup())
@@ -141,7 +147,11 @@ public final class RelConverter {
         planner.addRelTraitDef(ConventionTraitDef.INSTANCE);
         // Register CBO rules (like ShardingSphere does in buildVolcanoPlanner)
         registerCboRules(planner);
-        return RelOptCluster.create(planner, new RexBuilder(typeFactory));
+        final RelOptCluster result = RelOptCluster.create(planner, new RexBuilder(typeFactory));
+        final JaninoRelMetadataProvider metadataProvider = JaninoRelMetadataProvider.of(DefaultRelMetadataProvider.INSTANCE);
+        result.setMetadataProvider(metadataProvider);
+        result.setMetadataQuerySupplier(() -> new RelMetadataQuery(metadataProvider));
+        return result;
     }
 
     /**

@@ -18,9 +18,11 @@
 package com.intellisql.server;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -98,33 +100,57 @@ public class IntelliSqlServer {
      */
     private void initializeKernel() {
         try {
-            InputStream configStream = getClass().getClassLoader().getResourceAsStream(DEFAULT_CONFIG_PATH);
-            if (configStream == null) {
-                File configFile = new File(DEFAULT_CONFIG_PATH);
-                if (configFile.exists()) {
-                    configStream = Files.newInputStream(configFile.toPath());
-                }
+            if (config.getConfigPath() != null) {
+                initializeKernelFromPath(config.getConfigPath());
+                return;
             }
-            if (configStream != null) {
-                log.info("Loading configuration from {}", DEFAULT_CONFIG_PATH);
-                Path tempConfig = Files.createTempFile("intellisql-config", ".yaml");
-                Files.copy(configStream, tempConfig, StandardCopyOption.REPLACE_EXISTING);
-                configStream.close();
-                kernel = IntelliSqlKernel.create(tempConfig);
-                kernel.initialize();
-                MetadataManager metadataManager = kernel.getMetadataManager();
-                meta.setMetadataManager(metadataManager);
-                meta.setKernel(kernel);
-                log.info("Kernel initialized with {} tables", metadataManager.getAllTables().size());
-                Files.deleteIfExists(tempConfig);
-            } else {
-                log.warn("Configuration file not found at {}, using empty metadata", DEFAULT_CONFIG_PATH);
-            }
+            initializeKernelFromDefaultConfig();
             // CHECKSTYLE:OFF
         } catch (final Exception ex) {
             // CHECKSTYLE:ON
             log.warn("Failed to initialize kernel: {}. Server will start with empty metadata.", ex.getMessage());
         }
+    }
+
+    private void initializeKernelFromPath(final Path configPath) throws IOException {
+        log.info("Loading configuration from {}", configPath);
+        kernel = IntelliSqlKernel.create(configPath);
+        initializeKernelMetadata();
+    }
+
+    private void initializeKernelFromDefaultConfig() throws IOException {
+        InputStream configStream = getDefaultConfigStream();
+        if (configStream == null) {
+            log.warn("Configuration file not found at {}, using empty metadata", DEFAULT_CONFIG_PATH);
+            return;
+        }
+        Path tempConfig = Files.createTempFile("intellisql-config", ".yaml");
+        try {
+            log.info("Loading configuration from {}", DEFAULT_CONFIG_PATH);
+            Files.copy(configStream, tempConfig, StandardCopyOption.REPLACE_EXISTING);
+            kernel = IntelliSqlKernel.create(tempConfig);
+            initializeKernelMetadata();
+        } finally {
+            configStream.close();
+            Files.deleteIfExists(tempConfig);
+        }
+    }
+
+    private InputStream getDefaultConfigStream() throws IOException {
+        InputStream result = getClass().getClassLoader().getResourceAsStream(DEFAULT_CONFIG_PATH);
+        if (result != null) {
+            return result;
+        }
+        File configFile = new File(DEFAULT_CONFIG_PATH);
+        return configFile.exists() ? Files.newInputStream(configFile.toPath()) : null;
+    }
+
+    private void initializeKernelMetadata() {
+        kernel.initialize();
+        MetadataManager metadataManager = kernel.getMetadataManager();
+        meta.setMetadataManager(metadataManager);
+        meta.setKernel(kernel);
+        log.info("Kernel initialized with {} tables", metadataManager.getAllTables().size());
     }
 
     /**
@@ -177,7 +203,9 @@ public class IntelliSqlServer {
                 log.warn("Invalid port number: {}, using default {}", args[0], DEFAULT_PORT);
             }
         }
-        final IntelliSqlServer server = new IntelliSqlServer(ServerConfig.builder().port(port).build());
+        Path configPath = args.length > 1 ? Paths.get(args[1]) : null;
+        final IntelliSqlServer server =
+                new IntelliSqlServer(ServerConfig.builder().port(port).configPath(configPath).build());
         Runtime.getRuntime()
                 .addShutdownHook(
                         new Thread(

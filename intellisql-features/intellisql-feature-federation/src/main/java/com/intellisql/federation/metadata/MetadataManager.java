@@ -353,13 +353,39 @@ public final class MetadataManager {
         // CHECKSTYLE:ON
         final List<String> columnNames = new ArrayList<>();
         final List<SqlTypeName> columnTypes = new ArrayList<>();
+        final List<Boolean> columnNullables = new ArrayList<>();
         if (table.getColumns() != null) {
             for (final Column column : table.getColumns()) {
                 columnNames.add(column.getName());
-                columnTypes.add(SqlTypeName.VARCHAR);
+                columnTypes.add(toSqlTypeName(column));
+                columnNullables.add(column.isNullable());
             }
         }
-        return new FederatedTable(table.getName(), table.getDataSourceId(), columnNames, columnTypes);
+        return new FederatedTable(table.getName(), table.getDataSourceId(), columnNames, columnTypes, columnNullables);
+    }
+
+    private SqlTypeName toSqlTypeName(final Column column) {
+        if (column.getDataType() == null) {
+            return SqlTypeName.VARCHAR;
+        }
+        switch (column.getDataType()) {
+            case INTEGER:
+                return SqlTypeName.INTEGER;
+            case LONG:
+                return SqlTypeName.BIGINT;
+            case DOUBLE:
+                return SqlTypeName.DOUBLE;
+            case BOOLEAN:
+                return SqlTypeName.BOOLEAN;
+            case DATE:
+                return SqlTypeName.DATE;
+            case TIMESTAMP:
+                return SqlTypeName.TIMESTAMP;
+            case BINARY:
+                return SqlTypeName.VARBINARY;
+            default:
+                return SqlTypeName.VARCHAR;
+        }
     }
 
     /** Closes the metadata manager and releases resources. */

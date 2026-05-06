@@ -98,6 +98,7 @@ public class IntelliSqlConnection implements Connection {
     @Override
     public Statement createStatement(final int resultSetType, final int resultSetConcurrency) throws SQLException {
         checkClosed();
+        validateResultSetOptions(resultSetType, resultSetConcurrency);
         return createStatement();
     }
 
@@ -105,6 +106,7 @@ public class IntelliSqlConnection implements Connection {
     public Statement createStatement(
                                      final int resultSetType, final int resultSetConcurrency, final int resultSetHoldability) throws SQLException {
         checkClosed();
+        validateResultSetOptions(resultSetType, resultSetConcurrency);
         return createStatement();
     }
 
@@ -119,6 +121,7 @@ public class IntelliSqlConnection implements Connection {
     @Override
     public PreparedStatement prepareStatement(final String sql, final int resultSetType, final int resultSetConcurrency) throws SQLException {
         checkClosed();
+        validateResultSetOptions(resultSetType, resultSetConcurrency);
         return prepareStatement(sql);
     }
 
@@ -126,6 +129,7 @@ public class IntelliSqlConnection implements Connection {
     public PreparedStatement prepareStatement(
                                               final String sql, final int resultSetType, final int resultSetConcurrency, final int resultSetHoldability) throws SQLException {
         checkClosed();
+        validateResultSetOptions(resultSetType, resultSetConcurrency);
         return prepareStatement(sql);
     }
 
@@ -145,6 +149,15 @@ public class IntelliSqlConnection implements Connection {
     public PreparedStatement prepareStatement(final String sql, final String[] columnNames) throws SQLException {
         checkClosed();
         return prepareStatement(sql);
+    }
+
+    private void validateResultSetOptions(final int resultSetType, final int resultSetConcurrency) throws SQLException {
+        if (resultSetType != ResultSet.TYPE_FORWARD_ONLY) {
+            throw new SQLException("Only TYPE_FORWARD_ONLY result sets are supported");
+        }
+        if (resultSetConcurrency != ResultSet.CONCUR_READ_ONLY) {
+            throw new SQLException("Only CONCUR_READ_ONLY result sets are supported");
+        }
     }
 
     @Override

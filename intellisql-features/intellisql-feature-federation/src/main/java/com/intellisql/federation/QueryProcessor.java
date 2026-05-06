@@ -18,6 +18,7 @@
 package com.intellisql.federation;
 
 import java.util.Collections;
+import java.util.Locale;
 
 import com.intellisql.connector.ConnectorRegistry;
 import com.intellisql.connector.api.DataSourceConnector;
@@ -29,11 +30,13 @@ import com.intellisql.federation.converter.RelConverter;
 import com.intellisql.common.logger.QueryContext;
 import com.intellisql.common.logger.QueryContextManager;
 import com.intellisql.common.logger.StructuredLogger;
+import com.intellisql.common.metadata.Table;
 import com.intellisql.federation.metadata.MetadataManager;
 import com.intellisql.common.metadata.enums.DataSourceType;
 import com.intellisql.common.retry.ExponentialBackoffRetry;
 import com.intellisql.common.retry.RetryableOperation;
 import com.intellisql.optimizer.HybridOptimizer;
+import com.intellisql.optimizer.metadata.DataSourceAware;
 import com.intellisql.optimizer.plan.ExecutionPlan;
 import com.intellisql.optimizer.plan.ExecutionStage;
 import com.intellisql.parser.SqlParserFactory;
@@ -44,6 +47,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
+import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlNode;
 
@@ -65,6 +69,8 @@ public class QueryProcessor {
     private final StructuredLogger structuredLogger = StructuredLogger.getLogger(QueryProcessor.class);
 
     private final ExponentialBackoffRetry retryPolicy = new ExponentialBackoffRetry();
+
+    private final Object planningLock = new Object();
 
     /** Lazily initialized RelConverter - created on first use after metadata is initialized. */
     private volatile RelConverter relConverter;
@@ -123,11 +129,11 @@ public class QueryProcessor {
         QueryContextManager.setContext(context);
         try {
             structuredLogger.info(context, "Processing query: {}", sql);
+            if (isDirectMySQLQuery()) {
+                return executeDirectSingleSourceQuery(sql, context);
+            }
             final SqlNode parsedSql = parseSQL(sql, context);
-            final RelNode logicalPlan = convertToRelational(parsedSql, context);
-            final RelNode optimizedPlan = optimizer.optimize(logicalPlan);
-            final ExecutionPlan executionPlan =
-                    optimizer.generateExecutionPlan(optimizedPlan, context.getQueryId());
+            final ExecutionPlan executionPlan = generateExecutionPlan(parsedSql, context);
             final QueryResult result = executeWithRetry(executionPlan, context);
             final long duration = System.currentTimeMillis() - startTime;
             structuredLogger.info(
@@ -142,6 +148,36 @@ public class QueryProcessor {
             return QueryResult.failure("Query execution failed: " + ex.getMessage());
         } finally {
             QueryContextManager.clearContext();
+        }
+    }
+
+    private boolean isDirectMySQLQuery() {
+        if (dataSourceManager.getDataSourceNames().size() != 1) {
+            return false;
+        }
+        return DataSourceType.MYSQL == dataSourceManager.getDataSourceConfig(firstDataSourceName()).getType();
+    }
+
+    private QueryResult executeDirectSingleSourceQuery(final String sql, final QueryContext context) {
+        final String dataSourceId = firstDataSourceName();
+        final DataSourceType dataSourceType = determineDataSourceType(dataSourceId);
+        final DataSourceConnector connector = ConnectorRegistry.getInstance().getConnector(dataSourceType);
+        try (IntelliSQLConnection connection = getConnection(connector, dataSourceId)) {
+            structuredLogger.debug(context, "Executing direct single-source query on {}: {}", dataSourceId, sql);
+            return connection.executeQuery(sql);
+            // CHECKSTYLE:OFF
+        } catch (final Exception ex) {
+            // CHECKSTYLE:ON
+            structuredLogger.error(context, "Direct query execution failed: {}", ex.getMessage());
+            throw new RuntimeException("Direct query execution failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private ExecutionPlan generateExecutionPlan(final SqlNode parsedSql, final QueryContext context) {
+        synchronized (planningLock) {
+            final RelNode logicalPlan = convertToRelational(parsedSql, context);
+            final RelNode optimizedPlan = optimizer.optimize(logicalPlan);
+            return optimizer.generateExecutionPlan(optimizedPlan, context.getQueryId());
         }
     }
 
@@ -225,12 +261,16 @@ public class QueryProcessor {
                 context, "Executing execution plan with {} stages", executionPlan.getStages().size());
         QueryResult result = QueryResult.success(Collections.emptyList(), Collections.emptyList());
         for (final ExecutionStage stage : executionPlan.getStages()) {
-            result = executeStage(stage, context, result);
-            if (!result.isSuccess()) {
-                return result;
+            if (!isExecutableStage(stage)) {
+                continue;
             }
+            return executeStage(stage, context);
         }
         return result;
+    }
+
+    private boolean isExecutableStage(final ExecutionStage stage) {
+        return !"default".equals(findDataSourceId(stage.getOperation()));
     }
 
     /**
@@ -238,25 +278,22 @@ public class QueryProcessor {
      *
      * @param stage the execution stage
      * @param context the query context
-     * @param previousResult the result from the previous stage
      * @return the query result
      */
     private QueryResult executeStage(
                                      final ExecutionStage stage,
-                                     final QueryContext context,
-                                     final QueryResult previousResult) {
+                                     final QueryContext context) {
         structuredLogger.debug(context, "Executing stage: {}", stage.getId());
-        final String dataSourceId = stage.getDataSourceId();
-        if (dataSourceId == null || "default".equals(dataSourceId)) {
-            return previousResult;
-        }
+        final String dataSourceId = findDataSourceId(stage.getOperation());
         try {
             final DataSourceType dataSourceType = determineDataSourceType(dataSourceId);
             final DataSourceConnector connector =
                     ConnectorRegistry.getInstance().getConnector(dataSourceType);
-            final IntelliSQLConnection connection = getConnection(connector, dataSourceId);
-            final String targetSql = generateTargetSQL(stage, dataSourceType);
-            return connection.executeQuery(targetSql);
+            try (IntelliSQLConnection connection = getConnection(connector, dataSourceId)) {
+                final String targetSql = generateTargetSQL(stage, dataSourceType);
+                structuredLogger.debug(context, "Generated target SQL for {}: {}", dataSourceId, targetSql);
+                return connection.executeQuery(targetSql);
+            }
             // CHECKSTYLE:OFF
         } catch (final Exception ex) {
             ex.printStackTrace();
@@ -264,6 +301,107 @@ public class QueryProcessor {
             structuredLogger.error(context, "Stage execution failed: {}", ex.getMessage());
             return QueryResult.failure("Stage execution failed: " + ex.getMessage());
         }
+    }
+
+    /**
+     * Executes a SQL update statement against its owning data source.
+     *
+     * @param sql the SQL update statement
+     * @param context the query context
+     * @return affected row count
+     * @throws RuntimeException if update execution fails
+     */
+    public int executeUpdate(final String sql, final QueryContext context) {
+        QueryContextManager.setContext(context);
+        try {
+            final String dataSourceId = findUpdateDataSourceId(sql);
+            final DataSourceType dataSourceType = determineDataSourceType(dataSourceId);
+            final DataSourceConnector connector =
+                    ConnectorRegistry.getInstance().getConnector(dataSourceType);
+            try (IntelliSQLConnection connection = getConnection(connector, dataSourceId)) {
+                structuredLogger.debug(context, "Executing update on {}: {}", dataSourceId, sql);
+                return connection.executeUpdate(sql);
+            }
+            // CHECKSTYLE:OFF
+        } catch (final Exception ex) {
+            // CHECKSTYLE:ON
+            structuredLogger.error(context, "Update execution failed: {}", ex.getMessage());
+            throw new RuntimeException("Update execution failed: " + ex.getMessage(), ex);
+        } finally {
+            QueryContextManager.clearContext();
+        }
+    }
+
+    private String findUpdateDataSourceId(final String sql) {
+        if (dataSourceManager.getDataSourceNames().size() == 1) {
+            return firstDataSourceName();
+        }
+        final String normalizedSql = sql.toLowerCase(Locale.ENGLISH);
+        for (final Table each : metadataManager.getAllTables()) {
+            if (containsIdentifier(normalizedSql, each.getName())) {
+                return each.getDataSourceId();
+            }
+        }
+        return firstDataSourceName();
+    }
+
+    private String firstDataSourceName() {
+        for (final String each : dataSourceManager.getDataSourceNames()) {
+            return each;
+        }
+        return "default";
+    }
+
+    private boolean containsIdentifier(final String sql, final String identifier) {
+        if (identifier == null || identifier.isEmpty()) {
+            return false;
+        }
+        final String normalizedIdentifier = identifier.toLowerCase(Locale.ENGLISH);
+        int index = sql.indexOf(normalizedIdentifier);
+        while (index >= 0) {
+            if (isIdentifierBoundary(sql, index - 1) && isIdentifierBoundary(sql, index + normalizedIdentifier.length())) {
+                return true;
+            }
+            index = sql.indexOf(normalizedIdentifier, index + normalizedIdentifier.length());
+        }
+        return false;
+    }
+
+    private boolean isIdentifierBoundary(final String sql, final int index) {
+        if (index < 0 || index >= sql.length()) {
+            return true;
+        }
+        final char value = sql.charAt(index);
+        return !Character.isLetterOrDigit(value) && '_' != value && '$' != value;
+    }
+
+    private String findDataSourceId(final RelNode relNode) {
+        if (relNode == null) {
+            return "default";
+        }
+        final String directDataSourceId = extractDataSourceId(relNode);
+        if (!"default".equals(directDataSourceId)) {
+            return directDataSourceId;
+        }
+        for (final RelNode each : relNode.getInputs()) {
+            final String inputDataSourceId = findDataSourceId(each);
+            if (!"default".equals(inputDataSourceId)) {
+                return inputDataSourceId;
+            }
+        }
+        return "default";
+    }
+
+    private String extractDataSourceId(final RelNode relNode) {
+        final RelOptTable table = relNode.getTable();
+        if (table == null) {
+            return "default";
+        }
+        final DataSourceAware dataSourceAware = table.unwrap(DataSourceAware.class);
+        if (dataSourceAware != null && dataSourceAware.getDataSourceId() != null) {
+            return dataSourceAware.getDataSourceId();
+        }
+        return "default";
     }
 
     /**
