@@ -179,7 +179,7 @@ public class PostgreSQLSchemaDiscoverer implements SchemaDiscoverer {
                     indexColumns.get(indexName).add(columnName);
                 }
                 uniqueFlags.put(indexName, !rs.getBoolean("NON_UNIQUE"));
-                indexTypes.put(indexName, mapIndexType(rs.getString("INDEX_TYPE")));
+                indexTypes.put(indexName, mapIndexType(rs.getString("TYPE")));
             }
         }
 

@@ -20,13 +20,20 @@ package com.intellisql.jdbc;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.RowIdLifetime;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.avatica.AvaticaParameter;
+import org.apache.calcite.avatica.ColumnMetaData;
+import org.apache.calcite.avatica.Meta;
 
 /** JDBC DatabaseMetaData implementation for IntelliSql. */
 @Slf4j
@@ -659,7 +666,20 @@ public class IntelliSqlDatabaseMetaData implements DatabaseMetaData {
     @Override
     public ResultSet getTables(
                                final String catalog, final String schemaPattern, final String tableNamePattern, final String[] types) throws SQLException {
-        return createEmptyResultSet();
+        List<List<Object>> rows = new ArrayList<>();
+        try (
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery("SHOW TABLES")) {
+            while (resultSet.next()) {
+                String tableName = resultSet.getString(1);
+                if (matches(tableName, tableNamePattern) && matchesType(types, "TABLE")) {
+                    rows.add(row(catalog, schemaPattern, tableName, "TABLE"));
+                }
+            }
+        }
+        return createResultSet(
+                columns("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "TABLE_TYPE"),
+                rows);
     }
 
     @Override
@@ -669,26 +689,67 @@ public class IntelliSqlDatabaseMetaData implements DatabaseMetaData {
 
     @Override
     public ResultSet getSchemas(final String catalog, final String schemaPattern) throws SQLException {
-        return createEmptyResultSet();
+        String schema = connection.getSchema();
+        List<List<Object>> rows = matches(schema, schemaPattern)
+                ? Arrays.asList(row(schema, catalog))
+                : new ArrayList<List<Object>>(0);
+        return createResultSet(columns("TABLE_SCHEM", "TABLE_CATALOG"), rows);
     }
 
     @Override
     public ResultSet getCatalogs() throws SQLException {
-        return createEmptyResultSet();
+        return createResultSet(columns("TABLE_CAT"), Arrays.asList(row(connection.getCatalog())));
     }
 
     @Override
     public ResultSet getTableTypes() throws SQLException {
-        List<Object[]> rows = new ArrayList<>();
-        rows.add(new Object[]{"TABLE"});
-        rows.add(new Object[]{"VIEW"});
-        return convertToResultSet(rows);
+        return createResultSet(columns("TABLE_TYPE"), Arrays.asList(row("TABLE"), row("VIEW")));
     }
 
     @Override
     public ResultSet getColumns(
                                 final String catalog, final String schemaPattern, final String tableNamePattern, final String columnNamePattern) throws SQLException {
-        return createEmptyResultSet();
+        List<List<Object>> rows = new ArrayList<>();
+        try (ResultSet tables = getTables(catalog, schemaPattern, tableNamePattern, new String[]{"TABLE"})) {
+            while (tables.next()) {
+                collectColumns(tables.getString("TABLE_NAME"), columnNamePattern, rows);
+            }
+        }
+        return createResultSet(
+                columns("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "COLUMN_NAME", "DATA_TYPE", "TYPE_NAME", "ORDINAL_POSITION", "IS_NULLABLE"),
+                rows);
+    }
+
+    private void collectColumns(final String tableName, final String columnNamePattern, final List<List<Object>> rows) throws SQLException {
+        String sql = "SHOW COLUMNS FROM " + tableName;
+        try (
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(sql)) {
+            while (resultSet.next()) {
+                String columnName = resultSet.getString("COLUMN_NAME");
+                if (matches(columnName, columnNamePattern)) {
+                    String dataType = resultSet.getString("DATA_TYPE");
+                    String ordinalPosition = resultSet.getString("ORDINAL_POSITION");
+                    rows.add(row(
+                            connection.getCatalog(),
+                            connection.getSchema(),
+                            tableName,
+                            columnName,
+                            parseIntegerMetadataValue(dataType, "DATA_TYPE", tableName, columnName),
+                            resultSet.getString("TYPE_NAME"),
+                            parseIntegerMetadataValue(ordinalPosition, "ORDINAL_POSITION", tableName, columnName),
+                            resultSet.getString("IS_NULLABLE")));
+                }
+            }
+        }
+    }
+
+    private Integer parseIntegerMetadataValue(final String rawValue, final String fieldName, final String tableName, final String columnName) throws SQLException {
+        try {
+            return Integer.valueOf(rawValue);
+        } catch (final NumberFormatException ex) {
+            throw new SQLException("Invalid numeric metadata value for " + tableName + "." + columnName + " field " + fieldName + ": " + rawValue, ex);
+        }
     }
 
     @Override
@@ -958,10 +1019,63 @@ public class IntelliSqlDatabaseMetaData implements DatabaseMetaData {
     }
 
     private ResultSet createEmptyResultSet() {
-        return new IntelliSqlResultSet(null, null, null, null);
+        return createResultSet(new ArrayList<ColumnMetaData>(0), new ArrayList<List<Object>>(0));
     }
 
     private ResultSet convertToResultSet(final List<?> data) {
-        return new IntelliSqlResultSet(null, null, null, null);
+        List<List<Object>> rows = new ArrayList<>(data.size());
+        for (Object each : data) {
+            rows.add(row(each));
+        }
+        return createResultSet(columns("VALUE"), rows);
+    }
+
+    private ResultSet createResultSet(final List<ColumnMetaData> columns, final List<List<Object>> rows) {
+        List<Object> frameRows = new ArrayList<>(rows.size());
+        frameRows.addAll(rows);
+        Meta.Signature signature = new Meta.Signature(columns, "", new ArrayList<AvaticaParameter>(0), null, Meta.CursorFactory.ARRAY, Meta.StatementType.SELECT);
+        Meta.Frame frame = new Meta.Frame(0L, true, frameRows);
+        return new IntelliSqlResultSet(new IntelliSqlStatement(connection, 0), null, signature, frame);
+    }
+
+    private List<ColumnMetaData> columns(final String... labels) {
+        List<ColumnMetaData> result = new ArrayList<>(labels.length);
+        for (int i = 0; i < labels.length; i++) {
+            result.add(column(i, labels[i]));
+        }
+        return result;
+    }
+
+    private ColumnMetaData column(final int ordinal, final String label) {
+        ColumnMetaData.Rep rep = ColumnMetaData.Rep.of(String.class);
+        ColumnMetaData.AvaticaType avaticaType = new ColumnMetaData.AvaticaType(Types.VARCHAR, "VARCHAR", rep);
+        return new ColumnMetaData(ordinal, false, false, false, false, ResultSetMetaData.columnNullableUnknown, true, -1, label, label, "", 0, 0, "", "", avaticaType, true, false, false, "");
+    }
+
+    private List<Object> row(final Object... values) {
+        return new ArrayList<Object>(Arrays.asList(values));
+    }
+
+    private boolean matches(final String value, final String pattern) {
+        if (pattern == null || pattern.isEmpty() || "%".equals(pattern)) {
+            return true;
+        }
+        if (value == null) {
+            return false;
+        }
+        String regex = pattern.replace("_", ".").replace("%", ".*");
+        return value.matches(regex);
+    }
+
+    private boolean matchesType(final String[] types, final String tableType) {
+        if (types == null || types.length == 0) {
+            return true;
+        }
+        for (String each : types) {
+            if (tableType.equalsIgnoreCase(each)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -22,6 +22,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.calcite.avatica.Meta;
 import org.apache.calcite.avatica.remote.Service;
@@ -57,6 +59,8 @@ public class IntelliSqlStatement implements Statement {
     protected SQLWarning warningChain;
 
     protected Meta.StatementHandle statementHandle;
+
+    protected final List<String> batchSqls = new ArrayList<>();
     // CHECKSTYLE:ON: VisibilityModifier
 
     /**
@@ -110,8 +114,9 @@ public class IntelliSqlStatement implements Statement {
         closeCurrentResultSet();
         Service.PrepareResponse prepareResponse =
                 connection.getClient().prepare(connection.getConnectionId(), sql, maxRows);
-        connection.getClient().execute(prepareResponse.statement, null, fetchSize);
-        updateCount = 0;
+        Service.ExecuteResponse executeResponse =
+                connection.getClient().execute(prepareResponse.statement, null, fetchSize);
+        updateCount = getResponseUpdateCount(executeResponse);
         currentResultSet = null;
         return (int) updateCount;
     }
@@ -230,8 +235,12 @@ public class IntelliSqlStatement implements Statement {
                 connection.getClient().prepare(connection.getConnectionId(), sql, maxRows);
         Service.ExecuteResponse executeResponse =
                 connection.getClient().execute(prepareResponse.statement, null, fetchSize);
+        updateCount = getResponseUpdateCount(executeResponse);
+        if (updateCount >= 0) {
+            currentResultSet = null;
+            return false;
+        }
         currentResultSet = createResultSet(prepareResponse.statement, executeResponse);
-        updateCount = -1;
         return true;
     }
 
@@ -322,19 +331,24 @@ public class IntelliSqlStatement implements Statement {
     @Override
     public void addBatch(final String sql) throws SQLException {
         checkClosed();
-        throw new SQLException("Batch updates not supported in MVP");
+        batchSqls.add(sql);
     }
 
     @Override
     public void clearBatch() throws SQLException {
         checkClosed();
-        throw new SQLException("Batch updates not supported in MVP");
+        batchSqls.clear();
     }
 
     @Override
     public int[] executeBatch() throws SQLException {
         checkClosed();
-        throw new SQLException("Batch updates not supported in MVP");
+        int[] result = new int[batchSqls.size()];
+        for (int i = 0; i < batchSqls.size(); i++) {
+            result[i] = executeUpdate(batchSqls.get(i));
+        }
+        batchSqls.clear();
+        return result;
     }
 
     @Override
@@ -396,6 +410,13 @@ public class IntelliSqlStatement implements Statement {
         } else {
             warningChain.setNextWarning(warning);
         }
+    }
+
+    protected long getResponseUpdateCount(final Service.ExecuteResponse response) {
+        if (response != null && response.results != null && !response.results.isEmpty()) {
+            return response.results.get(0).updateCount;
+        }
+        return -1L;
     }
 
     protected void checkClosed() throws SQLException {

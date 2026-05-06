@@ -1,0 +1,24 @@
+execution:
+  mode: docker
+  serverPort: 0
+  jdbcDatabase: intellisql
+  caseRoot: e2e/cases
+  defaultModel: basic
+  defaultFetchSize: 1000
+  timeoutSeconds: 60
+containers:
+  postgresql:
+    enabled: true
+    image: postgres:15-alpine
+    database: testdb
+    username: testuser
+    password: testpass
+  mysql:
+    enabled: true
+    image: mysql:8.0
+    database: testdb
+    username: testuser
+    password: testpass
+assertion:
+  orderMode: auto
+  nullToken: <NULL>

@@ -1,0 +1,15 @@
+dataSources:
+  - name: mysql
+    type: mysql
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
+    pool:
+      maxPoolSize: 3
+      minIdle: 1
+props:
+  maxIntermediateRows: 10000
+  queryTimeoutSeconds: 60
+  defaultFetchSize: 1000
+  enableQueryLogging: true
+  logLevel: INFO

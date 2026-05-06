@@ -216,7 +216,8 @@ public class HybridOptimizer {
      * @return the estimated row count
      */
     private double estimateRows(final RelNode relNode) {
-        return relNode.estimateRowCount(relNode.getCluster().getMetadataQuery());
+        final Double result = relNode.getCluster().getMetadataQuery().getRowCount(relNode);
+        return result == null ? 1.0 : result;
     }
 
     /**
@@ -229,7 +230,7 @@ public class HybridOptimizer {
         if (relNode == null) {
             return 0.0;
         }
-        double cost = relNode.estimateRowCount(relNode.getCluster().getMetadataQuery());
+        double cost = estimateRows(relNode);
         for (final RelNode input : relNode.getInputs()) {
             cost += estimateCost(input);
         }

@@ -17,6 +17,8 @@
 
 package com.intellisql.server;
 
+import java.nio.file.Path;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -45,6 +47,8 @@ public class ServerConfig {
     @Builder.Default
     private String host = "0.0.0.0";
 
+    private Path configPath;
+
     /**
      * Creates a default server configuration.
      *
@@ -62,5 +66,16 @@ public class ServerConfig {
      */
     public static ServerConfig fromPort(final int port) {
         return ServerConfig.builder().port(port).build();
+    }
+
+    /**
+     * Creates a server configuration with the specified port and model configuration path.
+     *
+     * @param port the server port
+     * @param configPath the model configuration path
+     * @return the ServerConfig instance with the specified port and model configuration path
+     */
+    public static ServerConfig fromPortAndConfigPath(final int port, final Path configPath) {
+        return ServerConfig.builder().port(port).configPath(configPath).build();
     }
 }

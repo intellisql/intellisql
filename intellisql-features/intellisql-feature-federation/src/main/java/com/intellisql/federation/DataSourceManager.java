@@ -18,7 +18,9 @@
 package com.intellisql.federation;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -328,8 +330,19 @@ public final class DataSourceManager implements AutoCloseable {
             healthCheckScheduler.shutdownNow();
             Thread.currentThread().interrupt();
         }
+        closeConnectors();
         dataSourceStatuses.clear();
         initialized.set(false);
         log.info("DataSourceManager shutdown completed");
+    }
+
+    private void closeConnectors() {
+        final Set<DataSourceType> dataSourceTypes = new HashSet<>(dataSources.size());
+        for (final DataSourceConfig each : dataSources.values()) {
+            dataSourceTypes.add(each.getType());
+        }
+        for (final DataSourceType each : dataSourceTypes) {
+            getConnectorForType(each).close();
+        }
     }
 }
